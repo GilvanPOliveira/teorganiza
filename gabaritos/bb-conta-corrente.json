@@ -1,0 +1,47 @@
+{
+  "id": "bb-conta-corrente",
+  "banco": "Banco do Brasil",
+  "documento": "Extrato de Conta Corrente",
+  "versao": 1,
+  "identificacao": [
+    "Extrato de Conta Corrente",
+    "Lançamentos"
+  ],
+  "cabecalho": {
+    "periodo": "Período:\\s*(.+?)\\s+Agência",
+    "agencia": "Agência:\\s*([\\d-]+)",
+    "conta": "Conta:\\s*([\\d-]+)",
+    "titular": "Cliente:\\s*(.+)"
+  },
+  "normalizacao": {
+    "substituir": [
+      [
+        "\u0000",
+        ""
+      ]
+    ]
+  },
+  "tabela": {
+    "ancoraCabecalho": [
+      "Dia",
+      "Lote",
+      "Documento",
+      "Histórico",
+      "Valor"
+    ],
+    "colValor": "Valor",
+    "colDescricao": "Histórico",
+    "colData": "Dia",
+    "sinal": {
+      "tipo": "sufixo_parenteses"
+    }
+  },
+  "ignorar": [
+    "Saldo Anterior",
+    "Saldo do dia",
+    "Saldo Bloq"
+  ],
+  "fimTabela": [
+    "S A L D O"
+  ]
+}

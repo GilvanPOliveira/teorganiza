@@ -1,0 +1,48 @@
+{
+  "id": "santander-consolidado",
+  "banco": "Santander",
+  "documento": "Extrato Consolidado Inteligente",
+  "versao": 1,
+  "identificacao": [
+    "EXTRATO CONSOLIDADO INTELIGENTE"
+  ],
+  "cabecalho": {
+    "agencia": "Agência\\s+Conta Corrente\\s+(\\d+)",
+    "titular": "Nome\\s+(.+)"
+  },
+  "normalizacao": {
+    "substituir": [
+      [
+        "\u0000",
+        ""
+      ]
+    ]
+  },
+  "tabela": {
+    "ancoraCabecalho": [
+      "Data",
+      "Descrição",
+      "Documento",
+      "Movimento",
+      "Saldo"
+    ],
+    "colValor": "Movimento",
+    "colDescricao": "Descrição",
+    "colData": "Data",
+    "sinal": {
+      "tipo": "sufixo_menos"
+    }
+  },
+  "ignorar": [
+    "^SALDO EM",
+    "^Pagina",
+    "Extrato_PF",
+    "^BALP_"
+  ],
+  "fimTabela": [
+    "Saldos por Per",
+    "Compras com Cart",
+    "Comprovantes de Pagamento",
+    "Sevocênãotem"
+  ]
+}

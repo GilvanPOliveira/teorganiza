@@ -1,0 +1,56 @@
+{
+  "id": "bradesco-celular",
+  "banco": "Bradesco",
+  "documento": "Bradesco Celular",
+  "versao": 1,
+  "identificacao": [
+    "Bradesco Celular",
+    "Extrato de:"
+  ],
+  "cabecalho": {
+    "titular": "Nome:\\s*(.+)",
+    "agencia": "Agência:\\s*(\\d+)",
+    "conta": "Conta:\\s*([\\d-]+)",
+    "emitido": "Data:\\s*(\\d{2}/\\d{2}/\\d{4})"
+  },
+  "normalizacao": {
+    "substituir": [
+      [
+        "\u0000",
+        ""
+      ]
+    ]
+  },
+  "tabela": {
+    "ancoraCabecalho": [
+      "Data",
+      "Histórico",
+      "Docto.",
+      "Crédito",
+      "Débito",
+      "Saldo"
+    ],
+    "colDescricao": "Histórico",
+    "colData": "Data",
+    "sinal": {
+      "tipo": "colunas",
+      "entrada": "Crédito",
+      "saida": "Débito"
+    }
+  },
+  "registro": {
+    "dataHerdada": true,
+    "direcaoPorPrefixo": {
+      "REM:": "entrada",
+      "DES:": "saida"
+    }
+  },
+  "ignorar": [
+    "^Folha:",
+    "^Bradesco Celular",
+    "SALDO ANTERIOR",
+    "^Total",
+    "^Data:"
+  ],
+  "fimTabela": []
+}

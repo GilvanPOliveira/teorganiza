@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# NUNCA versionar extrato de banco. Os testes leem daqui, e esta pasta
+# fica fora do repositório de propósito: é dado financeiro real.
+fixtures/*
+!fixtures/README.md
+
+.env
+.env.*
+.DS_Store

@@ -1,0 +1,43 @@
+{
+  "id": "santander-extrato-conta",
+  "banco": "Santander",
+  "documento": "Extrato de Conta",
+  "versao": 1,
+  "identificacao": [
+    "EXTRATO DE CONTA",
+    "DETALHE DOS MOVIMENTOS"
+  ],
+  "cabecalho": {
+    "periodo": "Período:\\s*(.+)",
+    "agencia": "Agência:\\s*(\\d+)",
+    "conta": "Conta:\\s*([\\d.\\-]+)",
+    "titular": "Titular:\\s*(.+)"
+  },
+  "normalizacao": {
+    "substituir": [
+      [
+        "\u0000",
+        ""
+      ]
+    ]
+  },
+  "tabela": {
+    "ancoraCabecalho": [
+      "Data",
+      "Descrição",
+      "Valor",
+      "Saldo"
+    ],
+    "colValor": "Valor",
+    "colDescricao": "Descrição",
+    "colData": "Data",
+    "sinal": {
+      "tipo": "valor_assinado"
+    }
+  },
+  "ignorar": [
+    "^Saldo inicial",
+    "^(Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo),"
+  ],
+  "fimTabela": []
+}
