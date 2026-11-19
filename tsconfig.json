@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
@@ -11,7 +15,14 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "preserve",
+    "allowImportingTsExtensions": false
   },
-  "include": ["src", "test"]
+  "include": [
+    "src",
+    "test",
+    "app",
+    "vite.config.ts"
+  ]
 }

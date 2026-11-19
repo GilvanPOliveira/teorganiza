@@ -1,0 +1,22 @@
+#!/bin/sh
+# Recusa o commit se houver extrato ou planilha no que está sendo enviado.
+#
+# O repositório é público. Um extrato que escapar fica visível para o mundo,
+# e o histórico do git guarda para sempre — apagar depois não resolve.
+# A pasta fixtures/ já está no .gitignore; este gancho cobre o resto.
+
+bloqueados=$(git diff --cached --name-only --diff-filter=ACM \
+  | grep -Ei '\.(pdf|ofx|qif|xls|xlsx|csv)$' \
+  | grep -v '^test/.*\.csv$')
+
+if [ -n "$bloqueados" ]; then
+  echo ""
+  echo "  COMMIT RECUSADO: arquivo que pode conter extrato bancário"
+  echo ""
+  echo "$bloqueados" | sed 's/^/    /'
+  echo ""
+  echo "  Extrato vai em fixtures/, que não é versionada."
+  echo "  Se este arquivo for mesmo seguro:  git commit --no-verify"
+  echo ""
+  exit 1
+fi

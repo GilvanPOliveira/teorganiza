@@ -1,0 +1,49 @@
+/* Tokens do sistema de design do TeOrganiza. Tema escuro, pansy purple. */
+:root {
+  --bg-base: #120f18;
+  --bg-raised: #1a1523;
+  --bg-highlight: #2e1d4a;
+  --brand: #50347e;
+  --brand-lift: #a98cdc;
+  --border-subtle: #2a2235;
+  --border-control: #817293;
+  --text-primary: #f2eff7;
+  --text-secondary: #a69db8;
+  --text-muted: #8b8399;
+  --attention: #ff8a3d;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --sombra-vidro: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 32px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(900px 400px at 15% -8%, #2c1c4a 0%, rgba(44, 28, 74, 0) 60%), var(--bg-base);
+  min-height: 100vh;
+  font-family: var(--sans);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Todo valor monetário: largura fixa de dígito e alinhado à direita.
+   Dígito de largura variável desalinha coluna, e coluna desalinhada é
+   onde o olho erra. */
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+button { font: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--border-control); outline-offset: 2px; }

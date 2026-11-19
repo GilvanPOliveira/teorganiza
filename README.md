@@ -18,16 +18,19 @@ TeOrganiza reconcilia esses pares e mostra o gasto real.
 
 A engine de leitura está provada contra quatro extratos reais de três bancos.
 Em todos os quatro, o somatório dos lançamentos bate **ao centavo** com o saldo
-que o próprio documento declara.
+que o próprio documento declara — e a prova roda pelo mesmo `pdf.js` que o
+navegador usa, não por um caminho de teste paralelo.
 
-A interface ainda não existe.
+Há uma tela que já funciona: soltar um PDF e ver os lançamentos com os totais.
+Falta tudo o mais — Drive, tela de revisão, conciliação e as visões.
 
 ## Arquitetura
 
 ```
 src/            engine em TypeScript puro — sem DOM, sem framework
+app/            a interface: Vue, e o adaptador de pdf.js
 gabaritos/      um arquivo por banco e tipo de documento. Dados, não código.
-test/           testes de unidade; os de integração leem fixtures/ (fora do git)
+test/           unidade + integração; a integração lê fixtures/ (fora do git)
 ```
 
 ### As regras que não mudam
@@ -55,6 +58,12 @@ o saldo deixou de fechar.
 como palavras posicionadas. No navegador isso é `pdf.js`; nos testes, qualquer
 coisa que devolva coordenadas.
 
+**Palavra é reconstruída no adaptador, não na engine.** Extratores de PDF não
+concordam sobre o que é uma palavra: o mesmo documento sai ora quebrado em
+pedaços de letra (`"A"`, `"gên"`, `"c"`), ora colado em blocos maiores que a
+palavra (`"Crédito (R$)"` num item só). `segmentarEmPalavras` reconstrói antes
+de a engine ver qualquer coisa.
+
 ## Os quatro modelos de sinal
 
 Quatro documentos reais produziram quatro convenções, nenhuma repetida:
@@ -70,12 +79,18 @@ Quatro documentos reais produziram quatro convenções, nenhuma repetida:
 
 ```bash
 npm install
-npm test          # unidade
+npm run dev       # abre em localhost; solte um PDF na tela
+npm test          # 26 testes
 npm run typecheck
+npm run build     # site estático em dist/
 ```
 
+Não é preciso publicar para testar: `npm run dev` basta. Deploy serve para
+mostrar a outra pessoa.
+
 Para os testes de integração, veja `fixtures/README.md`. **Extrato de banco
-nunca entra neste repositório**, nem privado.
+nunca entra neste repositório**, nem privado — há um gancho de pre-commit que
+recusa PDF, OFX e planilha, ativado automaticamente no `npm install`.
 
 ## Decisões de projeto
 

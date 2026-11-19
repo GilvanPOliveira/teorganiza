@@ -4,6 +4,7 @@ export { normalizarDescricao, aplicarSubstituicoes, casaAlguma } from './texto.j
 export { agruparEmLinhas, colunasDaLinha, derivarFaixas, colunaDe } from './colunas.js';
 export { mapearLinhas, montarRegistros } from './registros.js';
 export { conferir, bateComSaldo, bateComTotais } from './conferencia.js';
+export { segmentarEmPalavras, type Fragmento } from './segmentar.js';
 export { chaveDe, comChaves, apenasNovos } from './idempotencia.js';
 
 import type { Gabarito, LancamentoBruto, PaginaPdf } from './tipos.js';

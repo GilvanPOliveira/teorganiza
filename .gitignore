@@ -11,3 +11,4 @@ fixtures/*
 .env
 .env.*
 .DS_Store
+test/casos.local.json
