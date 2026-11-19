@@ -6,6 +6,17 @@ export { mapearLinhas, montarRegistros } from './registros.js';
 export { conferir, bateComSaldo, bateComTotais } from './conferencia.js';
 export { segmentarEmPalavras, type Fragmento } from './segmentar.js';
 export { chaveDe, comChaves, apenasNovos } from './idempotencia.js';
+export {
+  conciliar,
+  totaisSemTransferencias,
+  interpretarData,
+  indiciosDe,
+  type LancamentoIdentificado,
+  type Transferencia,
+  type Confianca,
+  type OpcoesConciliacao,
+  type ResultadoConciliacao,
+} from './conciliacao.js';
 
 import type { Gabarito, LancamentoBruto, PaginaPdf } from './tipos.js';
 import { mapearLinhas, montarRegistros } from './registros.js';

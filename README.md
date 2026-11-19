@@ -94,5 +94,8 @@ recusa PDF, OFX e planilha, ativado automaticamente no `npm install`.
 
 ## Decisões de projeto
 
-O desenho completo — escopo, leitura de extratos, esquema do arquivo,
-conciliação e telas — está documentado fora do código.
+**[`docs/decisoes.md`](docs/decisoes.md)** — o que foi decidido e por quê: por
+que não há backend, por que o extrato é descartado, por que o cartão é uma
+conta, o que está em aberto e o roadmap. Leia antes de propor mudança de
+arquitetura: alternativas como app nativo e backend próprio já foram
+descartadas, com motivo registrado.

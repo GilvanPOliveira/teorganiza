@@ -57,9 +57,15 @@ async function lerPdf(caminho: string): Promise<readonly PaginaPdf[]> {
   return paginas;
 }
 
-const casos: readonly Caso[] = existsSync(CASOS)
-  ? (JSON.parse(readFileSync(CASOS, 'utf8')) as Caso[])
-  : [];
+/**
+ * Só vale o caso cujo PDF está de fato na máquina. O arquivo de casos e os
+ * PDFs são ignorados pelo git separadamente, então é normal ter a lista sem
+ * ter os arquivos — e nesse estado o teste tem que PULAR, não falhar: uma
+ * falha de ENOENT aqui vira ruído e esconde a falha que importa.
+ */
+const casos: readonly Caso[] = (
+  existsSync(CASOS) ? (JSON.parse(readFileSync(CASOS, 'utf8')) as Caso[]) : []
+).filter((caso) => existsSync(`fixtures/${caso.arquivo}`));
 
 describe.skipIf(casos.length === 0)('extratos reais', () => {
   for (const caso of casos) {
