@@ -14,16 +14,36 @@ export const dashboardEntrySchema = z.object({
   order: z.number().int(),
 })
 
+export const ACCENTS = ['blue', 'violet', 'green', 'amber', 'rose', 'cyan'] as const
+
+/**
+ * New fields are optional rather than a schema bump: a record written by an
+ * older build still validates, and the defaults fill the gaps on read.
+ */
 export const preferencesSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
   locale: z.string(),
   syncPolicy: z.enum(['manual', 'on-leave', 'periodic', 'always']),
+  accent: z.enum(ACCENTS).optional(),
+  navigation: z.enum(['dock', 'sidebar']).optional(),
+  /** Turned off, a module leaves the navigation; its data stays untouched. */
+  disabledModules: z.array(z.string()).optional(),
 })
 
 export const knownDeviceSchema = z.object({
   deviceId: z.string(),
   nickname: z.string(),
   lastSeenAt: z.string(),
+})
+
+/**
+ * Tags are shared by every module: one "reforma" tag marks the note, the
+ * expense and the shopping list alike. Records point to a tag by id, so a
+ * rename is a single edit here.
+ */
+export const tagSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  color: z.enum(ACCENTS),
 })
 
 export const moduleSettingsSchema = z.object({
@@ -51,6 +71,13 @@ export const coreCollections: AnyCollectionDef[] = [
     schemaVersion: 1,
     describe: (record) => record.data.nickname,
     indexes: ['deviceId'],
+  },
+  {
+    name: 'tags',
+    schema: tagSchema,
+    schemaVersion: 1,
+    describe: (record) => `#${record.data.name}`,
+    indexes: ['name'],
   },
   {
     name: 'settings',

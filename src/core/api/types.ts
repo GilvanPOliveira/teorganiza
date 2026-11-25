@@ -29,6 +29,13 @@ export interface Envelope<T = unknown> {
   /** Local revisions since the last successful sync. */
   rev: number
   schemaVersion: number
+  /**
+   * Ids from `core/tags`. In the envelope, not in `data`, so the core can
+   * find "everything tagged X" across every module without asking any of
+   * them. Optional because records written before tags existed have none;
+   * missing means the same as `[]`.
+   */
+  tags?: string[]
   data: T
 }
 
@@ -57,6 +64,8 @@ export interface Query<T> {
   limit?: number
   /** Tombstones are hidden unless you ask for them. */
   includeDeleted?: boolean
+  /** Only records carrying this tag id. */
+  tag?: string
 }
 
 /* ------------------------------------------------------------------ *
@@ -114,6 +123,27 @@ export interface WidgetDef {
   element: ComponentType
 }
 
+/** What the shell passes to a module icon. Any lucide icon fits. */
+export interface IconProps {
+  size?: number | string
+  strokeWidth?: number | string
+  className?: string
+}
+
+/**
+ * An entry in the command palette (Ctrl+K). Declarative on purpose: a
+ * command only navigates to one of the module's own routes, so the palette
+ * never runs module code outside the module's screen.
+ */
+export interface CommandDef {
+  id: string
+  label: string
+  /** A route of this module, relative like RouteDef.path. */
+  path: string
+  /** Extra words the palette matches, e.g. ['gasto', 'despesa']. */
+  keywords?: string[]
+}
+
 /* ------------------------------------------------------------------ *
  * Events
  * ------------------------------------------------------------------ */
@@ -132,11 +162,17 @@ export interface Module {
   apiVersion: typeof MODULE_API_VERSION
   /** The module's own semver, independent of the core. */
   version: string
-  icon?: ComponentType
+  icon?: ComponentType<IconProps>
+  /**
+   * Letter for the "G then letter" shortcut. Optional: without it the shell
+   * picks the first free letter of the name.
+   */
+  shortcut?: string
 
   collections: AnyCollectionDef[]
   routes: RouteDef[]
   widgets?: WidgetDef[]
+  commands?: CommandDef[]
   settings?: ZodType<any>
 
   /** Event names this module emits, without the module prefix. */

@@ -11,6 +11,9 @@ export interface RegisteredCollection {
 
 const ID_PATTERN = /^[a-z][a-z0-9-]*$/
 
+/** The shell's own URLs; a module with one of these ids would be unreachable. */
+const RESERVED_IDS = ['settings', 'tags']
+
 let registered: Module[] = []
 let collectionIndex = new Map<string, RegisteredCollection>()
 
@@ -38,6 +41,10 @@ export function registerModules(modules: Module[]): void {
 
   for (const mod of modules) {
     assert(ID_PATTERN.test(mod.id), `Module id "${mod.id}" must be a lowercase slug.`)
+    assert(
+      !RESERVED_IDS.includes(mod.id),
+      `Module id "${mod.id}" is reserved for the shell (${RESERVED_IDS.join(', ')}).`,
+    )
     assert(
       !seenModuleIds.has(mod.id),
       `Duplicate module id "${mod.id}". Ids must be unique, and "core" is reserved.`,
@@ -81,6 +88,17 @@ export function registerModules(modules: Module[]): void {
         `Duplicate route "${route.path}" in module "${mod.id}".`,
       )
       seenRoutes.add(route.path)
+    }
+
+    assert(
+      mod.shortcut === undefined || /^[a-z]$/.test(mod.shortcut),
+      `Shortcut of "${mod.id}" must be a single lowercase letter.`,
+    )
+    for (const command of mod.commands ?? []) {
+      assert(
+        seenRoutes.has(command.path),
+        `Command "${command.id}" in "${mod.id}" points to "${command.path}", which is not one of its routes.`,
+      )
     }
   }
 

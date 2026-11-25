@@ -92,19 +92,33 @@ Antes de dar qualquer tarefa por concluída: `npm run lint && npm test && npm ru
 
 ## 8. Onde o projeto está
 
-Etapa 1 de 12 concluída — o scaffold do core existe e está testado.
+O produto segue o NEXO como referência de estrutura (módulos ligáveis, Início,
+Ctrl+K, dock) e continua **sem servidor**. O mapa completo dos módulos e a
+ordem das etapas estão em `docs/MODULOS.md`.
+
+Concluídas:
+
+1. Scaffold do core
+2. Destino nenhum e adaptador `drive`, com merge de três vias e trava
+   (o Drive ainda não foi testado com um client id real)
+3. Design system e shell novo: tema escuro padrão, claro e sistema, seis
+   cores de destaque, dock ou barra lateral, Início com capa, Ctrl+K,
+   atalhos G + letra, módulos ligáveis e lixeira
+4. Tags no envelope (`core/tags`), o `TagPicker`/`TagList` no `core/api` e a
+   página que junta tudo de uma tag
+5. Adaptador `disk-web`: pasta escolhida pelo usuário (Chrome e Edge no
+   desktop), mesmo formato de arquivos do Drive, etag por SHA-256 do conteúdo
 
 **Próximas etapas, nessa ordem:**
 
-2. Tokens do design system e componentes base, junto das primeiras telas
-3. Destino nenhum e adaptador `drive`, com merge de três vias e trava
-4. Módulo `finance` completo
-5. Lixeira e tags no shell
-6. Módulo `lists`
+6. Módulo `finance` completo, com importação de extrato
+7. `lists` · 8. `habits` · 9. `calendar` · 10. `notes` · 11. `health` ·
+   12. `workouts` · 13. `goals`, Métricas e Revisão da semana ·
+   14. `focus`, `reading`, `study`, `diet`, `clients`
 
 O bloco `provides` já deve existir nos tipos, mesmo sem implementação: ele
 precisa estar no contrato antes de a `apiVersion 1` congelar. A agregação no
-núcleo só é escrita na etapa 8, com o `calendar`.
+núcleo só é escrita com o `calendar`.
 
 ## 9. Decisões ainda abertas
 

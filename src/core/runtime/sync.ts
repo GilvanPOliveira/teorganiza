@@ -2,10 +2,12 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { createRecord, readAll } from '@core/db/repository'
 import { getDeviceId, getDeviceNickname } from '@core/device'
 import { getCollections } from '@core/registry/registry'
+import { driveDestination, folderDestination, folderPickerAvailable } from '@core/storage/destinations'
 import { DriveAdapter } from '@core/storage/drive'
 import { GoogleAuth, googleClientId } from '@core/storage/google-auth'
 import { SyncController, type SyncPolicy, type SyncState } from '@core/sync/controller'
 import { countLive, countPending, dexieBaseStore, dexieLocalStore } from '@core/sync/stores'
+import { readPreferences } from './preferences'
 
 const DEFAULT_POLICY: SyncPolicy = 'on-leave'
 /** Local edits do not notify sync; the counters catch up at this pace. */
@@ -23,8 +25,15 @@ export function getSyncController(): SyncController {
   const paths = () => getCollections().map((c) => c.path)
 
   controller = new SyncController({
-    auth: clientId ? new GoogleAuth(clientId) : null,
-    createAdapter: (auth) => new DriveAdapter({ getAccessToken: () => auth.getAccessToken() }),
+    destinations: {
+      ...(clientId && {
+        drive: driveDestination(
+          new GoogleAuth(clientId),
+          (auth) => new DriveAdapter({ getAccessToken: () => auth.getAccessToken() }),
+        ),
+      }),
+      ...(folderPickerAvailable() && { 'disk-web': folderDestination(dexieBaseStore) }),
+    },
     local: dexieLocalStore,
     bases: dexieBaseStore,
     collections: () =>
@@ -80,8 +89,7 @@ export function useSyncLifecycle(): void {
 }
 
 async function readPolicy(): Promise<SyncPolicy> {
-  const [preferences] = await readAll<{ syncPolicy: SyncPolicy }>('core/preferences')
-  return preferences?.data.syncPolicy ?? DEFAULT_POLICY
+  return (await readPreferences()).syncPolicy ?? DEFAULT_POLICY
 }
 
 /**

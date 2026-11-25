@@ -4,7 +4,10 @@ import {
   EmptyState,
   Field,
   Table,
+  TagList,
+  TagPicker,
   Toolbar,
+  toLocalISODate,
   useCollection,
   useEmit,
   useFormat,
@@ -30,24 +33,29 @@ export function TransactionList() {
 
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
+  const [tags, setTags] = useState<string[]>([])
 
   async function add() {
     const cents = Math.round(Number(amount.replace(',', '.')) * 100)
     if (!description.trim() || !Number.isFinite(cents) || cents === 0) return
 
-    const id = await create({
-      date: new Date().toISOString().slice(0, 10),
-      amount: Math.abs(cents),
-      type: cents < 0 ? 'expense' : 'income',
-      description: description.trim(),
-      categoryId: null,
-      accountId: null,
-      paid: true,
-    })
+    const id = await create(
+      {
+        date: toLocalISODate(),
+        amount: Math.abs(cents),
+        type: cents < 0 ? 'expense' : 'income',
+        description: description.trim(),
+        categoryId: null,
+        accountId: null,
+        paid: true,
+      },
+      tags,
+    )
 
     emit('transaction-created', { id, amount: Math.abs(cents) })
     setDescription('')
     setAmount('')
+    setTags([])
   }
 
   return (
@@ -65,6 +73,7 @@ export function TransactionList() {
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
         />
+        <TagPicker label={t('field.tags')} value={tags} onChange={setTags} />
         <Button variant="primary" onClick={() => void add()}>
           {t('action.add')}
         </Button>
@@ -77,7 +86,9 @@ export function TransactionList() {
           {transactions.map((record) => (
             <tr key={record.id}>
               <td>{fmt.date(record.data.date)}</td>
-              <td>{record.data.description}</td>
+              <td>
+                {record.data.description} <TagList ids={record.tags} />
+              </td>
               <td className={record.data.type === 'expense' ? 'to-negative' : 'to-positive'}>
                 {record.data.type === 'expense' ? '-' : '+'}
                 {fmt.money(record.data.amount)}

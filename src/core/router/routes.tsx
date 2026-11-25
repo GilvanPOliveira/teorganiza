@@ -5,6 +5,8 @@ import { ModuleScope } from '@core/runtime/module-context'
 import { Dashboard } from '@core/shell/Dashboard'
 import { Settings } from '@core/shell/Settings'
 import { Shell } from '@core/shell/Shell'
+import { TagPage, TagsPage } from '@core/shell/Tags'
+import { Trash } from '@core/shell/Trash'
 
 /**
  * Routes are built from the registry. A module declares relative paths and
@@ -28,6 +30,9 @@ export function buildRouter() {
       children: [
         { index: true, element: <Dashboard /> },
         { path: 'settings', element: <Settings /> },
+        { path: 'settings/trash', element: <Trash /> },
+        { path: 'tags', element: <TagsPage /> },
+        { path: 'tags/:tagId', element: <TagPage /> },
         ...moduleRoutes,
       ],
     },
