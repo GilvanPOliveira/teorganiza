@@ -1,0 +1,13 @@
+{
+  "field.description": "Descrição",
+  "field.amount": "Valor",
+  "action.add": "Adicionar",
+  "action.remove": "Remover",
+  "action.new": "Novo lançamento",
+  "column.date": "Data",
+  "column.description": "Descrição",
+  "column.amount": "Valor",
+  "empty.title": "Nenhum lançamento ainda",
+  "empty.body": "Adicione o primeiro acima. Valores negativos viram despesa.",
+  "widget.balance.caption": "{count} lançamentos neste mês"
+}

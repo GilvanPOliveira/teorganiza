@@ -1,0 +1,13 @@
+{
+  "field.description": "Description",
+  "field.amount": "Amount",
+  "action.add": "Add",
+  "action.remove": "Remove",
+  "action.new": "New transaction",
+  "column.date": "Date",
+  "column.description": "Description",
+  "column.amount": "Amount",
+  "empty.title": "No transactions yet",
+  "empty.body": "Add the first one above. Negative amounts become expenses.",
+  "widget.balance.caption": "{count} transactions this month"
+}
