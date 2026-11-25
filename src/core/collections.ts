@@ -46,6 +46,17 @@ export const tagSchema = z.object({
   color: z.enum(ACCENTS),
 })
 
+/**
+ * The Sunday review: what went well, what got stuck, three priorities.
+ * One record per week, keyed by the Monday that starts it.
+ */
+export const reviewSchema = z.object({
+  week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  wins: z.string(),
+  blocked: z.string(),
+  priorities: z.array(z.string()).max(3),
+})
+
 export const moduleSettingsSchema = z.object({
   moduleId: z.string(),
   values: z.record(z.unknown()),
@@ -78,6 +89,13 @@ export const coreCollections: AnyCollectionDef[] = [
     schemaVersion: 1,
     describe: (record) => `#${record.data.name}`,
     indexes: ['name'],
+  },
+  {
+    name: 'reviews',
+    schema: reviewSchema,
+    schemaVersion: 1,
+    describe: (record) => `Revisão da semana de ${record.data.week}`,
+    indexes: ['week'],
   },
   {
     name: 'settings',

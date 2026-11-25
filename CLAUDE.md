@@ -108,8 +108,14 @@ Concluídas:
    página que junta tudo de uma tag
 5. Adaptador `disk-web`: pasta escolhida pelo usuário (Chrome e Edge no
    desktop), mesmo formato de arquivos do Drive, etag por SHA-256 do conteúdo
+6. As 27 áreas do NEXO em primeira versão: 13 módulos (`lists`, `calendar`,
+   `notes`, `habits`, `goals`, `health`, `workouts`, `diet`, `study`,
+   `reading`, `finance` com Cobranças, `clients`, `focus`), Revisão da semana
+   e Métricas no shell, e Notícias, Arquivos e Nex como prévias que explicam
+   por que ainda não funcionam. Um módulo oferece várias áreas pela
+   propriedade `area` das rotas. Os módulos novos só têm textos em pt-BR.
 
-**Próximas etapas, nessa ordem:**
+**Próximas etapas — aprofundar o que já existe, nessa ordem:**
 
 6. Módulo `finance` completo, com importação de extrato
 7. `lists` · 8. `habits` · 9. `calendar` · 10. `notes` · 11. `health` ·

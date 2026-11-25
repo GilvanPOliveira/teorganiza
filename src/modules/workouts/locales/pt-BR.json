@@ -1,0 +1,22 @@
+{
+  "session.placeholder": "Treino de hoje — ex.: peito e tríceps",
+  "session.exercises": "{count} exercícios",
+  "session.exercises.one": "1 exercício",
+  "session.volume": "{kg} kg",
+  "session.remove": "Apagar treino",
+  "exercise.name": "Exercício — ex.: supino reto",
+  "exercise.sets": "Séries",
+  "exercise.reps": "Repetições",
+  "exercise.weight": "Carga em kg",
+  "exercise.add": "Adicionar exercício",
+  "exercise.remove": "Tirar exercício",
+  "stats.month": "Treinos no mês",
+  "stats.sessions": "sessões",
+  "stats.volume": "Volume no mês",
+  "stats.monthHint": "séries × repetições × carga",
+  "stats.total": "Treinos no total",
+  "records.title": "Recordes (1RM estimado)",
+  "records.oneRepMax": "{kg} kg",
+  "empty.title": "Nenhum treino registrado",
+  "empty.body": "Crie o treino de hoje e anote os exercícios: séries, repetições e carga."
+}

@@ -1,0 +1,10 @@
+{
+  "client.placeholder": "Novo cliente — nome",
+  "client.search": "Buscar clientes",
+  "client.remove": "Apagar cliente",
+  "field.company": "Empresa",
+  "field.email": "E-mail",
+  "field.phone": "Telefone",
+  "empty.title": "Nenhum cliente ainda",
+  "empty.body": "Cadastre pelo nome; toque no cliente para completar empresa, e-mail e telefone."
+}

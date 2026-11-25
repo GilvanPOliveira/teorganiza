@@ -29,7 +29,7 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
       navigate(path)
       onClose()
     }
-    const enabled = new Set(nav.modules.map((m) => m.id))
+    const enabled = nav.enabledModuleIds
 
     const actions: Item[] = getModules()
       .filter((mod) => enabled.has(mod.id))
@@ -45,7 +45,7 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
         })),
       )
 
-    const places: Item[] = [nav.home, ...nav.modules, nav.tags, nav.settings, nav.trash].map((target) => ({
+    const places: Item[] = [nav.home, ...nav.areas, nav.tags, nav.settings, nav.trash].map((target) => ({
       id: `goto/${target.id}`,
       group: 'goto' as const,
       label: target.label,
