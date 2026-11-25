@@ -14,10 +14,20 @@ export const dashboardEntrySchema = z.object({
   order: z.number().int(),
 })
 
+export const ACCENTS = ['blue', 'violet', 'green', 'amber', 'rose', 'cyan'] as const
+
+/**
+ * New fields are optional rather than a schema bump: a record written by an
+ * older build still validates, and the defaults fill the gaps on read.
+ */
 export const preferencesSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
   locale: z.string(),
   syncPolicy: z.enum(['manual', 'on-leave', 'periodic', 'always']),
+  accent: z.enum(ACCENTS).optional(),
+  navigation: z.enum(['dock', 'sidebar']).optional(),
+  /** Turned off, a module leaves the navigation; its data stays untouched. */
+  disabledModules: z.array(z.string()).optional(),
 })
 
 export const knownDeviceSchema = z.object({

@@ -8,6 +8,7 @@ import {
   readAll,
   readOne,
   removeRecord,
+  restoreRecord,
   updateRecord,
 } from '@core/db/repository'
 import { registerModules } from '@core/registry/registry'
@@ -105,6 +106,22 @@ describe('repository', () => {
     const withDeleted = await readAll<Note>(PATH, { includeDeleted: true })
     expect(withDeleted).toHaveLength(1)
     expect(withDeleted[0].deletedAt).not.toBeNull()
+  })
+
+  it('restores a tombstone as an ordinary edit', async () => {
+    const id = await createRecord<Note>(PATH, { title: 'a', pinned: false }, DEVICE)
+    await removeRecord(PATH, id, DEVICE)
+    await restoreRecord(PATH, id, 'another-device')
+
+    const record = await readOne<Note>(PATH, id)
+    expect(record!.deletedAt).toBeNull()
+    expect(record!.rev).toBe(3)
+    expect(record!.deviceId).toBe('another-device')
+    expect(await readAll<Note>(PATH)).toHaveLength(1)
+
+    // Restoring a live record changes nothing.
+    await restoreRecord(PATH, id, DEVICE)
+    expect((await readOne<Note>(PATH, id))!.rev).toBe(3)
   })
 
   it('filters, sorts and limits', async () => {

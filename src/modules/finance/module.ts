@@ -1,3 +1,4 @@
+import { Wallet } from 'lucide-react'
 import { defineModule } from '@core/api'
 import { categorySchema, transactionSchema, type Category, type Transaction } from './schema'
 import { TransactionList, TransactionListActions } from './screens'
@@ -10,6 +11,8 @@ export default defineModule({
   name: 'Finanças',
   apiVersion: 1,
   version: '0.1.0',
+  icon: Wallet,
+  shortcut: 'f',
 
   collections: [
     {
@@ -40,6 +43,15 @@ export default defineModule({
       element: TransactionList,
       label: 'Lançamentos',
       actions: TransactionListActions,
+    },
+  ],
+
+  commands: [
+    {
+      id: 'new-transaction',
+      label: 'Novo lançamento',
+      path: '',
+      keywords: ['gasto', 'despesa', 'receita', 'dinheiro'],
     },
   ],
 

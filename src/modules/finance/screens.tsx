@@ -5,6 +5,7 @@ import {
   Field,
   Table,
   Toolbar,
+  toLocalISODate,
   useCollection,
   useEmit,
   useFormat,
@@ -36,7 +37,7 @@ export function TransactionList() {
     if (!description.trim() || !Number.isFinite(cents) || cents === 0) return
 
     const id = await create({
-      date: new Date().toISOString().slice(0, 10),
+      date: toLocalISODate(),
       amount: Math.abs(cents),
       type: cents < 0 ? 'expense' : 'income',
       description: description.trim(),

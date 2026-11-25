@@ -1,11 +1,11 @@
-import { useFormat, useRecords, useT } from '@core/api'
+import { toLocalISODate, useFormat, useRecords, useT } from '@core/api'
 import type { Transaction } from './schema'
 
 /** Read-only plus a link, by contract. No forms on the dashboard. */
 export function MonthBalance() {
   const t = useT()
   const fmt = useFormat()
-  const month = new Date().toISOString().slice(0, 7)
+  const month = toLocalISODate().slice(0, 7)
 
   const transactions = useRecords<Transaction>('transactions', {
     where: { date: { gte: `${month}-01`, lte: `${month}-31` } },

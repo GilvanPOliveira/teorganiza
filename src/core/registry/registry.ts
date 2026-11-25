@@ -82,6 +82,17 @@ export function registerModules(modules: Module[]): void {
       )
       seenRoutes.add(route.path)
     }
+
+    assert(
+      mod.shortcut === undefined || /^[a-z]$/.test(mod.shortcut),
+      `Shortcut of "${mod.id}" must be a single lowercase letter.`,
+    )
+    for (const command of mod.commands ?? []) {
+      assert(
+        seenRoutes.has(command.path),
+        `Command "${command.id}" in "${mod.id}" points to "${command.path}", which is not one of its routes.`,
+      )
+    }
   }
 
   registered = modules

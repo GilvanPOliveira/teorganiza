@@ -18,6 +18,8 @@
 export type {
   AppContextValue,
   CollectionDef,
+  CommandDef,
+  IconProps,
   Envelope,
   EventHandler,
   EventPayload,
@@ -37,6 +39,8 @@ export { MODULE_API_VERSION } from './types'
 
 export { defineModule } from './defineModule'
 
+export { parseDate, toLocalISODate } from './dates'
+
 export {
   useAppContext,
   useCollection,
@@ -53,4 +57,4 @@ export {
 
 export type { CollectionWriter, Formatter } from './hooks'
 
-export { Button, Card, EmptyState, Field, Table, Toolbar } from './ui'
+export { Button, Card, EmptyState, Field, Segmented, Switch, Table, Toolbar } from './ui'
