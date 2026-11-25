@@ -37,7 +37,7 @@ export function Shell() {
 
   return (
     <div
-      className={`to-app to-app--${mode}${leftDock && !leftDockOpen ? ' to-app--dock-hidden' : ''}`}
+      className={`to-app to-app--${mode}`}
       style={{ '--to-dock-columns': dock.columns } as CSSProperties}
     >
       {sidebar && <Sidebar targets={nav.all} />}

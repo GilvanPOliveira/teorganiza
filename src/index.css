@@ -393,13 +393,23 @@ h3 {
 
 .to-app--dock-left .to-main {
   padding-bottom: 0;
-  /* Columns of 44px with 4px gaps, the dock's padding and its distance from the edge. */
-  padding-left: calc(var(--to-dock-columns, 1) * 48px + 28px);
-  transition: padding-left 0.18s ease-out;
 }
 
-.to-app--dock-left.to-app--dock-hidden .to-main {
-  padding-left: 0;
+/*
+ * The left dock floats over the page, like the bottom one: hiding or
+ * showing it moves nothing, and the top bar never moves. The content keeps
+ * a fixed gutter, only as wide as needed for the dock not to cover it —
+ * on a wide screen the centred content already clears it, and the gutter
+ * is the normal one.
+ *
+ * Dock's right edge: 16px from the window + columns of 48px + its padding.
+ * Content's left edge: half of what is left beside the 1180px column.
+ */
+.to-app--dock-left .to-content {
+  padding-left: max(
+    24px,
+    calc(var(--to-dock-columns, 1) * 48px + 44px - max(0px, (100vw - var(--to-content-width)) / 2))
+  );
 }
 
 .to-topbar__brand--button {
@@ -2224,10 +2234,12 @@ a.to-tag:hover {
     animation: none;
   }
 
-  .to-app--dock-left .to-main,
-  .to-app--dock-left.to-app--dock-hidden .to-main {
-    padding-left: 0;
+  .to-app--dock-left .to-main {
     padding-bottom: 76px;
+  }
+
+  .to-app--dock-left .to-content {
+    padding-left: 16px;
   }
 
   .to-dock__item {
