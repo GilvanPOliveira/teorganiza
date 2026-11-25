@@ -12,13 +12,12 @@ import {
   EtagMismatchError,
   StorageRequestError,
 } from './errors'
+import { fileName, LOCK_FILE, parsePartition, partitionFile, ROOT_NAME } from './layout'
 import type { DeviceLease, LockResult, StorageAdapter } from './types'
 
 const API = 'https://www.googleapis.com/drive/v3'
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3'
 const FOLDER = 'application/vnd.google-apps.folder'
-const ROOT_NAME = 'TeOrganiza'
-const LOCK_FILE = '_lock.json'
 
 export interface DriveAdapterOptions {
   /**
@@ -38,11 +37,6 @@ interface DriveFile {
   name: string
   mimeType: string
   headRevisionId?: string
-}
-
-interface PartitionFile {
-  schemaVersion: number
-  records: Envelope<unknown>[]
 }
 
 /**
@@ -118,10 +112,7 @@ export class DriveAdapter implements StorageAdapter {
     expectedEtag: string | null,
   ): Promise<{ etag: string }> {
     const folder = await this.folder(collectionPath, true)
-    const body: PartitionFile = {
-      schemaVersion: records.reduce((max, r) => Math.max(max, r.schemaVersion), 0),
-      records,
-    }
+    const body = partitionFile(records)
     return this.putJson(folder!, fileName(partition), body, expectedEtag, `${collectionPath}/${partition}`)
   }
 
@@ -383,19 +374,6 @@ function retryDelay(attempt: number, retryAfter: string | null): number {
   const asked = retryAfter ? Number(retryAfter) * 1000 : NaN
   if (Number.isFinite(asked) && asked >= 0) return Math.min(asked, 60_000)
   return 2 ** attempt * 500 + Math.random() * 250
-}
-
-function fileName(partition: string): string {
-  if (!/^[\w.-]+$/.test(partition) || partition.startsWith('_') || partition.startsWith('.')) {
-    throw new Error(`Invalid partition name: ${partition}`)
-  }
-  return `${partition}.json`
-}
-
-function parsePartition(body: unknown): Envelope<unknown>[] {
-  const records = (body as Partial<PartitionFile> | null)?.records
-  if (!Array.isArray(records)) throw new Error('Partition file has no records array')
-  return records
 }
 
 function escapeQuery(value: string): string {

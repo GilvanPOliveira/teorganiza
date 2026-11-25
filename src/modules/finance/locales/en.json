@@ -9,5 +9,7 @@
   "column.amount": "Amount",
   "empty.title": "No transactions yet",
   "empty.body": "Add the first one above. Negative amounts become expenses.",
-  "widget.balance.caption": "{count} transactions this month"
+  "widget.balance.caption": "{count} transactions this month",
+  "field.tags": "Tags",
+  "widget.balance.caption.one": "1 transaction this month"
 }

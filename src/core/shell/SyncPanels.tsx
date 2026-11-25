@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Cloud, FolderOpen } from 'lucide-react'
 import { useFormat } from '@core/api/hooks'
 import { Button, Card } from '@core/api/ui'
 import { readAll } from '@core/db/repository'
@@ -18,57 +19,95 @@ export function StorageSettings() {
   const t = useCoreT()
   const sync = useSyncState()
   const controller = getSyncController()
+  const busy = sync.phase === 'syncing'
+
+  if (sync.kind === null) {
+    return (
+      <Card title={t('settings.storage')}>
+        <p>{t('storage.none')}</p>
+        <p className="to-muted">{t('storage.warning.body', { count: sync.liveCount })}</p>
+        {sync.persisted === false && <p className="to-muted">{t('storage.notPersisted')}</p>}
+        {sync.error && <p className="to-negative">{sync.error}</p>}
+
+        <div className="to-destinations">
+          <section className="to-destination">
+            <span className="to-iconbox">
+              <FolderOpen size={18} />
+            </span>
+            <div className="to-destination__text">
+              <strong>{t('storage.folder')}</strong>
+              <span className="to-muted">
+                {sync.folderAvailable ? t('storage.folder.note') : t('storage.folder.unavailable')}
+              </span>
+            </div>
+            {sync.folderAvailable && (
+              <Button variant="primary" onClick={() => void controller.connectFolder()}>
+                {t('storage.folder.choose')}
+              </Button>
+            )}
+          </section>
+
+          <section className="to-destination">
+            <span className="to-iconbox">
+              <Cloud size={18} />
+            </span>
+            <div className="to-destination__text">
+              <strong>{t('storage.drive')}</strong>
+              <span className="to-muted">
+                {sync.driveAvailable ? t('storage.drive.scopeNote') : t('storage.drive.unavailable')}
+              </span>
+            </div>
+            {sync.driveAvailable && (
+              <Button onClick={() => void controller.connectDrive()}>{t('storage.drive.connect')}</Button>
+            )}
+          </section>
+        </div>
+      </Card>
+    )
+  }
+
+  const folder = sync.kind === 'disk-web'
+  const needsAuth = sync.phase === 'needs-auth'
 
   return (
     <Card title={t('settings.storage')}>
-      {sync.kind === null ? (
-        <>
-          <p>{t('storage.none')}</p>
-          <p className="to-muted">{t('storage.warning.body', { count: sync.liveCount })}</p>
-          {sync.persisted === false && <p className="to-muted">{t('storage.notPersisted')}</p>}
-          {sync.driveAvailable ? (
-            <>
-              <Button variant="primary" onClick={() => void controller.connectDrive()}>
-                {t('storage.drive.connect')}
-              </Button>
-              <p className="to-muted">{t('storage.drive.scopeNote')}</p>
-            </>
-          ) : (
-            <p className="to-muted">{t('storage.drive.unavailable')}</p>
-          )}
-        </>
-      ) : (
-        <>
-          <p>{sync.phase === 'needs-auth' ? t('sync.status.needsAuth') : t('storage.drive.connected')}</p>
-          <div className="to-toolbar">
-            {sync.phase === 'needs-auth' ? (
-              <Button variant="primary" onClick={() => void controller.connectDrive()}>
-                {t('storage.reconnect')}
-              </Button>
-            ) : (
-              <>
-                <Button variant="primary" disabled={sync.phase === 'syncing'} onClick={() => void controller.sync()}>
-                  {t('sync.now')}
-                </Button>
-                <Button onClick={() => controller.signOut()}>{t('storage.signOut')}</Button>
-              </>
-            )}
-          </div>
-          <div className="to-toolbar">
-            <Button variant="ghost" onClick={() => void controller.disconnect()}>
-              {t('storage.disconnect')}
+      <p>
+        {needsAuth
+          ? t(folder ? 'storage.folder.needsAccess' : 'sync.status.needsAuth')
+          : folder
+            ? t('storage.folder.connected', { name: sync.destinationLabel ?? '' })
+            : t('storage.drive.connected')}
+      </p>
+      {sync.error && <p className="to-negative">{sync.error}</p>}
+      <div className="to-toolbar">
+        {needsAuth ? (
+          <Button variant="primary" onClick={() => void controller.connect(sync.kind!)}>
+            {t(folder ? 'storage.folder.allow' : 'storage.reconnect')}
+          </Button>
+        ) : (
+          <>
+            <Button variant="primary" disabled={busy} onClick={() => void controller.sync()}>
+              {t('sync.now')}
             </Button>
-            <span className="to-muted">{t('storage.disconnect.note')}</span>
-          </div>
-          {sync.phase !== 'needs-auth' && (
-            <div className="to-toolbar">
-              <Button variant="danger" onClick={() => void controller.revoke()}>
-                {t('storage.revoke')}
-              </Button>
-              <span className="to-muted">{t('storage.revoke.note')}</span>
-            </div>
-          )}
-        </>
+            {!folder && <Button onClick={() => controller.signOut()}>{t('storage.signOut')}</Button>}
+          </>
+        )}
+      </div>
+      <div className="to-toolbar">
+        <Button variant="ghost" onClick={() => void controller.disconnect()}>
+          {t('storage.disconnect')}
+        </Button>
+        <span className="to-muted">
+          {t(folder ? 'storage.folder.disconnectNote' : 'storage.disconnect.note')}
+        </span>
+      </div>
+      {!folder && !needsAuth && (
+        <div className="to-toolbar">
+          <Button variant="danger" onClick={() => void controller.revoke()}>
+            {t('storage.revoke')}
+          </Button>
+          <span className="to-muted">{t('storage.revoke.note')}</span>
+        </div>
       )}
     </Card>
   )
@@ -91,8 +130,8 @@ export function SyncStatus() {
       break
     case 'needs-auth':
       message = (
-        <button type="button" className="to-linklike" onClick={() => void controller.connectDrive()}>
-          {t('sync.status.needsAuth')}
+        <button type="button" className="to-linklike" onClick={() => void controller.connect(sync.kind!)}>
+          {t(sync.kind === 'disk-web' ? 'storage.folder.needsAccess' : 'sync.status.needsAuth')}
         </button>
       )
       break
