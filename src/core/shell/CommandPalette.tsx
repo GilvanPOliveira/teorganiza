@@ -70,11 +70,11 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
         id: 'app/navigation',
         group: 'app',
         label:
-          preferences.navigation === 'dock' ? t('palette.useSidebar') : t('palette.useDock'),
+          preferences.navigation === 'sidebar' ? t('palette.useDock') : t('palette.useSidebar'),
         keywords: ['dock', 'sidebar', 'barra', 'lateral', 'menu'],
-        icon: preferences.navigation === 'dock' ? <PanelLeft size={16} /> : <PanelBottom size={16} />,
+        icon: preferences.navigation === 'sidebar' ? <PanelBottom size={16} /> : <PanelLeft size={16} />,
         run: () => {
-          void setPreferences({ navigation: preferences.navigation === 'dock' ? 'sidebar' : 'dock' })
+          void setPreferences({ navigation: preferences.navigation === 'sidebar' ? 'dock' : 'sidebar' })
           onClose()
         },
       },

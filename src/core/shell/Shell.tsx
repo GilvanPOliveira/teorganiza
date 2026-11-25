@@ -1,4 +1,4 @@
-import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { MoreHorizontal, Search, Settings } from 'lucide-react'
 import { Button, EmptyState } from '@core/api/ui'
@@ -8,7 +8,7 @@ import { CommandPalette } from './CommandPalette'
 import { Logo } from './Logo'
 import { MOD_KEY, OPEN_PALETTE_EVENT } from './palette-event'
 import { ModuleIcon } from './ModuleIcon'
-import type { NavTarget } from './navigation'
+import { dockLayout, type NavTarget } from './navigation'
 import { SyncDialogs, SyncStatus } from './SyncPanels'
 import { useActiveRoute, useCoreT, useShellNavigation } from './useShell'
 
@@ -29,36 +29,75 @@ export function Shell() {
   useShortcuts(shortcutTargets, openPalette)
 
   const sidebar = preferences.navigation === 'sidebar'
+  const leftDock = preferences.navigation === 'dock-left'
+  // Only the left dock can be hidden; the top-left button toggles it.
+  const [leftDockOpen, setLeftDockOpen] = useState(true)
+  const dock = useDockLayout(nav.all.length, leftDock)
+  const mode = sidebar ? 'sidebar' : leftDock ? 'dock-left' : 'dock'
 
   return (
-    <div className={`to-app ${sidebar ? 'to-app--sidebar' : 'to-app--dock'}`}>
+    <div
+      className={`to-app to-app--${mode}${leftDock && !leftDockOpen ? ' to-app--dock-hidden' : ''}`}
+      style={{ '--to-dock-columns': dock.columns } as CSSProperties}
+    >
       {sidebar && <Sidebar targets={nav.all} />}
 
       <div className="to-main">
-        <TopBar onSearch={openPalette} />
+        <TopBar
+          onSearch={openPalette}
+          dockToggle={leftDock ? { open: leftDockOpen, toggle: () => setLeftDockOpen((open) => !open) } : null}
+        />
         <main className="to-content">
           <ActiveScreen />
         </main>
         <StatusBar />
       </div>
 
-      <Dock targets={nav.all} desktopHidden={sidebar} />
+      <Dock
+        targets={nav.all}
+        desktopHidden={sidebar || (leftDock && !leftDockOpen)}
+        side={leftDock ? 'left' : 'bottom'}
+        rows={dock.rows}
+      />
       {paletteOpen && <CommandPalette nav={nav} onClose={() => setPaletteOpen(false)} />}
       <SyncDialogs />
     </div>
   )
 }
 
-function TopBar({ onSearch }: { onSearch: () => void }) {
+function TopBar({
+  onSearch,
+  dockToggle,
+}: {
+  onSearch: () => void
+  /** Present only with the left dock: the logo then hides or shows it. */
+  dockToggle: { open: boolean; toggle: () => void } | null
+}) {
   const t = useCoreT()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { active, area } = useActiveRoute()
+  const inSettings = pathname === '/settings' || pathname.startsWith('/settings/')
 
   return (
     <header className="to-topbar">
       {/* Hidden on desktop when the sidebar shows the brand; phones never have the sidebar. */}
-      <Link to="/" className="to-topbar__brand" aria-label={t('app.name')}>
-        <Logo size={26} />
-      </Link>
+      {dockToggle ? (
+        <button
+          type="button"
+          className="to-topbar__brand to-topbar__brand--button"
+          aria-label={t(dockToggle.open ? 'dock.hide' : 'dock.show')}
+          aria-expanded={dockToggle.open}
+          title={t(dockToggle.open ? 'dock.hide' : 'dock.show')}
+          onClick={dockToggle.toggle}
+        >
+          <Logo size={26} />
+        </button>
+      ) : (
+        <Link to="/" className="to-topbar__brand" aria-label={t('app.name')}>
+          <Logo size={26} />
+        </Link>
+      )}
       {active && <span className="to-topbar__crumb">/ {area?.label ?? active.name}</span>}
 
       <div className="to-topbar__end">
@@ -67,9 +106,16 @@ function TopBar({ onSearch }: { onSearch: () => void }) {
           <span className="to-search__text">{t('palette.open')}</span>
           <kbd className="to-kbd">{MOD_KEY} K</kbd>
         </button>
-        <NavLink to="/settings" end className="to-iconbutton" aria-label={t('nav.settings')}>
+        {/* A second click, with settings already open, goes back home. */}
+        <button
+          type="button"
+          className={`to-iconbutton${inSettings ? ' active' : ''}`}
+          aria-label={inSettings ? t('nav.home') : t('nav.settings')}
+          title={inSettings ? t('nav.home') : t('nav.settings')}
+          onClick={() => navigate(inSettings ? '/' : '/settings')}
+        >
           <Settings size={17} />
-        </NavLink>
+        </button>
       </div>
     </header>
   )
@@ -174,7 +220,18 @@ function SidebarLink({ target, targets }: { target: NavTarget; targets: NavTarge
  * Floating on desktop, a bottom bar on phones. On phones the first items
  * stay and the rest open from "more", so the bar never scrolls.
  */
-function Dock({ targets, desktopHidden }: { targets: NavTarget[]; desktopHidden: boolean }) {
+function Dock({
+  targets,
+  desktopHidden,
+  side,
+  rows,
+}: {
+  targets: NavTarget[]
+  desktopHidden: boolean
+  side: 'bottom' | 'left'
+  /** Left dock only: icons per column before a new column starts. */
+  rows: number
+}) {
   const t = useCoreT()
   const { pathname } = useLocation()
   const [moreOpenAt, setMoreOpenAt] = useState<string | null>(null)
@@ -185,7 +242,8 @@ function Dock({ targets, desktopHidden }: { targets: NavTarget[]; desktopHidden:
   return (
     <>
       <nav
-        className={`to-dock${desktopHidden ? ' to-dock--mobile-only' : ''}`}
+        className={`to-dock${side === 'left' ? ' to-dock--left' : ''}${desktopHidden ? ' to-dock--mobile-only' : ''}`}
+        style={side === 'left' ? ({ '--to-dock-rows': rows } as CSSProperties) : undefined}
         aria-label={t('nav.main')}
       >
         {targets.map((target, index) => (
@@ -229,6 +287,17 @@ function Dock({ targets, desktopHidden }: { targets: NavTarget[]; desktopHidden:
       )}
     </>
   )
+}
+
+function useDockLayout(count: number, enabled: boolean) {
+  const [height, setHeight] = useState(() => globalThis.innerHeight ?? 800)
+  useEffect(() => {
+    if (!enabled) return
+    const onResize = () => setHeight(window.innerHeight)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [enabled])
+  return dockLayout(count, height)
 }
 
 function StatusBar() {

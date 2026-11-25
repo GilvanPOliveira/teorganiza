@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, Hash, Monitor, Moon, PanelBottom, PanelLeft, Sun, Trash2 } from 'lucide-react'
+import { ChevronRight, Hash, Monitor, Moon, PanelBottom, PanelLeft, PanelLeftDashed, Sun, Trash2 } from 'lucide-react'
 import { Card, Segmented, Switch } from '@core/api/ui'
 import { AVAILABLE_LOCALES } from '@core/i18n/catalog'
 import { getModules } from '@core/registry/registry'
@@ -91,6 +91,7 @@ export function Settings() {
               onChange={(navigation) => void setPreferences({ navigation })}
               options={[
                 { value: 'dock', label: <><PanelBottom size={14} />{t('settings.navigation.dock')}</> },
+                { value: 'dock-left', label: <><PanelLeftDashed size={14} />{t('settings.navigation.dockLeft')}</> },
                 { value: 'sidebar', label: <><PanelLeft size={14} />{t('settings.navigation.sidebar')}</> },
               ]}
             />
