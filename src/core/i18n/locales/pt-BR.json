@@ -92,7 +92,7 @@
   "settings.accent.rose": "Rosa",
   "settings.accent.cyan": "Ciano",
   "settings.navigation": "Navegação",
-  "settings.navigation.dock": "Dock",
+  "settings.navigation.dock": "Dock no centro",
   "settings.navigation.sidebar": "Barra lateral",
   "settings.language.pt-BR": "Português (Brasil)",
   "settings.language.en": "English",
@@ -156,5 +156,8 @@
   "metrics.byModule": "Por módulo",
   "metrics.module": "Módulo",
   "metrics.last7": "7 dias",
-  "metrics.last30": "30 dias"
+  "metrics.last30": "30 dias",
+  "settings.navigation.dockLeft": "Dock à esquerda",
+  "dock.hide": "Esconder atalhos",
+  "dock.show": "Mostrar atalhos"
 }

@@ -77,6 +77,21 @@ export function filterPalette<T extends Omit<PaletteItem, 'run'>>(items: T[], qu
   })
 }
 
+/** Room for one dock icon plus its gap, and the space kept free above and below the dock. */
+const DOCK_CELL = 48
+const DOCK_RESERVED = 64 + 16 + 12
+
+/**
+ * The left dock never scrolls: when its icons do not fit the window's
+ * height, it grows a second column, then a third. Rows are balanced so the
+ * last column is not left with a single icon.
+ */
+export function dockLayout(count: number, height: number): { columns: number; rows: number } {
+  const fit = Math.max(1, Math.floor((height - DOCK_RESERVED) / DOCK_CELL))
+  const columns = Math.max(1, Math.ceil(count / fit))
+  return { columns, rows: Math.ceil(count / columns) }
+}
+
 /** Greeting by the hour: 5–11 morning, 12–17 afternoon, otherwise evening. */
 export function greetingKey(hour: number): 'home.morning' | 'home.afternoon' | 'home.evening' {
   if (hour >= 5 && hour < 12) return 'home.morning'

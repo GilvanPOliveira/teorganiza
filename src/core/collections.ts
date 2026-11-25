@@ -25,7 +25,7 @@ export const preferencesSchema = z.object({
   locale: z.string(),
   syncPolicy: z.enum(['manual', 'on-leave', 'periodic', 'always']),
   accent: z.enum(ACCENTS).optional(),
-  navigation: z.enum(['dock', 'sidebar']).optional(),
+  navigation: z.enum(['dock', 'dock-left', 'sidebar']).optional(),
   /** Turned off, a module leaves the navigation; its data stays untouched. */
   disabledModules: z.array(z.string()).optional(),
 })

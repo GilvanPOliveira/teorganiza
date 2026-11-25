@@ -369,6 +369,57 @@ h3 {
   color: var(--to-on-accent);
 }
 
+/* Left dock: floating on the left, icons stacked, new columns instead of scroll */
+
+.to-dock--left {
+  top: 68px;
+  bottom: auto;
+  left: 16px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--to-dock-rows, 12), 44px);
+  max-width: none;
+  overflow: visible;
+  transform: none;
+  animation: to-dock-in 0.18s ease-out;
+}
+
+@keyframes to-dock-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+.to-app--dock-left .to-main {
+  padding-bottom: 0;
+  /* Columns of 44px with 4px gaps, the dock's padding and its distance from the edge. */
+  padding-left: calc(var(--to-dock-columns, 1) * 48px + 28px);
+  transition: padding-left 0.18s ease-out;
+}
+
+.to-app--dock-left.to-app--dock-hidden .to-main {
+  padding-left: 0;
+}
+
+.to-topbar__brand--button {
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.to-topbar__brand--button:hover {
+  filter: brightness(1.12);
+  transform: scale(1.05);
+}
+
+.to-topbar__brand--button[aria-expanded='false'] {
+  opacity: 0.85;
+}
+
 .to-dock__label,
 .to-dock__item--mobile {
   display: none;
@@ -2163,6 +2214,20 @@ a.to-tag:hover {
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     border-width: 1px 0 0;
     border-radius: 0;
+  }
+
+  /* On a phone every dock is the bottom bar. */
+  .to-dock--left {
+    top: auto;
+    display: flex;
+    grid-template-rows: none;
+    animation: none;
+  }
+
+  .to-app--dock-left .to-main,
+  .to-app--dock-left.to-app--dock-hidden .to-main {
+    padding-left: 0;
+    padding-bottom: 76px;
   }
 
   .to-dock__item {
