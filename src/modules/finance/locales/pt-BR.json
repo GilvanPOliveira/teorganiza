@@ -11,5 +11,18 @@
   "empty.body": "Adicione o primeiro acima. Valores negativos viram despesa.",
   "widget.balance.caption": "{count} lançamentos neste mês",
   "field.tags": "Tags",
-  "widget.balance.caption.one": "1 lançamento neste mês"
+  "widget.balance.caption.one": "1 lançamento neste mês",
+  "charges.toReceive": "A receber",
+  "charges.openCount": "{count} cobranças",
+  "charges.openCount.one": "1 cobrança",
+  "charges.late": "Atrasadas",
+  "charges.received": "Recebido",
+  "charges.placeholder": "Cobrança — ex.: site institucional",
+  "charges.client": "Cliente",
+  "charges.amount": "Valor",
+  "charges.due": "Vencimento",
+  "charges.markPaid": "Marcar {description} como paga",
+  "charges.remove": "Apagar cobrança",
+  "charges.empty.title": "Nenhuma cobrança",
+  "charges.empty.body": "Registre o que tem a receber, de quem e até quando."
 }

@@ -12,7 +12,7 @@ export interface RegisteredCollection {
 const ID_PATTERN = /^[a-z][a-z0-9-]*$/
 
 /** The shell's own URLs; a module with one of these ids would be unreachable. */
-const RESERVED_IDS = ['settings', 'tags']
+const RESERVED_IDS = ['settings', 'tags', 'review', 'metrics']
 
 let registered: Module[] = []
 let collectionIndex = new Map<string, RegisteredCollection>()
@@ -94,6 +94,17 @@ export function registerModules(modules: Module[]): void {
       mod.shortcut === undefined || /^[a-z]$/.test(mod.shortcut),
       `Shortcut of "${mod.id}" must be a single lowercase letter.`,
     )
+    const seenAreas = new Set<string>()
+    for (const route of mod.routes) {
+      if (!route.area) continue
+      assert(ID_PATTERN.test(route.area.id), `Area "${route.area.id}" in "${mod.id}" must be a lowercase slug.`)
+      assert(!seenAreas.has(route.area.id), `Duplicate area "${route.area.id}" in module "${mod.id}".`)
+      assert(
+        route.area.shortcut === undefined || /^[a-z]$/.test(route.area.shortcut),
+        `Shortcut of area "${route.area.id}" in "${mod.id}" must be a single lowercase letter.`,
+      )
+      seenAreas.add(route.area.id)
+    }
     for (const command of mod.commands ?? []) {
       assert(
         seenRoutes.has(command.path),

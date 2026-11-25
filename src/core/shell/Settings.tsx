@@ -6,16 +6,42 @@ import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ACCENTS, type Accent, type Navigation, type ThemeChoice } from '@core/runtime/preferences'
 import { ModuleIcon } from './ModuleIcon'
+import { moduleAreas } from './navigation'
 import { StorageSettings } from './SyncPanels'
-import { useCoreT } from './useShell'
+import { SHELL_AREAS, useCoreT } from './useShell'
 
 export function Settings() {
   const t = useCoreT()
   const { preferences, setPreferences } = useAppState()
 
-  const toggleModule = (moduleId: string, on: boolean) => {
-    const others = preferences.disabledModules.filter((id) => id !== moduleId)
-    void setPreferences({ disabledModules: on ? others : [...others, moduleId] })
+  const areas = [
+    ...getModules().flatMap((mod) =>
+      moduleAreas(mod).map((area) => ({ ...area, module: mod.name, version: mod.version })),
+    ),
+    ...SHELL_AREAS.map((area) => ({
+      id: area.id,
+      moduleId: null as string | null,
+      label: t(area.labelKey),
+      icon: area.icon,
+      order: area.order,
+      module: t('app.name'),
+      version: null as string | null,
+    })),
+  ].sort((a, b) => a.order - b.order)
+
+  const isOn = (id: string, moduleId: string | null) =>
+    !preferences.disabledModules.includes(id) && !(moduleId && preferences.disabledModules.includes(moduleId))
+
+  /** Turning one area back on, inside a module turned off whole, keeps its siblings off. */
+  const toggleArea = (id: string, moduleId: string | null, on: boolean) => {
+    let next = [...preferences.disabledModules]
+    if (moduleId && next.includes(moduleId)) {
+      next = next.filter((entry) => entry !== moduleId)
+      for (const area of areas) if (area.moduleId === moduleId) next.push(area.id)
+    }
+    next = next.filter((entry) => entry !== id)
+    if (!on) next.push(id)
+    void setPreferences({ disabledModules: [...new Set(next)] })
   }
 
   return (
@@ -90,21 +116,23 @@ export function Settings() {
       <Card title={t('settings.modules')}>
         <p className="to-muted to-settings__lead">{t('settings.modules.note')}</p>
         <ul className="to-modulelist">
-          {getModules().map((mod) => {
-            const on = !preferences.disabledModules.includes(mod.id)
+          {areas.map((area) => {
+            const on = isOn(area.id, area.moduleId)
             return (
-              <li key={mod.id} className="to-modulelist__item">
-                <ModuleIcon icon={mod.icon} label={mod.name} size={18} boxed />
+              <li key={area.id} className="to-modulelist__item">
+                <ModuleIcon icon={area.icon} label={area.label} size={18} boxed />
                 <span className="to-modulelist__text">
-                  <strong>{mod.name}</strong>
+                  <strong>{area.label}</strong>
                   <span className="to-muted">
-                    {t('settings.modules.version', { version: mod.version })}
+                    {area.version
+                      ? t('settings.modules.from', { module: area.module, version: area.version })
+                      : area.module}
                   </span>
                 </span>
                 <Switch
                   checked={on}
-                  label={t('settings.modules.toggle', { name: mod.name })}
-                  onChange={(value) => toggleModule(mod.id, value)}
+                  label={t('settings.modules.toggle', { name: area.label })}
+                  onChange={(value) => toggleArea(area.id, area.moduleId, value)}
                 />
               </li>
             )

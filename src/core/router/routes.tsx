@@ -4,6 +4,8 @@ import { getModules } from '@core/registry/registry'
 import { ModuleScope } from '@core/runtime/module-context'
 import { Dashboard } from '@core/shell/Dashboard'
 import { Settings } from '@core/shell/Settings'
+import { Metrics } from '@core/shell/Metrics'
+import { Review } from '@core/shell/Review'
 import { Shell } from '@core/shell/Shell'
 import { TagPage, TagsPage } from '@core/shell/Tags'
 import { Trash } from '@core/shell/Trash'
@@ -32,6 +34,8 @@ export function buildRouter() {
         { path: 'settings', element: <Settings /> },
         { path: 'settings/trash', element: <Trash /> },
         { path: 'tags', element: <TagsPage /> },
+        { path: 'review', element: <Review /> },
+        { path: 'metrics', element: <Metrics /> },
         { path: 'tags/:tagId', element: <TagPage /> },
         ...moduleRoutes,
       ],

@@ -1,0 +1,21 @@
+{
+  "stats.today": "Hoje",
+  "stats.left": "faltam {kcal} kcal da meta",
+  "stats.over": "{kcal} kcal acima da meta",
+  "stats.protein": "Proteína",
+  "stats.of": "meta de {value} g",
+  "stats.carbsFat": "Carboidrato / gordura",
+  "meal.placeholder": "O que você comeu — ex.: arroz, feijão e frango",
+  "meal.kcal": "Calorias",
+  "meal.protein": "Proteína em gramas",
+  "meal.proteinShort": "prot.",
+  "meal.remove": "Apagar refeição",
+  "empty.title": "Nada registrado hoje",
+  "empty.body": "Anote o que comeu com as calorias; a barra mostra quanto falta da meta.",
+  "history.title": "Dias anteriores",
+  "history.day": "Dia",
+  "history.vsTarget": "da meta",
+  "target.title": "Meta diária",
+  "target.kcal": "Calorias (kcal)",
+  "target.protein": "Proteína (g)"
+}

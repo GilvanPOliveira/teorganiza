@@ -51,7 +51,7 @@ export function Shell() {
 
 function TopBar({ onSearch }: { onSearch: () => void }) {
   const t = useCoreT()
-  const { active } = useActiveRoute()
+  const { active, area } = useActiveRoute()
 
   return (
     <header className="to-topbar">
@@ -59,7 +59,7 @@ function TopBar({ onSearch }: { onSearch: () => void }) {
       <Link to="/" className="to-topbar__brand" aria-label={t('app.name')}>
         <Logo size={26} />
       </Link>
-      {active && <span className="to-topbar__crumb">/ {active.name}</span>}
+      {active && <span className="to-topbar__crumb">/ {area?.label ?? active.name}</span>}
 
       <div className="to-topbar__end">
         <button type="button" className="to-search" onClick={onSearch}>
@@ -79,14 +79,16 @@ function TopBar({ onSearch }: { onSearch: () => void }) {
 function ActiveScreen() {
   const t = useCoreT()
   const { preferences } = useAppState()
-  const { active, route } = useActiveRoute()
+  const { active, route, area } = useActiveRoute()
 
   if (!active) return <Outlet />
 
-  if (preferences.disabledModules.includes(active.id)) {
+  const title = area?.label ?? active.name
+  const off = preferences.disabledModules
+  if (off.includes(active.id) || (area && off.includes(area.id))) {
     return (
       <EmptyState
-        title={t('modules.disabled.title', { name: active.name })}
+        title={t('modules.disabled.title', { name: title })}
         body={t('modules.disabled.body')}
         action={
           <Link to="/settings">
@@ -97,14 +99,15 @@ function ActiveScreen() {
     )
   }
 
-  const tabs = active.routes.filter((r) => r.label)
+  // Areas live in the main navigation; tabs are for the rest.
+  const tabs = active.routes.filter((r) => r.label && !r.area)
 
   return (
     <div className="to-page">
       <header className="to-page__header">
         <div className="to-page__title">
-          <ModuleIcon icon={active.icon} label={active.name} size={20} boxed />
-          <h1>{active.name}</h1>
+          <ModuleIcon icon={area?.icon ?? active.icon} label={title} size={20} boxed />
+          <h1>{title}</h1>
         </div>
         {route?.actions && (
           <div className="to-page__actions">
@@ -145,19 +148,19 @@ function Sidebar({ targets }: { targets: NavTarget[] }) {
       </Link>
       <nav className="to-sidebar__nav" aria-label={t('nav.main')}>
         {places.map((target) => (
-          <SidebarLink key={target.id} target={target} />
+          <SidebarLink key={target.id} target={target} targets={targets} />
         ))}
       </nav>
       <div className="to-sidebar__end">
-        <SidebarLink target={settings} />
+        <SidebarLink target={settings} targets={targets} />
       </div>
     </aside>
   )
 }
 
-function SidebarLink({ target }: { target: NavTarget }) {
+function SidebarLink({ target, targets }: { target: NavTarget; targets: NavTarget[] }) {
   return (
-    <NavLink to={target.path} end={target.path === '/'} className="to-sidebar__item">
+    <NavLink to={target.path} end={exactMatch(target, targets)} className="to-sidebar__item">
       <ModuleIcon icon={target.icon} label={target.label} size={17} />
       <span>{target.label}</span>
       {target.shortcut && (
@@ -189,7 +192,7 @@ function Dock({ targets, desktopHidden }: { targets: NavTarget[]; desktopHidden:
           <NavLink
             key={target.id}
             to={target.path}
-            end={target.path === '/'}
+            end={exactMatch(target, targets)}
             className={`to-dock__item${index >= MOBILE_DOCK_ITEMS ? ' to-dock__item--desktop' : ''}`}
             title={
               target.shortcut ? `${target.label} · G ${target.shortcut.toUpperCase()}` : target.label
@@ -276,6 +279,14 @@ function useShortcuts(targets: NavTarget[], openPalette: () => void) {
       window.removeEventListener(OPEN_PALETTE_EVENT, openPalette)
     }
   }, [targets, openPalette, navigate])
+}
+
+/**
+ * A link is active only on its exact path when another entry lives under
+ * it: Tarefas is '/lists', and must not light up on '/lists/kanban'.
+ */
+function exactMatch(target: NavTarget, targets: NavTarget[]): boolean {
+  return target.path === '/' || targets.some((other) => other !== target && other.path.startsWith(`${target.path}/`))
 }
 
 function isTyping(target: EventTarget | null): boolean {

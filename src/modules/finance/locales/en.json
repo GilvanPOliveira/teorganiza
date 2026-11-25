@@ -11,5 +11,18 @@
   "empty.body": "Add the first one above. Negative amounts become expenses.",
   "widget.balance.caption": "{count} transactions this month",
   "field.tags": "Tags",
-  "widget.balance.caption.one": "1 transaction this month"
+  "widget.balance.caption.one": "1 transaction this month",
+  "charges.toReceive": "To receive",
+  "charges.openCount": "{count} charges",
+  "charges.openCount.one": "1 charge",
+  "charges.late": "Overdue",
+  "charges.received": "Received",
+  "charges.placeholder": "Charge — e.g. company website",
+  "charges.client": "Client",
+  "charges.amount": "Amount",
+  "charges.due": "Due date",
+  "charges.markPaid": "Mark {description} as paid",
+  "charges.remove": "Delete charge",
+  "charges.empty.title": "No charges",
+  "charges.empty.body": "Record what you are owed, by whom and by when."
 }
