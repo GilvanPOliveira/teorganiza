@@ -125,5 +125,13 @@
   "storage.warning.body.one": "1 record exists only here. Pick a destination so you do not depend on this browser.",
   "sync.pending.one": "1 pending change",
   "sync.status.conflicts.one": "1 conflict waiting for you",
-  "tags.count.one": "1 item"
+  "tags.count.one": "1 item",
+  "storage.folder": "A folder on this computer",
+  "storage.folder.note": "Your data goes into a TeOrganiza folder you choose, in files you can open without the app. It can live inside Dropbox or OneDrive.",
+  "storage.folder.unavailable": "This browser cannot open folders. Use Chrome or Edge on a computer.",
+  "storage.folder.choose": "Choose folder",
+  "storage.folder.connected": "Saving to {name}/TeOrganiza",
+  "storage.folder.needsAccess": "Folder access paused — allow",
+  "storage.folder.allow": "Allow folder access",
+  "storage.folder.disconnectNote": "The folder and its files stay where they are; so does the local copy."
 }

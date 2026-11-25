@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Envelope } from '@core/api/types'
+import { driveDestination, folderDestination } from '@core/storage/destinations'
 import { DriveAdapter } from '@core/storage/drive'
 import { AuthExpiredError } from '@core/storage/errors'
 import {
@@ -12,6 +13,7 @@ import type { LocalChange, LocalStore } from '@core/sync/engine'
 import { canonical } from '@core/sync/merge'
 import type { PartitionState } from '@core/sync/types'
 import { FakeDrive } from './fakeDrive'
+import { FakeFolder } from './fakeFolder'
 
 type Rec = Envelope<unknown>
 const PATH = 'notes/items'
@@ -92,8 +94,12 @@ function device(id: string, policy: SyncPolicy = 'on-leave', shared?: { bases: M
   const local = shared?.local ?? new MemoryLocal()
   const bases = shared?.bases ?? new MemoryBases()
   const controller = new SyncController({
-    auth,
-    createAdapter: (a) => new DriveAdapter({ getAccessToken: () => a.getAccessToken(), fetch: drive.fetch as typeof fetch }),
+    destinations: {
+      drive: driveDestination(
+        auth,
+        (a) => new DriveAdapter({ getAccessToken: () => a.getAccessToken(), fetch: drive.fetch as typeof fetch }),
+      ),
+    },
     local,
     bases,
     collections: () => [{ path: PATH, describe: (r) => (r.data as { title: string }).title }],
@@ -288,5 +294,109 @@ describe('disconnecting', () => {
     expect(controller.getState()).toMatchObject({ phase: 'local-only', kind: null })
     expect(local.rows.has('a')).toBe(true)
     expect(bases.bases.size).toBe(0)
+  })
+})
+
+describe('a folder as the destination', () => {
+  function folderDevice(id: string, folder: FakeFolder, shared?: { bases: MemoryBases; local: MemoryLocal }) {
+    const local = shared?.local ?? new MemoryLocal()
+    const bases = shared?.bases ?? new MemoryBases()
+    let picks = 0
+    const controller = new SyncController({
+      destinations: {
+        'disk-web': folderDestination(bases, async () => {
+          picks++
+          return folder
+        }),
+      },
+      local,
+      bases,
+      collections: () => [{ path: PATH, describe: (r) => (r.data as { title: string }).title }],
+      counts: {
+        pending: async () => [...local.rows.values()].filter((r) => r.rev > 0).length,
+        live: async () => [...local.rows.values()].filter((r) => r.deletedAt === null).length,
+      },
+      device: () => ({ deviceId: id, nickname: id.toUpperCase() }),
+      policy: async () => 'on-leave',
+      persist: async () => true,
+      setInterval: () => 0,
+      clearInterval: () => {},
+    })
+    return { controller, local, bases, picks: () => picks }
+  }
+
+  it('carries data between two computers through the same folder', async () => {
+    const shared = new FakeFolder('Dropbox')
+    const pc = folderDevice('pc', shared)
+    pc.local.add('a', 'Do PC')
+    await pc.controller.start()
+    await pc.controller.connectFolder()
+    expect(pc.controller.getState()).toMatchObject({
+      phase: 'idle',
+      kind: 'disk-web',
+      pendingCount: 0,
+      destinationLabel: 'Dropbox',
+    })
+    expect(shared.folders.get('TeOrganiza')!.read('notes/items/all.json')).toContain('Do PC')
+
+    await pc.controller.handleHidden() // releases the lease
+    const laptop = folderDevice('laptop', shared)
+    await laptop.controller.start()
+    await laptop.controller.connectFolder()
+    expect(laptop.controller.getState().phase).toBe('idle')
+    expect(laptop.local.rows.get('a')?.data).toEqual({ title: 'Do PC' })
+  })
+
+  it('after a reload with the permission kept, syncs without asking', async () => {
+    const folder = new FakeFolder('Documentos')
+    const first = folderDevice('pc', folder)
+    await first.controller.start()
+    await first.controller.connectFolder()
+
+    const reopened = folderDevice('pc', folder, { bases: first.bases, local: first.local })
+    await reopened.controller.start()
+    expect(reopened.controller.getState()).toMatchObject({ phase: 'idle', kind: 'disk-web' })
+    expect(reopened.picks()).toBe(0)
+  })
+
+  it('after a reload without permission, waits for a click and keeps the queue', async () => {
+    const folder = new FakeFolder('Documentos')
+    const first = folderDevice('pc', folder)
+    await first.controller.start()
+    await first.controller.connectFolder()
+
+    folder.permission = 'prompt'
+    const reopened = folderDevice('pc', folder, { bases: first.bases, local: first.local })
+    reopened.local.add('b', 'Nova')
+    await reopened.controller.start()
+    expect(reopened.controller.getState()).toMatchObject({ phase: 'needs-auth', pendingCount: 1 })
+
+    await reopened.controller.connectFolder() // "Permitir acesso"
+    expect(reopened.controller.getState()).toMatchObject({ phase: 'idle', pendingCount: 0 })
+    expect(reopened.picks()).toBe(0)
+    expect(folder.folders.get('TeOrganiza')!.read('notes/items/all.json')).toContain('Nova')
+  })
+
+  it('a cancelled folder picker leaves everything as it was', async () => {
+    const local = new MemoryLocal()
+    const bases = new MemoryBases()
+    const controller = new SyncController({
+      destinations: {
+        'disk-web': folderDestination(bases, async () => {
+          throw Object.assign(new Error('The user aborted a request.'), { name: 'AbortError' })
+        }),
+      },
+      local,
+      bases,
+      collections: () => [],
+      counts: { pending: async () => 0, live: async () => 0 },
+      device: () => ({ deviceId: 'pc', nickname: 'PC' }),
+      policy: async () => 'on-leave',
+      setInterval: () => 0,
+      clearInterval: () => {},
+    })
+    await controller.start()
+    await controller.connectFolder()
+    expect(controller.getState()).toMatchObject({ phase: 'local-only', kind: null })
   })
 })
