@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Module } from '@core/api/types'
 import {
   assignShortcuts,
+  enabledAreas,
   enabledModules,
+  moduleAreas,
   filterPalette,
   greetingKey,
   HOME_SHORTCUT,
@@ -140,5 +142,42 @@ describe('translation counts', () => {
     expect(translate('pt-BR', 'demo', 'items', { count: 2 })).toBe('2 itens')
     // Without a singular, the plain key is used even for one.
     expect(translate('pt-BR', 'demo', 'plain', { count: 1 })).toBe('1 coisas')
+  })
+})
+
+describe('areas', () => {
+  const Screen = () => null
+  const single = { id: 'habits', name: 'Hábitos', order: 100, routes: [{ path: '', element: Screen }] } as unknown as Module
+  const multi = {
+    id: 'lists',
+    name: 'Listas',
+    routes: [
+      { path: '', element: Screen, area: { id: 'tasks', label: 'Tarefas', order: 10, shortcut: 't' } },
+      { path: 'projects/:id', element: Screen },
+      { path: 'kanban', element: Screen, area: { id: 'kanban', label: 'Kanban', order: 30 } },
+    ],
+  } as unknown as Module
+
+  it('makes a module without areas one entry, at its root', () => {
+    expect(moduleAreas(single)).toEqual([
+      expect.objectContaining({ id: 'habits', moduleId: 'habits', label: 'Hábitos', path: '/habits', order: 100 }),
+    ])
+  })
+
+  it('makes each declared area an entry, and leaves other routes out', () => {
+    const areas = moduleAreas(multi)
+    expect(areas.map((a) => [a.id, a.path, a.shortcut])).toEqual([
+      ['lists/tasks', '/lists', 't'],
+      ['lists/kanban', '/lists/kanban', undefined],
+    ])
+  })
+
+  it('orders areas from every module together, and hides the ones turned off', () => {
+    expect(enabledAreas([single, multi], []).map((a) => a.id)).toEqual(['lists/tasks', 'lists/kanban', 'habits'])
+    expect(enabledAreas([single, multi], ['lists/kanban']).map((a) => a.id)).toEqual(['lists/tasks', 'habits'])
+  })
+
+  it('treats a whole module turned off (saved before areas existed) as all its areas off', () => {
+    expect(enabledAreas([single, multi], ['lists']).map((a) => a.id)).toEqual(['habits'])
   })
 })

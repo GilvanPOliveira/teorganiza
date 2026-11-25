@@ -1,0 +1,16 @@
+{
+  "goal.placeholder": "Nova meta — ex.: correr",
+  "goal.target": "Alvo",
+  "goal.unit": "unidade (km, livros…)",
+  "goal.deadline": "Prazo",
+  "goal.done": "Concluída",
+  "goal.due": "até {date}",
+  "goal.less": "Diminuir progresso",
+  "goal.more": "Aumentar progresso",
+  "goal.remove": "Apagar meta",
+  "goal.reached": "Concluídas",
+  "empty.title": "Nenhuma meta ainda",
+  "empty.body": "Uma meta é um alvo, uma medida e, se quiser, um prazo.",
+  "widget.caption": "{count} metas em andamento",
+  "widget.caption.one": "1 meta em andamento"
+}

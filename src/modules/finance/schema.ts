@@ -25,3 +25,14 @@ export const categorySchema = z.object({
 })
 
 export type Category = z.infer<typeof categorySchema>
+
+/** Money to receive from someone. Integer cents, like everything else. */
+export const chargeSchema = z.object({
+  description: z.string().trim().min(1),
+  client: z.string(),
+  amount: z.number().int().positive(),
+  due: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  paid: z.boolean(),
+})
+
+export type Charge = z.infer<typeof chargeSchema>

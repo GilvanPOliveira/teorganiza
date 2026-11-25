@@ -33,10 +33,14 @@ export function useCoreWriter<T>(collection: string) {
     (data: T) => repository.createRecord<T>(path, data, deviceId),
     [path, deviceId],
   )
+  const update = useCallback(
+    (id: string, patch: Partial<T>) => repository.updateRecord<T>(path, id, patch, deviceId),
+    [path, deviceId],
+  )
   const remove = useCallback(
     (id: string) => repository.removeRecord<T>(path, id, deviceId),
     [path, deviceId],
   )
 
-  return useMemo(() => ({ create, remove }), [create, remove])
+  return useMemo(() => ({ create, update, remove }), [create, update, remove])
 }

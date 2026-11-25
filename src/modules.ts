@@ -1,5 +1,18 @@
 import type { Module } from '@core/api'
+import calendar from '@modules/calendar/module'
+import clients from '@modules/clients/module'
+import diet from '@modules/diet/module'
 import finance from '@modules/finance/module'
+import focus from '@modules/focus/module'
+import goals from '@modules/goals/module'
+import habits from '@modules/habits/module'
+import health from '@modules/health/module'
+import lists from '@modules/lists/module'
+import notes from '@modules/notes/module'
+import previews from '@modules/previews/module'
+import reading from '@modules/reading/module'
+import study from '@modules/study/module'
+import workouts from '@modules/workouts/module'
 
 /**
  * The module registry.
@@ -12,4 +25,19 @@ import finance from '@modules/finance/module'
  * Nothing in `core/` ever changes to add one. If it has to, the contract
  * is wrong — open an issue instead of reaching into the core.
  */
-export const modules: Module[] = [finance]
+export const modules: Module[] = [
+  lists,
+  calendar,
+  goals,
+  health,
+  habits,
+  workouts,
+  diet,
+  study,
+  reading,
+  notes,
+  finance,
+  clients,
+  focus,
+  previews,
+]

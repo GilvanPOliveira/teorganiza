@@ -1,0 +1,20 @@
+{
+  "stats.reading": "Lendo agora",
+  "stats.done": "Lidos",
+  "stats.pages": "Páginas lidas",
+  "book.placeholder": "Livro — título",
+  "book.author": "Autor",
+  "book.totalPages": "Páginas",
+  "book.pages": "{read} de {pages} páginas",
+  "book.start": "Começar",
+  "book.finish": "Terminei",
+  "book.remove": "Tirar da estante",
+  "shelf.label": "Estante",
+  "shelf.reading": "Lendo",
+  "shelf.want": "Quero ler",
+  "shelf.done": "Lidos",
+  "shelf.reading.empty": "Nenhum livro em leitura",
+  "shelf.want.empty": "Nenhum livro na fila",
+  "shelf.done.empty": "Nenhum livro terminado ainda",
+  "shelf.body": "Adicione um livro acima; ele entra na prateleira que está aberta."
+}

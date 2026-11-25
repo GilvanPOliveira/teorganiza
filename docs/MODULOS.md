@@ -106,6 +106,17 @@ Aprovada em 25/11/2026; substitui a lista antiga de `CLAUDE.md`.
 A captura rápida do Início ("pagar a luz sexta #casa") chega com `lists`,
 que é o primeiro módulo com algo para capturar.
 
+## O que existe hoje (primeira versão)
+
+Todas as 27 entradas aparecem na navegação, na ordem do NEXO. Uma rota
+declara `area` para virar entrada própria; assim `lists` oferece Tarefas,
+Projetos, Kanban, Trabalho, Lar e Filmes e Séries sem virar seis módulos.
+Cada área pode ser desligada sozinha em Configurações.
+
+São primeiras versões: guardam e mostram os dados, sem a profundidade do
+NEXO. Notícias, Arquivos e Nex são prévias que explicam o motivo de não
+funcionarem ainda. Os textos dos módulos novos existem só em pt-BR.
+
 ## Decisões abertas criadas por este mapa
 
 - Kanban: `lists` ganha um estado configurável por lista, ou kanban é outro módulo?

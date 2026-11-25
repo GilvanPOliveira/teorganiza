@@ -111,6 +111,24 @@ export interface RouteDef {
   label?: string
   /** Rendered in the shell's top bar. The only point a module reaches chrome. */
   actions?: ComponentType
+  /**
+   * Makes this route its own entry in the app's navigation. One module can
+   * offer several areas over the same data — `lists` gives Tarefas,
+   * Projetos and Kanban — because a module is defined by the shape of its
+   * data, while the navigation follows how people think about their day.
+   */
+  area?: AreaDef
+}
+
+export interface AreaDef {
+  /** Unique within the module; the global id is '<moduleId>/<id>'. */
+  id: string
+  label: string
+  icon?: ComponentType<IconProps>
+  /** Position in the navigation; lower comes first. */
+  order?: number
+  /** Letter for "G then letter". */
+  shortcut?: string
 }
 
 export type WidgetSize = 'sm' | 'md' | 'lg'
@@ -163,6 +181,8 @@ export interface Module {
   /** The module's own semver, independent of the core. */
   version: string
   icon?: ComponentType<IconProps>
+  /** Position in the navigation when the module has no areas. */
+  order?: number
   /**
    * Letter for the "G then letter" shortcut. Optional: without it the shell
    * picks the first free letter of the name.

@@ -1,0 +1,51 @@
+import { Bell, CalendarDays } from 'lucide-react'
+import { defineModule } from '@core/api'
+import { eventSchema, type CalendarEvent } from './schema'
+import { CalendarScreen, RemindersScreen } from './screens'
+import { TodayAgenda } from './widgets'
+import ptBR from './locales/pt-BR.json'
+
+export default defineModule({
+  id: 'calendar',
+  name: 'Agenda',
+  apiVersion: 1,
+  version: '0.1.0',
+  icon: CalendarDays,
+
+  collections: [
+    {
+      name: 'events',
+      schema: eventSchema,
+      schemaVersion: 1,
+      describe: (record) => {
+        const { title, date, time } = record.data as CalendarEvent
+        return `${title} · ${date}${time ? ` ${time}` : ''}`
+      },
+      indexes: ['date', 'remind'],
+      /** Grows with time, so it partitions by month like the ledger. */
+      partition: (record) => (record.data as CalendarEvent).date.slice(0, 7),
+    },
+  ],
+
+  routes: [
+    {
+      path: '',
+      element: CalendarScreen,
+      area: { id: 'calendar', label: 'Calendário', icon: CalendarDays, order: 40 },
+    },
+    {
+      path: 'reminders',
+      element: RemindersScreen,
+      area: { id: 'reminders', label: 'Lembretes', icon: Bell, order: 50 },
+    },
+  ],
+
+  commands: [
+    { id: 'new-event', label: 'Novo evento', path: '', keywords: ['evento', 'agenda', 'compromisso'] },
+    { id: 'new-reminder', label: 'Novo lembrete', path: 'reminders', keywords: ['lembrete', 'aviso'] },
+  ],
+
+  widgets: [{ id: 'today', label: 'Agenda de hoje', size: 'sm', element: TodayAgenda }],
+
+  locales: { 'pt-BR': ptBR },
+})
