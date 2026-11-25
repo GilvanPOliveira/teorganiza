@@ -38,7 +38,22 @@ export interface StorageAdapter {
     expectedEtag: string | null,
   ): Promise<{ etag: string }>
 
-  acquireLock?(device: DeviceLease): Promise<LockResult>
+  /**
+   * Reads a past version of a partition by its etag. Only for destinations
+   * with `versioning`: it is how a write that landed on top of another
+   * (see `ConcurrentWriteError`) gets the overwritten version back to merge.
+   */
+  readVersion?(
+    collectionPath: string,
+    partition: string,
+    etag: string,
+  ): Promise<Envelope<unknown>[] | null>
+
+  /**
+   * `takeOver` is the user's answer to "open on another device — take
+   * over here?". The lock is soft: it never forbids, it only warns.
+   */
+  acquireLock?(device: DeviceLease, options?: { takeOver?: boolean }): Promise<LockResult>
   releaseLock?(): Promise<void>
 }
 

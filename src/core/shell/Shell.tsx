@@ -4,6 +4,7 @@ import { translate } from '@core/i18n/catalog'
 import { getModule, getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ModuleScope } from '@core/runtime/module-context'
+import { SyncDialogs, SyncStatus } from './SyncPanels'
 
 /**
  * Everything around a module. The shell knows no module by name: the
@@ -69,6 +70,8 @@ export function Shell() {
 
         <StatusBar />
       </div>
+
+      <SyncDialogs />
     </div>
   )
 }
@@ -88,17 +91,12 @@ function useActiveRoute() {
 }
 
 function StatusBar() {
-  const { locale, storage } = useAppState()
-  const t = (key: string, vars?: Record<string, unknown>) =>
-    translate(locale, 'core', key, vars)
-
+  const { storage } = useAppState()
   const noDestination = storage.kind === null
 
   return (
     <footer className={`to-status${noDestination ? ' to-status--warning' : ''}`}>
-      <span>{noDestination ? t('storage.none') : storage.kind}</span>
-      <span>{storage.lastSyncAt ?? t('storage.never')}</span>
-      <span>{t('sync.pending', { count: storage.pendingCount })}</span>
+      <SyncStatus />
     </footer>
   )
 }
