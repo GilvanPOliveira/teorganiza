@@ -1,4 +1,5 @@
 import type { StorageKind } from '@core/api/types'
+import type { Destination, TokenAuth } from '@core/storage/destinations'
 import { AuthExpiredError } from '@core/storage/errors'
 import type { DeviceLease, StorageAdapter } from '@core/storage/types'
 import {
@@ -18,7 +19,7 @@ export type SyncPolicy = 'manual' | 'on-leave' | 'periodic' | 'always'
 export type SyncPhase =
   /** No destination: the evaluation state. */
   | 'local-only'
-  /** A destination is set, but there is no valid token. Needs a click. */
+  /** A destination is set, but access lapsed (token, folder permission). Needs a click. */
   | 'needs-auth'
   | 'idle'
   | 'syncing'
@@ -43,15 +44,14 @@ export interface SyncState {
   persisted: boolean | null
   /** False when the build has no Google client id. */
   driveAvailable: boolean
+  /** False where the browser cannot open a folder (Firefox, Safari, phones). */
+  folderAvailable: boolean
+  /** What to call the destination, e.g. the folder the user picked. */
+  destinationLabel: string | null
 }
 
-export interface Auth {
-  readonly connected: boolean
-  connect(): Promise<void>
-  getAccessToken(): Promise<string>
-  signOut(): void
-  revoke(): Promise<void>
-}
+/** The Google token side of the Drive destination. */
+export type Auth = TokenAuth
 
 export interface SyncBaseStore extends BaseStore {
   clear(): Promise<void>
@@ -60,8 +60,8 @@ export interface SyncBaseStore extends BaseStore {
 }
 
 export interface SyncDeps {
-  auth: Auth | null
-  createAdapter: (auth: Auth) => StorageAdapter
+  /** The destinations this build and browser offer. */
+  destinations: Partial<Record<StorageKind, Destination>>
   local: LocalStore
   bases: SyncBaseStore
   collections: () => SyncCollection[]
@@ -105,7 +105,9 @@ export class SyncController {
       lockHolder: null,
       error: null,
       persisted: null,
-      driveAvailable: deps.auth !== null,
+      driveAvailable: deps.destinations.drive !== undefined,
+      folderAvailable: deps.destinations['disk-web'] !== undefined,
+      destinationLabel: null,
     }
   }
 
@@ -118,36 +120,63 @@ export class SyncController {
     return () => this.listeners.delete(listener)
   }
 
-  /** At app start. Never opens a popup: a reload always lands on needs-auth. */
+  /**
+   * At app start. Never prompts: when access lapsed (always, for a Google
+   * token after a reload) it lands on needs-auth and waits for a click.
+   */
   async start(): Promise<void> {
-    const kind = (await this.deps.bases.getMeta<StorageKind>(META_DESTINATION)) ?? null
+    const stored = (await this.deps.bases.getMeta<StorageKind>(META_DESTINATION)) ?? null
     const lastSyncAt = (await this.deps.bases.getMeta<string>(META_LAST_SYNC)) ?? null
     const persisted = this.deps.persist ? await this.deps.persist().catch(() => false) : null
-    const usable = kind === 'drive' && this.deps.auth !== null
+    const destination = stored ? this.deps.destinations[stored] : undefined
+    const kind = destination ? stored : null
+
     this.set({
-      kind: usable ? kind : null,
+      kind,
       lastSyncAt,
       persisted,
-      phase: usable ? (this.deps.auth!.connected ? 'idle' : 'needs-auth') : 'local-only',
+      phase: kind ? 'needs-auth' : 'local-only',
+      destinationLabel: destination ? await destination.label() : null,
     })
+
+    if (destination && (await destination.isReady())) {
+      try {
+        await this.attach(destination)
+        this.set({ phase: 'idle' })
+        this.startTimer()
+      } catch (error) {
+        if (!(error instanceof AuthExpiredError)) this.set({ phase: 'error', error: describe(error) })
+      }
+    }
     await this.refreshCounts()
   }
 
-  /** "Conectar ao Google Drive" and "Reconectar". Call from a click. */
-  async connectDrive(): Promise<void> {
-    const auth = this.deps.auth
-    if (!auth) throw new Error('Google Drive is not configured in this build')
+  /** "Conectar ao Google Drive" and its "Reconectar". Call from a click. */
+  connectDrive(): Promise<void> {
+    return this.connect('drive')
+  }
+
+  /** "Escolher pasta" and its "Permitir acesso". Call from a click. */
+  connectFolder(): Promise<void> {
+    return this.connect('disk-web')
+  }
+
+  /** Call from a click: it may open a popup, a picker or a permission prompt. */
+  async connect(kind: StorageKind): Promise<void> {
+    const destination = this.deps.destinations[kind]
+    if (!destination) throw new Error(`Destination "${kind}" is not available here`)
+    if (this.state.kind && this.state.kind !== kind) {
+      throw new Error('Disconnect the current destination before choosing another')
+    }
     try {
-      await auth.connect()
+      await destination.connect()
+      await this.attach(destination)
     } catch (error) {
       this.set({ phase: this.state.kind ? 'needs-auth' : 'local-only', error: describe(error) })
       return
     }
-    this.adapter = this.deps.createAdapter(auth)
-    this.engine = new SyncEngine(this.adapter, this.deps.local, this.deps.bases, this.deps.collections)
-    await this.adapter.init()
-    await this.deps.bases.setMeta(META_DESTINATION, 'drive')
-    this.set({ kind: 'drive', error: null })
+    await this.deps.bases.setMeta(META_DESTINATION, kind)
+    this.set({ kind, error: null, destinationLabel: await destination.label() })
 
     if (await this.takeLease(false)) await this.sync()
     this.startTimer()
@@ -191,7 +220,7 @@ export class SyncController {
 
   async handleVisible(): Promise<void> {
     await this.refreshCounts()
-    if (!this.engine || !this.deps.auth?.connected) {
+    if (!this.engine || !(await this.ready())) {
       if (this.state.kind) this.set({ phase: 'needs-auth' })
       return
     }
@@ -204,17 +233,25 @@ export class SyncController {
   async disconnect(): Promise<void> {
     this.stopTimer()
     await this.adapter?.releaseLock?.().catch(() => undefined)
-    this.deps.auth?.signOut()
+    await this.destination()?.forget()
     await this.deps.bases.clear()
     this.adapter = null
     this.engine = null
-    this.set({ kind: null, phase: 'local-only', lastSyncAt: null, conflicts: [], lockHolder: null, error: null })
+    this.set({
+      kind: null,
+      phase: 'local-only',
+      lastSyncAt: null,
+      conflicts: [],
+      lockHolder: null,
+      error: null,
+      destinationLabel: null,
+    })
   }
 
   /** "Sair": drops the token only. Reconnecting imports nothing again. */
   signOut(): void {
     this.stopTimer()
-    this.deps.auth?.signOut()
+    this.destination()?.signOut()
     if (this.state.kind) this.set({ phase: 'needs-auth' })
   }
 
@@ -222,7 +259,7 @@ export class SyncController {
   async revoke(): Promise<void> {
     this.stopTimer()
     await this.adapter?.releaseLock?.().catch(() => undefined)
-    await this.deps.auth?.revoke()
+    await this.destination()?.revoke?.()
     if (this.state.kind) this.set({ phase: 'needs-auth' })
   }
 
@@ -243,7 +280,7 @@ export class SyncController {
 
   private async run(options: SyncOptions): Promise<void> {
     if (!this.engine) return
-    if (!this.deps.auth?.connected) {
+    if (!(await this.ready())) {
       this.set({ phase: 'needs-auth' })
       await this.refreshCounts() // the queue that waits for the reconnect
       return
@@ -265,7 +302,7 @@ export class SyncController {
     } catch (error) {
       if (error instanceof AuthExpiredError) {
         // Abort, keep the queue, ask for the gesture.
-        this.deps.auth?.signOut()
+        this.destination()?.signOut()
         this.set({ phase: 'needs-auth' })
       } else {
         this.set({ phase: 'error', error: describe(error) })
@@ -289,7 +326,7 @@ export class SyncController {
       return false
     } catch (error) {
       if (error instanceof AuthExpiredError) {
-        this.deps.auth?.signOut()
+        this.destination()?.signOut()
         this.set({ phase: 'needs-auth' })
         return false
       }
@@ -297,6 +334,21 @@ export class SyncController {
       // it must not stop sync, which is protected by the etag regardless.
       return true
     }
+  }
+
+  private destination(): Destination | undefined {
+    return this.state.kind ? this.deps.destinations[this.state.kind] : undefined
+  }
+
+  private async ready(): Promise<boolean> {
+    return (await this.destination()?.isReady()) ?? false
+  }
+
+  private async attach(destination: Destination): Promise<void> {
+    const adapter = await destination.createAdapter()
+    await adapter.init()
+    this.adapter = adapter
+    this.engine = new SyncEngine(adapter, this.deps.local, this.deps.bases, this.deps.collections)
   }
 
   private startTimer(): void {
@@ -313,8 +365,8 @@ export class SyncController {
   }
 
   private async tick(): Promise<void> {
-    if (!this.engine || !this.deps.auth?.connected) return
-    if (this.state.phase !== 'idle') return
+    if (!this.engine || this.state.phase !== 'idle') return
+    if (!(await this.ready())) return
     if (!(await this.takeLease(false))) return
     const policy = await this.deps.policy()
     if (policy === 'periodic' || policy === 'always') await this.sync()

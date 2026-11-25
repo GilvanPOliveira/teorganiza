@@ -125,5 +125,13 @@
   "storage.warning.body.one": "1 registro existe só aqui. Escolha um destino para não depender deste navegador.",
   "sync.pending.one": "1 alteração pendente",
   "sync.status.conflicts.one": "1 conflito aguardando você",
-  "tags.count.one": "1 item"
+  "tags.count.one": "1 item",
+  "storage.folder": "Pasta neste computador",
+  "storage.folder.note": "Os dados ficam numa pasta TeOrganiza que você escolhe, em arquivos que dá para abrir sem o app. Pode ser dentro do Dropbox ou do OneDrive.",
+  "storage.folder.unavailable": "Este navegador não abre pastas. Use o Chrome ou o Edge no computador.",
+  "storage.folder.choose": "Escolher pasta",
+  "storage.folder.connected": "Salvando em {name}/TeOrganiza",
+  "storage.folder.needsAccess": "Acesso à pasta pausado — permitir",
+  "storage.folder.allow": "Permitir acesso à pasta",
+  "storage.folder.disconnectNote": "A pasta e os arquivos continuam onde estão; a cópia local também."
 }

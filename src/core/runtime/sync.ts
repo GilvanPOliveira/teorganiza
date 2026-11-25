@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { createRecord, readAll } from '@core/db/repository'
 import { getDeviceId, getDeviceNickname } from '@core/device'
 import { getCollections } from '@core/registry/registry'
+import { driveDestination, folderDestination, folderPickerAvailable } from '@core/storage/destinations'
 import { DriveAdapter } from '@core/storage/drive'
 import { GoogleAuth, googleClientId } from '@core/storage/google-auth'
 import { SyncController, type SyncPolicy, type SyncState } from '@core/sync/controller'
@@ -24,8 +25,15 @@ export function getSyncController(): SyncController {
   const paths = () => getCollections().map((c) => c.path)
 
   controller = new SyncController({
-    auth: clientId ? new GoogleAuth(clientId) : null,
-    createAdapter: (auth) => new DriveAdapter({ getAccessToken: () => auth.getAccessToken() }),
+    destinations: {
+      ...(clientId && {
+        drive: driveDestination(
+          new GoogleAuth(clientId),
+          (auth) => new DriveAdapter({ getAccessToken: () => auth.getAccessToken() }),
+        ),
+      }),
+      ...(folderPickerAvailable() && { 'disk-web': folderDestination(dexieBaseStore) }),
+    },
     local: dexieLocalStore,
     bases: dexieBaseStore,
     collections: () =>
