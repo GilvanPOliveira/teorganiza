@@ -2,21 +2,16 @@ import { Card } from '@core/api/ui'
 import { AVAILABLE_LOCALES, translate } from '@core/i18n/catalog'
 import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
+import { StorageSettings } from './SyncPanels'
 
 export function Settings() {
-  const { locale, theme, deviceId, storage, setLocale, setTheme } = useAppState()
+  const { locale, theme, setLocale, setTheme } = useAppState()
   const t = (key: string, vars?: Record<string, unknown>) =>
     translate(locale, 'core', key, vars)
 
   return (
     <div className="to-settings">
-      <Card title={t('settings.storage')}>
-        <p>{storage.kind ?? t('storage.none')}</p>
-        <p className="to-muted">
-          {t('storage.warning.body', { count: storage.pendingCount })}
-        </p>
-        <p className="to-muted">device: {deviceId}</p>
-      </Card>
+      <StorageSettings />
 
       <Card title={t('settings.language')}>
         <select value={locale} onChange={(event) => setLocale(event.target.value)}>
