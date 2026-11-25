@@ -114,6 +114,27 @@ export interface WidgetDef {
   element: ComponentType
 }
 
+/** What the shell passes to a module icon. Any lucide icon fits. */
+export interface IconProps {
+  size?: number | string
+  strokeWidth?: number | string
+  className?: string
+}
+
+/**
+ * An entry in the command palette (Ctrl+K). Declarative on purpose: a
+ * command only navigates to one of the module's own routes, so the palette
+ * never runs module code outside the module's screen.
+ */
+export interface CommandDef {
+  id: string
+  label: string
+  /** A route of this module, relative like RouteDef.path. */
+  path: string
+  /** Extra words the palette matches, e.g. ['gasto', 'despesa']. */
+  keywords?: string[]
+}
+
 /* ------------------------------------------------------------------ *
  * Events
  * ------------------------------------------------------------------ */
@@ -132,11 +153,17 @@ export interface Module {
   apiVersion: typeof MODULE_API_VERSION
   /** The module's own semver, independent of the core. */
   version: string
-  icon?: ComponentType
+  icon?: ComponentType<IconProps>
+  /**
+   * Letter for the "G then letter" shortcut. Optional: without it the shell
+   * picks the first free letter of the name.
+   */
+  shortcut?: string
 
   collections: AnyCollectionDef[]
   routes: RouteDef[]
   widgets?: WidgetDef[]
+  commands?: CommandDef[]
   settings?: ZodType<any>
 
   /** Event names this module emits, without the module prefix. */

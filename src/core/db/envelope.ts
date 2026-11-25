@@ -95,3 +95,14 @@ export function tombstoneEnvelope<T>(
     deletedAt: now,
   }
 }
+
+/** Undoes a tombstone. To the merge it is an ordinary edit. */
+export function restoreEnvelope<T>(previous: Envelope<T>, deviceId: string): Envelope<T> {
+  return {
+    ...previous,
+    deviceId,
+    rev: previous.rev + 1,
+    updatedAt: new Date().toISOString(),
+    deletedAt: null,
+  }
+}

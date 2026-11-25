@@ -86,16 +86,75 @@ export function Table({
   children: ReactNode
 }) {
   return (
-    <table className="to-table">
-      <thead>
-        <tr>
-          {headers.map((header, index) => (
-            <th key={index}>{header}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>{children}</tbody>
-    </table>
+    <div className="to-table__wrap">
+      <table className="to-table">
+        <thead>
+          <tr>
+            {headers.map((header, index) => (
+              <th key={index}>{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{children}</tbody>
+      </table>
+    </div>
+  )
+}
+
+/** A small set of mutually exclusive choices, shown side by side. */
+export function Segmented<V extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: V
+  options: { value: V; label: ReactNode }[]
+  onChange: (value: V) => void
+  label: string
+}) {
+  return (
+    <div className="to-segmented" role="radiogroup" aria-label={label}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          role="radio"
+          aria-checked={option.value === value}
+          className={cx('to-segmented__item', option.value === value && 'is-active')}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** On/off. The label is required: a switch nobody can name is a bug. */
+export function Switch({
+  checked,
+  onChange,
+  label,
+  disabled,
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      className={cx('to-switch', checked && 'is-on')}
+      onClick={() => onChange(!checked)}
+    >
+      <span className="to-switch__thumb" />
+    </button>
   )
 }
 

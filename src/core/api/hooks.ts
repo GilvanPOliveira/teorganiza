@@ -8,6 +8,7 @@ import { collectionPath } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { emitEvent, qualify } from '@core/runtime/events'
 import { useModuleId } from '@core/runtime/module-context'
+import { parseDate } from './dates'
 
 /* ------------------------------------------------------------------ *
  * Data
@@ -180,8 +181,8 @@ export function useFormat(): Formatter {
 
     return {
       money: (cents) => money.format(cents / 100),
-      date: (iso) => date.format(new Date(iso)),
-      dateTime: (iso) => dateTime.format(new Date(iso)),
+      date: (iso) => date.format(parseDate(iso)),
+      dateTime: (iso) => dateTime.format(parseDate(iso)),
       relative: (iso) => {
         const minutes = Math.round((Date.parse(iso) - Date.now()) / 60000)
         if (Math.abs(minutes) < 60) return relative.format(minutes, 'minute')

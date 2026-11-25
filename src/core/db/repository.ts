@@ -1,7 +1,7 @@
 import type { Envelope, Query, RangeFilter } from '@core/api/types'
 import { getCollection, getModule } from '@core/registry/registry'
 import { table } from './database'
-import { newEnvelope, tombstoneEnvelope, touchEnvelope } from './envelope'
+import { newEnvelope, restoreEnvelope, tombstoneEnvelope, touchEnvelope } from './envelope'
 
 /**
  * Reading applies migrations record by record. There is no "migration
@@ -123,4 +123,15 @@ export async function removeRecord<T>(
   const previous = await table<T>(path).get(id)
   if (!previous) return
   await table<T>(path).put(tombstoneEnvelope(migrate(previous, path), deviceId))
+}
+
+/** Brings a record back from the trash. A live record is left alone. */
+export async function restoreRecord<T>(
+  path: string,
+  id: string,
+  deviceId: string,
+): Promise<void> {
+  const previous = await table<T>(path).get(id)
+  if (!previous || previous.deletedAt === null) return
+  await table<T>(path).put(restoreEnvelope(migrate(previous, path), deviceId))
 }

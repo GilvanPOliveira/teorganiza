@@ -6,6 +6,7 @@ import { DriveAdapter } from '@core/storage/drive'
 import { GoogleAuth, googleClientId } from '@core/storage/google-auth'
 import { SyncController, type SyncPolicy, type SyncState } from '@core/sync/controller'
 import { countLive, countPending, dexieBaseStore, dexieLocalStore } from '@core/sync/stores'
+import { readPreferences } from './preferences'
 
 const DEFAULT_POLICY: SyncPolicy = 'on-leave'
 /** Local edits do not notify sync; the counters catch up at this pace. */
@@ -80,8 +81,7 @@ export function useSyncLifecycle(): void {
 }
 
 async function readPolicy(): Promise<SyncPolicy> {
-  const [preferences] = await readAll<{ syncPolicy: SyncPolicy }>('core/preferences')
-  return preferences?.data.syncPolicy ?? DEFAULT_POLICY
+  return (await readPreferences()).syncPolicy ?? DEFAULT_POLICY
 }
 
 /**

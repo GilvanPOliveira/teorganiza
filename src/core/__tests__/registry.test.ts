@@ -52,6 +52,17 @@ describe('registry', () => {
     expect(() => registerModules([absolute])).toThrow(/must be relative/)
   })
 
+  it('refuses a command that points to a route the module does not have', () => {
+    const broken = moduleFixture({ commands: [{ id: 'new', label: 'New', path: 'nope' }] })
+    expect(() => registerModules([broken])).toThrow(/not one of its routes/)
+    const fine = moduleFixture({ commands: [{ id: 'new', label: 'New', path: '' }] })
+    expect(() => registerModules([fine])).not.toThrow()
+  })
+
+  it('refuses a shortcut that is not a single letter', () => {
+    expect(() => registerModules([moduleFixture({ shortcut: 'fi' })])).toThrow(/single lowercase letter/)
+  })
+
   it('refuses an unknown collection instead of failing silently', () => {
     registerModules([moduleFixture()])
     expect(() => getCollection('demo/nope')).toThrow(/Unknown collection/)
