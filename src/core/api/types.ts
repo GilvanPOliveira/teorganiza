@@ -29,6 +29,13 @@ export interface Envelope<T = unknown> {
   /** Local revisions since the last successful sync. */
   rev: number
   schemaVersion: number
+  /**
+   * Ids from `core/tags`. In the envelope, not in `data`, so the core can
+   * find "everything tagged X" across every module without asking any of
+   * them. Optional because records written before tags existed have none;
+   * missing means the same as `[]`.
+   */
+  tags?: string[]
   data: T
 }
 
@@ -57,6 +64,8 @@ export interface Query<T> {
   limit?: number
   /** Tombstones are hidden unless you ask for them. */
   includeDeleted?: boolean
+  /** Only records carrying this tag id. */
+  tag?: string
 }
 
 /* ------------------------------------------------------------------ *

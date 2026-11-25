@@ -9,5 +9,7 @@
   "column.amount": "Valor",
   "empty.title": "Nenhum lançamento ainda",
   "empty.body": "Adicione o primeiro acima. Valores negativos viram despesa.",
-  "widget.balance.caption": "{count} lançamentos neste mês"
+  "widget.balance.caption": "{count} lançamentos neste mês",
+  "field.tags": "Tags",
+  "widget.balance.caption.one": "1 lançamento neste mês"
 }

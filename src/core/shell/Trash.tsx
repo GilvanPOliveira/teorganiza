@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Hash, RotateCcw } from 'lucide-react'
 import { useFormat } from '@core/api/hooks'
 import type { Envelope } from '@core/api/types'
 import { Button, EmptyState } from '@core/api/ui'
@@ -10,6 +10,9 @@ import { getCollections, getModule } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ModuleIcon } from './ModuleIcon'
 import { useCoreT } from './useShell'
+
+/** Of the core's own collections, only tags are something a person deletes. */
+const TRASHABLE_CORE = new Set(['tags'])
 
 interface TrashEntry {
   path: string
@@ -21,13 +24,13 @@ interface TrashEntry {
 /**
  * Nothing is ever deleted — every delete is a tombstone — so the trash is
  * just the tombstones, newest first. Restoring is an ordinary edit, and it
- * syncs like one. The core's own collections stay out: a removed widget is
- * not something anyone wants back from a trash.
+ * syncs like one. Of the core's own collections only tags show up: a
+ * removed widget is not something anyone wants back from a trash.
  */
 async function readTrash(): Promise<TrashEntry[]> {
   const entries: TrashEntry[] = []
   for (const { path, moduleId, def } of getCollections()) {
-    if (moduleId === CORE_MODULE_ID) continue
+    if (moduleId === CORE_MODULE_ID && !TRASHABLE_CORE.has(def.name)) continue
     const rows = await readAll<unknown>(path, { includeDeleted: true })
     for (const record of rows) {
       if (record.deletedAt === null) continue
@@ -66,13 +69,15 @@ export function Trash() {
         <ul className="to-trash">
           {entries.map(({ path, moduleId, record, label }) => {
             const mod = getModule(moduleId)
+            const isTag = moduleId === CORE_MODULE_ID
+            const origin = mod?.name ?? (isTag ? t('tags.title') : moduleId)
             return (
               <li key={`${path}/${record.id}`} className="to-trash__item">
-                <ModuleIcon icon={mod?.icon} label={mod?.name ?? moduleId} size={16} boxed />
+                <ModuleIcon icon={mod?.icon ?? (isTag ? Hash : undefined)} label={origin} size={16} boxed />
                 <span className="to-trash__text">
                   <span className="to-trash__label">{label}</span>
                   <span className="to-muted">
-                    {mod?.name ?? moduleId} · {t('trash.deleted', { when: format.relative(record.deletedAt!) })}
+                    {origin} · {t('trash.deleted', { when: format.relative(record.deletedAt!) })}
                   </span>
                 </span>
                 <Button onClick={() => void restoreRecord(path, record.id, deviceId)}>

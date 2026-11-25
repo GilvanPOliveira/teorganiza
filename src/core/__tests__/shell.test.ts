@@ -9,6 +9,7 @@ import {
   normalize,
 } from '@core/shell/navigation'
 import { parseDate, toLocalISODate } from '@core/api/dates'
+import { buildCatalog, translate } from '@core/i18n/catalog'
 import { DEFAULT_PREFERENCES, resolveTheme, withDefaults } from '@core/runtime/preferences'
 
 describe('shortcuts', () => {
@@ -118,5 +119,26 @@ describe('calendar dates', () => {
     const date = parseDate('2026-11-25')
     expect([date.getFullYear(), date.getMonth(), date.getDate(), date.getHours()]).toEqual([2026, 10, 25, 0])
     expect(parseDate('2026-11-25T10:00:00.000Z').toISOString()).toBe('2026-11-25T10:00:00.000Z')
+  })
+})
+
+describe('translation counts', () => {
+  it('uses the singular key for exactly one, and the plain key otherwise', () => {
+    buildCatalog([
+      {
+        id: 'demo',
+        name: 'Demo',
+        apiVersion: 1,
+        version: '1.0.0',
+        collections: [],
+        routes: [{ path: '', element: () => null }],
+        locales: { 'pt-BR': { items: '{count} itens', 'items.one': '1 item', plain: '{count} coisas' } },
+      },
+    ])
+    expect(translate('pt-BR', 'demo', 'items', { count: 1 })).toBe('1 item')
+    expect(translate('pt-BR', 'demo', 'items', { count: 0 })).toBe('0 itens')
+    expect(translate('pt-BR', 'demo', 'items', { count: 2 })).toBe('2 itens')
+    // Without a singular, the plain key is used even for one.
+    expect(translate('pt-BR', 'demo', 'plain', { count: 1 })).toBe('1 coisas')
   })
 })

@@ -1,3 +1,4 @@
+import { normalizeTags } from '@core/db/envelope'
 import type { Envelope } from '@core/api/types'
 import type { Conflict, MergeFn, MergeResult, Resolution } from './types'
 
@@ -162,8 +163,12 @@ function payloadKey(record: Rec): string {
   for (const [key, value] of Object.entries(record)) {
     if (!SYNC_METADATA.has(key)) payload[key] = value
   }
+  // Tags are a set. A record written before tags existed has none, which is
+  // the same as an empty list, and order never means anything.
+  payload.tags = normalizeTags(record.tags)
   return canonical(payload)
 }
+
 
 /** JSON with object keys sorted, so key order never reads as a change. */
 export function canonical(value: unknown): string {

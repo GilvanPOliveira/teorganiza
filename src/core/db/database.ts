@@ -21,7 +21,7 @@ export function openDatabase(): Dexie {
   const stores: Record<string, string> = {}
   for (const collection of getCollections()) {
     const indexes = (collection.def.indexes ?? []).map((field) => `data.${field}`)
-    stores[collection.path] = ['id', 'updatedAt', 'deletedAt', ...indexes].join(', ')
+    stores[collection.path] = ['id', 'updatedAt', 'deletedAt', '*tags', ...indexes].join(', ')
   }
 
   const signature = JSON.stringify(stores)

@@ -243,3 +243,26 @@ describe('applyResolutions', () => {
     expect(() => applyResolutions(result, new Map())).toThrow(/undecided/)
   })
 })
+
+describe('tags in the merge', () => {
+  it('treats a record without tags like one with an empty list', () => {
+    const base = rec()
+    const upgraded = { ...rec({ deviceId: 'phone' }), tags: [] }
+    expect(resolveRecord(base, upgraded, base)).toEqual({ kind: 'take-remote' })
+  })
+
+  it('ignores tag order and duplicates', () => {
+    const base = { ...rec(), tags: ['a', 'b'] }
+    const local = { ...rec({ deviceId: 'phone' }), tags: ['b', 'a', 'a'] }
+    expect(resolveRecord(base, local, base)).toEqual({ kind: 'take-remote' })
+  })
+
+  it('counts a tag change as a change, and a tag change on both sides as a conflict', () => {
+    const base = { ...rec(), tags: ['a'] }
+    const local = { ...base, tags: ['a', 'b'], deviceId: 'phone', rev: 1 }
+    expect(resolveRecord(base, local, base)).toEqual({ kind: 'keep-local' })
+
+    const remote = { ...base, tags: ['c'], deviceId: 'pc' }
+    expect(resolveRecord(base, local, remote)).toEqual({ kind: 'conflict' })
+  })
+})

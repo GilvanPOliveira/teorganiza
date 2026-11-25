@@ -36,6 +36,16 @@ export const knownDeviceSchema = z.object({
   lastSeenAt: z.string(),
 })
 
+/**
+ * Tags are shared by every module: one "reforma" tag marks the note, the
+ * expense and the shopping list alike. Records point to a tag by id, so a
+ * rename is a single edit here.
+ */
+export const tagSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  color: z.enum(ACCENTS),
+})
+
 export const moduleSettingsSchema = z.object({
   moduleId: z.string(),
   values: z.record(z.unknown()),
@@ -61,6 +71,13 @@ export const coreCollections: AnyCollectionDef[] = [
     schemaVersion: 1,
     describe: (record) => record.data.nickname,
     indexes: ['deviceId'],
+  },
+  {
+    name: 'tags',
+    schema: tagSchema,
+    schemaVersion: 1,
+    describe: (record) => `#${record.data.name}`,
+    indexes: ['name'],
   },
   {
     name: 'settings',

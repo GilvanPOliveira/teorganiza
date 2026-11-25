@@ -53,8 +53,11 @@ export {
   useRecords,
   useSettings,
   useT,
+  useTags,
 } from './hooks'
 
-export type { CollectionWriter, Formatter } from './hooks'
+export type { CollectionWriter, Formatter, Tag } from './hooks'
+
+export { TagList, TagPicker } from './tags'
 
 export { Button, Card, EmptyState, Field, Segmented, Switch, Table, Toolbar } from './ui'
