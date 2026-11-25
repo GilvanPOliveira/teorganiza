@@ -8,7 +8,8 @@ import { DEFAULT_LOCALE } from '@core/i18n/catalog'
 
 export type ThemeChoice = 'light' | 'dark' | 'system'
 export type Accent = (typeof ACCENTS)[number]
-export type Navigation = 'dock' | 'sidebar'
+/** Dock at the bottom centre, dock floating on the left, or the fixed sidebar. */
+export type Navigation = 'dock' | 'dock-left' | 'sidebar'
 export type SyncPolicyChoice = 'manual' | 'on-leave' | 'periodic' | 'always'
 
 export interface Preferences {
