@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import type { AppContextValue, StorageState } from '@core/api/types'
 import { getDeviceId } from '@core/device'
 import { DEFAULT_LOCALE } from '@core/i18n/catalog'
+import { useSyncLifecycle, useSyncState } from './sync'
 
 interface AppState extends AppContextValue {
   setLocale: (locale: string) => void
@@ -10,19 +11,19 @@ interface AppState extends AppContextValue {
 
 const AppContext = createContext<AppState | null>(null)
 
-/** No destination yet: the evaluation state, not a third backend. */
-const INITIAL_STORAGE: StorageState = {
-  kind: null,
-  lastSyncAt: null,
-  pendingCount: 0,
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState(DEFAULT_LOCALE)
   const [theme, setTheme] = useState<'light' | 'dark'>(() =>
     globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
   )
-  const [storage] = useState<StorageState>(INITIAL_STORAGE)
+  useSyncLifecycle()
+  const sync = useSyncState()
+  // Read-only projection for modules: they may show sync state, never drive it.
+  // kind === null is the evaluation state, not a third backend.
+  const storage = useMemo<StorageState>(
+    () => ({ kind: sync.kind, lastSyncAt: sync.lastSyncAt, pendingCount: sync.pendingCount }),
+    [sync.kind, sync.lastSyncAt, sync.pendingCount],
+  )
   const deviceId = useMemo(() => getDeviceId(), [])
 
   const value = useMemo<AppState>(

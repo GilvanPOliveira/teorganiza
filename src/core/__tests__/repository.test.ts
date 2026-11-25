@@ -55,6 +55,15 @@ describe('uuidv7', () => {
     expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
     expect([later, first].sort()[0]).toBe(first)
   })
+
+  it('stays ordered for thousands of ids made in the same millisecond', () => {
+    const ids = Array.from({ length: 5000 }, () => uuidv7())
+    expect([...ids].sort()).toEqual(ids)
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const id of ids) {
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+    }
+  })
 })
 
 describe('repository', () => {
