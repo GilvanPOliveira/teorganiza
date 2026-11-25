@@ -91,7 +91,7 @@ Aprovada em 25/11/2026; substitui a lista antiga de `CLAUDE.md`.
 1. Scaffold do core — feita
 2. Destino nenhum e adaptador `drive` — feita
 3. Design system e shell novo: tokens, temas, dock/barra lateral, Início, Ctrl+K, módulos ligáveis, lixeira — feita
-4. Tags no envelope e o seletor no `core/api`
+4. Tags no envelope e o seletor no `core/api` — feita
 5. Adaptador `disk-web`: pasta local escolhida pelo usuário (Chrome e Edge no desktop)
 6. `finance` completo, com importação de extrato
 7. `lists`: tarefas, projetos, kanban, lar, filmes

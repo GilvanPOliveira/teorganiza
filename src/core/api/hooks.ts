@@ -42,11 +42,13 @@ export function useCount<T>(collection: string, query?: Query<T>): number {
 }
 
 export interface CollectionWriter<T> {
-  /** Pass only `data` — the core fills in the whole envelope. */
-  create: (data: T) => Promise<string>
+  /** Pass only `data` (and optionally tag ids) — the core fills in the whole envelope. */
+  create: (data: T, tags?: string[]) => Promise<string>
   update: (id: string, patch: Partial<T>) => Promise<void>
   /** Writes a tombstone. Nothing is ever physically removed. */
   remove: (id: string) => Promise<void>
+  /** Replaces the record's tags with these tag ids. */
+  setTags: (id: string, tags: string[]) => Promise<void>
 }
 
 export function useCollection<T>(collection: string): CollectionWriter<T> {
@@ -56,11 +58,52 @@ export function useCollection<T>(collection: string): CollectionWriter<T> {
 
   return useMemo<CollectionWriter<T>>(
     () => ({
-      create: (data) => repository.createRecord<T>(path, data, deviceId),
+      create: (data, tags) => repository.createRecord<T>(path, data, deviceId, tags),
       update: (id, patch) => repository.updateRecord<T>(path, id, patch, deviceId),
       remove: (id) => repository.removeRecord<T>(path, id, deviceId),
+      setTags: (id, tags) => repository.setRecordTags<T>(path, id, tags, deviceId),
     }),
     [path, deviceId],
+  )
+}
+
+/* ------------------------------------------------------------------ *
+ * Tags — shared by every module
+ * ------------------------------------------------------------------ */
+
+export interface Tag {
+  id: string
+  name: string
+  color: string
+}
+
+const TAGS_PATH = collectionPath('core', 'tags')
+
+/** Every live tag, by name. Works inside a module and in the shell. */
+export function useTags(): Tag[] {
+  const rows = useLiveQuery(
+    () => repository.readAll<{ name: string; color: string }>(TAGS_PATH, { sort: { field: 'name', dir: 'asc' } }),
+    [],
+  )
+  return useMemo(
+    () => (rows ?? []).map((row) => ({ id: row.id, name: row.data.name, color: row.data.color })),
+    [rows],
+  )
+}
+
+/** Creates a tag, or returns the existing one with the same name. */
+export function useCreateTag(): (name: string) => Promise<string> {
+  const { deviceId, preferences } = useAppState()
+  return useCallback(
+    async (name: string) => {
+      const clean = name.trim().replace(/^#/, '')
+      const existing = (await repository.readAll<{ name: string }>(TAGS_PATH)).find(
+        (row) => row.data.name.toLocaleLowerCase() === clean.toLocaleLowerCase(),
+      )
+      if (existing) return existing.id
+      return repository.createRecord(TAGS_PATH, { name: clean, color: preferences.accent }, deviceId)
+    },
+    [deviceId, preferences.accent],
   )
 }
 

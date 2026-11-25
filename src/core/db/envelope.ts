@@ -60,6 +60,7 @@ export function newEnvelope<T>(
     deviceId,
     rev: 1,
     schemaVersion,
+    tags: [],
     data,
   }
 }
@@ -105,4 +106,24 @@ export function restoreEnvelope<T>(previous: Envelope<T>, deviceId: string): Env
     updatedAt: new Date().toISOString(),
     deletedAt: null,
   }
+}
+
+/** Replaces the tag set. An ordinary edit to the merge. */
+export function retagEnvelope<T>(
+  previous: Envelope<T>,
+  tags: string[],
+  deviceId: string,
+): Envelope<T> {
+  return {
+    ...previous,
+    tags,
+    deviceId,
+    rev: previous.rev + 1,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+/** A tag list as a set: sorted, without duplicates, `[]` for missing. */
+export function normalizeTags(tags: readonly string[] | undefined): string[] {
+  return [...new Set(tags ?? [])].sort()
 }

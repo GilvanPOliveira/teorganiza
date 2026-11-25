@@ -25,7 +25,7 @@ export function Shell() {
   const nav = useShellNavigation()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const openPalette = useCallback(() => setPaletteOpen(true), [])
-  const shortcutTargets = useMemo(() => [...nav.all, nav.trash], [nav])
+  const shortcutTargets = useMemo(() => [...nav.all, nav.trash, nav.tags], [nav])
   useShortcuts(shortcutTargets, openPalette)
 
   const sidebar = preferences.navigation === 'sidebar'

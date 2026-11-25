@@ -824,6 +824,7 @@ h3 {
 
 .to-button {
   display: inline-flex;
+  text-decoration: none;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -1084,6 +1085,144 @@ h3 {
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Tags */
+
+.to-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.to-tag {
+  --to-tag: var(--to-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--to-tag) 16%, transparent);
+  color: color-mix(in srgb, var(--to-tag) 75%, var(--to-text));
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.6;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a.to-tag:hover {
+  background: color-mix(in srgb, var(--to-tag) 26%, transparent);
+}
+
+.to-tag[data-color='blue'] { --to-tag: #4f8cff; }
+.to-tag[data-color='violet'] { --to-tag: #8b5cf6; }
+.to-tag[data-color='green'] { --to-tag: #22c55e; }
+.to-tag[data-color='amber'] { --to-tag: #f59e0b; }
+.to-tag[data-color='rose'] { --to-tag: #f43f5e; }
+.to-tag[data-color='cyan'] { --to-tag: #06b6d4; }
+
+.to-tag--large {
+  padding: 2px 12px;
+  font-size: 1.25rem;
+}
+
+.to-tag__remove {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.to-tag__remove:hover {
+  opacity: 1;
+}
+
+.to-tagpicker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.to-tagpicker__box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid var(--to-border-strong);
+  border-radius: 10px;
+  background: var(--to-bg);
+}
+
+.to-tagpicker__box:focus-within {
+  border-color: var(--to-accent);
+}
+
+.to-tagpicker__input {
+  flex: 1;
+  min-width: 60px;
+  border: 0;
+  background: transparent;
+  color: var(--to-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  outline: none;
+}
+
+.to-tagpicker__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  margin: 4px 0 0;
+  padding: 4px;
+  border: 1px solid var(--to-border-strong);
+  border-radius: 10px;
+  background: var(--to-surface);
+  box-shadow: var(--to-shadow);
+  list-style: none;
+}
+
+.to-tagpicker__menu button {
+  display: flex;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--to-text);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.to-tagpicker__menu button:hover {
+  background: var(--to-surface-2);
+}
+
+.to-tagrow__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.to-trash__item--link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.to-trash__item--link:hover {
+  border-color: var(--to-border-strong);
 }
 
 /* Command palette */

@@ -104,10 +104,11 @@ Concluídas:
 3. Design system e shell novo: tema escuro padrão, claro e sistema, seis
    cores de destaque, dock ou barra lateral, Início com capa, Ctrl+K,
    atalhos G + letra, módulos ligáveis e lixeira
+4. Tags no envelope (`core/tags`), o `TagPicker`/`TagList` no `core/api` e a
+   página que junta tudo de uma tag
 
 **Próximas etapas, nessa ordem:**
 
-4. Tags no envelope (`core/tags`) e o seletor de tags no `core/api`
 5. Adaptador `disk-web`: pasta local escolhida pelo usuário
 6. Módulo `finance` completo, com importação de extrato
 7. `lists` · 8. `habits` · 9. `calendar` · 10. `notes` · 11. `health` ·

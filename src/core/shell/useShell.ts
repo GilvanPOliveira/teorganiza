@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { House, Settings, Trash2 } from 'lucide-react'
+import { Hash, House, Settings, Trash2 } from 'lucide-react'
 import { translate } from '@core/i18n/catalog'
 import { getModule, getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
@@ -20,6 +20,7 @@ export interface ShellNavigation {
   modules: NavTarget[]
   settings: NavTarget
   trash: NavTarget
+  tags: NavTarget
   /** Home, then modules, then settings — the order of the dock. */
   all: NavTarget[]
 }
@@ -33,13 +34,21 @@ export function useShellNavigation(): ShellNavigation {
     const modules = enabledModules(getModules(), disabledKey ? disabledKey.split(',') : [])
     const settingsLabel = t('nav.settings')
     const trashLabel = t('nav.trash')
+    const tagsLabel = t('nav.tags')
     const letters = assignShortcuts([
       ...modules.map((mod) => ({ id: mod.id, label: mod.name, preferred: mod.shortcut })),
       { id: 'settings', label: settingsLabel },
       { id: 'trash', label: trashLabel },
+      { id: 'tags', label: tagsLabel },
     ])
 
-    const home: NavTarget = { id: 'home', label: t('nav.home'), path: '/', icon: House, shortcut: HOME_SHORTCUT }
+    const home: NavTarget = {
+      id: 'home',
+      label: t('nav.home'),
+      path: '/',
+      icon: House,
+      shortcut: HOME_SHORTCUT,
+    }
     const moduleTargets = modules.map((mod) => ({
       id: mod.id,
       label: mod.name,
@@ -47,10 +56,18 @@ export function useShellNavigation(): ShellNavigation {
       icon: mod.icon,
       shortcut: letters.get(mod.id),
     }))
-    const settings: NavTarget = { id: 'settings', label: settingsLabel, path: '/settings', icon: Settings, shortcut: letters.get('settings') }
-    const trash: NavTarget = { id: 'trash', label: trashLabel, path: '/settings/trash', icon: Trash2, shortcut: letters.get('trash') }
+    const place = (id: string, label: string, path: string, icon: NavTarget['icon']): NavTarget => ({
+      id,
+      label,
+      path,
+      icon,
+      shortcut: letters.get(id),
+    })
+    const settings = place('settings', settingsLabel, '/settings', Settings)
+    const trash = place('trash', trashLabel, '/settings/trash', Trash2)
+    const tags = place('tags', tagsLabel, '/tags', Hash)
 
-    return { home, modules: moduleTargets, settings, trash, all: [home, ...moduleTargets, settings] }
+    return { home, modules: moduleTargets, settings, trash, tags, all: [home, ...moduleTargets, settings] }
   }, [t, disabledKey])
 }
 

@@ -63,6 +63,16 @@ describe('registry', () => {
     expect(() => registerModules([moduleFixture({ shortcut: 'fi' })])).toThrow(/single lowercase letter/)
   })
 
+  it('keeps the URLs of the shell out of module ids', () => {
+    expect(() => registerModules([moduleFixture({ id: 'tags' })])).toThrow(/reserved for the shell/)
+    expect(() => registerModules([moduleFixture({ id: 'settings' })])).toThrow(/reserved for the shell/)
+  })
+
+  it('provides the shared tags collection', () => {
+    registerModules([])
+    expect(getCollection('core/tags').moduleId).toBe('core')
+  })
+
   it('refuses an unknown collection instead of failing silently', () => {
     registerModules([moduleFixture()])
     expect(() => getCollection('demo/nope')).toThrow(/Unknown collection/)

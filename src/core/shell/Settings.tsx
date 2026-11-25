@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, Monitor, Moon, PanelBottom, PanelLeft, Sun, Trash2 } from 'lucide-react'
+import { ChevronRight, Hash, Monitor, Moon, PanelBottom, PanelLeft, Sun, Trash2 } from 'lucide-react'
 import { Card, Segmented, Switch } from '@core/api/ui'
 import { AVAILABLE_LOCALES } from '@core/i18n/catalog'
 import { getModules } from '@core/registry/registry'
@@ -113,6 +113,15 @@ export function Settings() {
       </Card>
 
       <StorageSettings />
+
+      <Link to="/tags" className="to-linkcard">
+        <Hash size={18} />
+        <span>
+          <strong>{t('tags.title')}</strong>
+          <span className="to-muted">{t('tags.lead')}</span>
+        </span>
+        <ChevronRight size={18} />
+      </Link>
 
       <Link to="/settings/trash" className="to-linkcard">
         <Trash2 size={18} />

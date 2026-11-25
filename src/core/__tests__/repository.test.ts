@@ -9,6 +9,7 @@ import {
   readOne,
   removeRecord,
   restoreRecord,
+  setRecordTags,
   updateRecord,
 } from '@core/db/repository'
 import { registerModules } from '@core/registry/registry'
@@ -122,6 +123,25 @@ describe('repository', () => {
     // Restoring a live record changes nothing.
     await restoreRecord(PATH, id, DEVICE)
     expect((await readOne<Note>(PATH, id))!.rev).toBe(3)
+  })
+
+  it('stores tags as a set in the envelope and filters by them', async () => {
+    const a = await createRecord<Note>(PATH, { title: 'a', pinned: false }, DEVICE, ['t2', 't1', 't1'])
+    const b = await createRecord<Note>(PATH, { title: 'b', pinned: false }, DEVICE)
+
+    expect((await readOne<Note>(PATH, a))!.tags).toEqual(['t1', 't2'])
+    expect((await readOne<Note>(PATH, b))!.tags).toEqual([])
+    expect((await readAll<Note>(PATH, { tag: 't1' })).map((r) => r.id)).toEqual([a])
+
+    await setRecordTags(PATH, b, ['t1'], DEVICE)
+    const retagged = await readOne<Note>(PATH, b)
+    expect(retagged!.tags).toEqual(['t1'])
+    expect(retagged!.rev).toBe(2)
+    expect(await readAll<Note>(PATH, { tag: 't1' })).toHaveLength(2)
+
+    // The same set again is not an edit.
+    await setRecordTags(PATH, b, ['t1', 't1'], DEVICE)
+    expect((await readOne<Note>(PATH, b))!.rev).toBe(2)
   })
 
   it('filters, sorts and limits', async () => {

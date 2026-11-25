@@ -39,10 +39,13 @@ export function translate(
   key: string,
   vars?: Record<string, unknown>,
 ): string {
-  const template =
-    catalog.get(locale)?.get(namespace)?.[key] ??
-    catalog.get(DEFAULT_LOCALE)?.get(namespace)?.[key] ??
-    key
+  const lookup = (k: string) =>
+    catalog.get(locale)?.get(namespace)?.[k] ?? catalog.get(DEFAULT_LOCALE)?.get(namespace)?.[k]
+
+  // Singular, when the catalog has one: "{count} itens" / "1 item".
+  // pt-BR and en only distinguish one from the rest.
+  const singular = vars?.count === 1 ? lookup(`${key}.one`) : undefined
+  const template = singular ?? lookup(key) ?? key
 
   if (!vars) return template
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CornerDownLeft, Moon, PanelBottom, PanelLeft, Plus, Search, Sun } from 'lucide-react'
+import { CornerDownLeft, Hash, Moon, PanelBottom, PanelLeft, Plus, Search, Sun } from 'lucide-react'
+import { useTags } from '@core/api/hooks'
 import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ModuleIcon } from './ModuleIcon'
@@ -18,6 +19,7 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
   const t = useCoreT()
   const navigate = useNavigate()
   const { theme, preferences, setPreferences } = useAppState()
+  const tags = useTags()
   const [query, setQuery] = useState('')
   const [cursor, setCursor] = useState(0)
   const listRef = useRef<HTMLUListElement>(null)
@@ -43,7 +45,7 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
         })),
       )
 
-    const places: Item[] = [nav.home, ...nav.modules, nav.settings, nav.trash].map((target) => ({
+    const places: Item[] = [nav.home, ...nav.modules, nav.tags, nav.settings, nav.trash].map((target) => ({
       id: `goto/${target.id}`,
       group: 'goto' as const,
       label: target.label,
@@ -78,8 +80,18 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
       },
     ]
 
-    return [...actions, ...places, ...app]
-  }, [nav, navigate, onClose, t, theme, preferences.navigation, setPreferences])
+    const tagged: Item[] = tags.map((tag) => ({
+      id: `tag/${tag.id}`,
+      group: 'goto' as const,
+      label: `#${tag.name}`,
+      hint: t('nav.tags'),
+      keywords: ['tag', 'etiqueta'],
+      icon: <Hash size={16} />,
+      run: go(`/tags/${tag.id}`),
+    }))
+
+    return [...actions, ...places, ...tagged, ...app]
+  }, [nav, navigate, onClose, t, theme, preferences.navigation, setPreferences, tags])
 
   const visible = filterPalette(items, query)
   const active = Math.min(cursor, Math.max(visible.length - 1, 0))
