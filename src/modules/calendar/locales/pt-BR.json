@@ -1,0 +1,21 @@
+{
+  "event.allDay": "Dia todo",
+  "event.reminder": "Lembrete",
+  "event.remind": "Virar lembrete",
+  "event.unremind": "Tirar dos lembretes",
+  "event.remove": "Apagar",
+  "event.placeholder": "Novo evento neste dia",
+  "event.time": "Horário",
+  "event.date": "Data",
+  "month.previous": "Mês anterior",
+  "month.next": "Próximo mês",
+  "month.today": "Hoje",
+  "day.empty": "Nada marcado para este dia.",
+  "reminders.note": "Os lembretes aparecem aqui e na agenda. O aviso fora do app chega quando as notificações forem feitas.",
+  "reminders.placeholder": "Lembrar de… — ex.: tomar o remédio",
+  "reminders.empty.title": "Nenhum lembrete pela frente",
+  "reminders.empty.body": "Crie um acima, ou toque no sino de um evento da agenda.",
+  "reminders.past": "Passados",
+  "widget.today.caption": "{count} compromissos hoje",
+  "widget.today.caption.one": "1 compromisso hoje"
+}

@@ -17,6 +17,7 @@
 
 export type {
   AppContextValue,
+  AreaDef,
   CollectionDef,
   CommandDef,
   IconProps,
@@ -52,6 +53,7 @@ export {
   useRecord,
   useRecords,
   useSettings,
+  useCreateTag,
   useT,
   useTags,
 } from './hooks'
@@ -60,4 +62,21 @@ export type { CollectionWriter, Formatter, Tag } from './hooks'
 
 export { TagList, TagPicker } from './tags'
 
-export { Button, Card, EmptyState, Field, Segmented, Switch, Table, Toolbar } from './ui'
+export {
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  EmptyState,
+  Field,
+  Progress,
+  QuickAdd,
+  Segmented,
+  Select,
+  Stat,
+  StatGrid,
+  Switch,
+  Table,
+  TextArea,
+  Toolbar,
+} from './ui'

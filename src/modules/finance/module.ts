@@ -1,6 +1,7 @@
-import { Wallet } from 'lucide-react'
+import { Receipt, Wallet } from 'lucide-react'
 import { defineModule } from '@core/api'
-import { categorySchema, transactionSchema, type Category, type Transaction } from './schema'
+import { ChargesScreen } from './charges'
+import { categorySchema, chargeSchema, transactionSchema, type Category, type Charge, type Transaction } from './schema'
 import { TransactionList, TransactionListActions } from './screens'
 import { MonthBalance } from './widgets'
 import en from './locales/en.json'
@@ -12,7 +13,6 @@ export default defineModule({
   apiVersion: 1,
   version: '0.1.0',
   icon: Wallet,
-  shortcut: 'f',
 
   collections: [
     {
@@ -35,6 +35,16 @@ export default defineModule({
       describe: (record) => (record.data as Category).name,
       indexes: ['name'],
     },
+    {
+      name: 'charges',
+      schema: chargeSchema,
+      schemaVersion: 1,
+      describe: (record) => {
+        const { description, client, amount } = record.data as Charge
+        return `${description}${client ? ` · ${client}` : ''} · ${(amount / 100).toFixed(2)}`
+      },
+      indexes: ['due', 'paid'],
+    },
   ],
 
   routes: [
@@ -43,6 +53,12 @@ export default defineModule({
       element: TransactionList,
       label: 'Lançamentos',
       actions: TransactionListActions,
+      area: { id: 'ledger', label: 'Finanças', icon: Wallet, order: 160, shortcut: 'f' },
+    },
+    {
+      path: 'charges',
+      element: ChargesScreen,
+      area: { id: 'charges', label: 'Cobranças', icon: Receipt, order: 210 },
     },
   ],
 
@@ -53,6 +69,7 @@ export default defineModule({
       path: '',
       keywords: ['gasto', 'despesa', 'receita', 'dinheiro'],
     },
+    { id: 'new-charge', label: 'Nova cobrança', path: 'charges', keywords: ['cobrança', 'receber', 'cliente'] },
   ],
 
   widgets: [{ id: 'month-balance', label: 'Saldo do mês', size: 'sm', element: MonthBalance }],

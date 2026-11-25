@@ -1,0 +1,17 @@
+{
+  "stats.today": "Foco hoje",
+  "stats.week": "Últimos 7 dias",
+  "stats.sessions": "Sessões",
+  "stats.minutes": "{count} min",
+  "stats.hours": "{count} h",
+  "timer.length": "Duração",
+  "timer.minutes": "{count} min",
+  "timer.label": "No que você vai focar?",
+  "timer.start": "Começar",
+  "timer.resume": "Continuar",
+  "timer.pause": "Pausar",
+  "timer.reset": "Zerar",
+  "timer.note": "A sessão é salva sozinha quando o tempo acaba.",
+  "history.title": "Sessões recentes",
+  "history.untitled": "Foco"
+}

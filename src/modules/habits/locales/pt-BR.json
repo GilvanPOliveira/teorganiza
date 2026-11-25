@@ -1,0 +1,19 @@
+{
+  "habit.placeholder": "Novo hábito — ex.: ler 20 páginas",
+  "habit.today": "Marcar {name} hoje",
+  "habit.month": "{count} dias nos últimos 28",
+  "habit.month.one": "1 dia nos últimos 28",
+  "habit.done": "feito",
+  "habit.notDone": "não feito",
+  "habit.streak": "Sequência atual",
+  "habit.remove": "Apagar hábito",
+  "stats.today": "Feitos hoje",
+  "stats.best": "Melhor sequência atual",
+  "stats.days": "{count} dias",
+  "stats.days.one": "1 dia",
+  "stats.marks": "Marcações",
+  "stats.marksHint": "nos últimos 28 dias",
+  "empty.title": "Nenhum hábito ainda",
+  "empty.body": "Comece com um só. A grade mostra os últimos 28 dias, e a chama, a sequência.",
+  "widget.caption": "hábitos feitos hoje"
+}

@@ -83,3 +83,59 @@ export function greetingKey(hour: number): 'home.morning' | 'home.afternoon' | '
   if (hour >= 12 && hour < 18) return 'home.afternoon'
   return 'home.evening'
 }
+
+/** One entry of the navigation that belongs to a module. */
+export interface ModuleArea {
+  /** The module id for a single-area module, '<moduleId>/<areaId>' otherwise. */
+  id: string
+  moduleId: string
+  label: string
+  path: string
+  icon?: NavTarget['icon']
+  order: number
+  shortcut?: string
+}
+
+const DEFAULT_ORDER = 1000
+
+/**
+ * A module without areas is one entry, its root. A module with areas is
+ * as many entries as it declares, and its root is not one of them.
+ */
+export function moduleAreas(mod: Module): ModuleArea[] {
+  const declared = mod.routes.filter((route) => route.area)
+  if (declared.length === 0) {
+    return [
+      {
+        id: mod.id,
+        moduleId: mod.id,
+        label: mod.name,
+        path: `/${mod.id}`,
+        icon: mod.icon,
+        order: mod.order ?? DEFAULT_ORDER,
+        shortcut: mod.shortcut,
+      },
+    ]
+  }
+  return declared.map((route) => ({
+    id: `${mod.id}/${route.area!.id}`,
+    moduleId: mod.id,
+    label: route.area!.label,
+    path: `/${mod.id}/${route.path}`.replace(/\/$/, ''),
+    icon: route.area!.icon ?? mod.icon,
+    order: route.area!.order ?? mod.order ?? DEFAULT_ORDER,
+    shortcut: route.area!.shortcut,
+  }))
+}
+
+/**
+ * Every area of every module, minus the ones the user turned off, in
+ * navigation order. Turning a whole module off (its id in the list) hides
+ * all of its areas, which keeps preferences saved before areas existed.
+ */
+export function enabledAreas(modules: Module[], disabled: readonly string[]): ModuleArea[] {
+  return modules
+    .flatMap(moduleAreas)
+    .filter((area) => !disabled.includes(area.id) && !disabled.includes(area.moduleId))
+    .sort((a, b) => a.order - b.order)
+}

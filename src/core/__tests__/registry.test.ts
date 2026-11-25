@@ -73,6 +73,17 @@ describe('registry', () => {
     expect(getCollection('core/tags').moduleId).toBe('core')
   })
 
+  it('refuses two areas with the same id in one module', () => {
+    const area = { id: 'tasks', label: 'Tarefas' }
+    const twice = moduleFixture({
+      routes: [
+        { path: '', element: () => null, area },
+        { path: 'other', element: () => null, area },
+      ],
+    })
+    expect(() => registerModules([twice])).toThrow(/Duplicate area/)
+  })
+
   it('refuses an unknown collection instead of failing silently', () => {
     registerModules([moduleFixture()])
     expect(() => getCollection('demo/nope')).toThrow(/Unknown collection/)
