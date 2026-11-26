@@ -20,6 +20,10 @@ export type {
   AreaDef,
   CollectionDef,
   CommandDef,
+  DatedEntry,
+  ProgressEntry,
+  ProviderReader,
+  Providers,
   IconProps,
   Envelope,
   EventHandler,
@@ -56,14 +60,34 @@ export {
   useCreateTag,
   useT,
   useTags,
+  useDated,
+  useProgressSources,
+  useOpenHref,
 } from './hooks'
 
 export type { CollectionWriter, Formatter, Tag } from './hooks'
+export type { CollectedDated, CollectedProgress } from '@core/providers/collect'
 
 export { TagList, TagPicker } from './tags'
 
-export { Attachments, FileDrop, FileRows, formatSize, useAddFiles, useFiles } from './files'
-export type { StoredFile } from '@core/collections'
+export {
+  Attachments,
+  FileDrop,
+  FileRows,
+  fileCategory,
+  formatSize,
+  LinkAdd,
+  LinkRows,
+  normalizeUrl,
+  parseLink,
+  urlHost,
+  useAddFiles,
+  useBlobUrl,
+  useFiles,
+  useLinks,
+} from './files'
+export type { FileCategory } from './files'
+export type { StoredFile, StoredLink } from '@core/collections'
 
 export {
   Badge,

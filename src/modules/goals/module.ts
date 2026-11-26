@@ -32,5 +32,20 @@ export default defineModule({
 
   widgets: [{ id: 'progress', label: 'Metas', size: 'md', element: GoalsWidget }],
 
+  provides: {
+    /** Goal deadlines, on the agenda and in the day summary. */
+    dated: async (read, { from, to }) =>
+      (await read<Goal>('goals'))
+        .filter((goal) => goal.data.due && goal.data.due >= from && goal.data.due <= to)
+        .map((goal) => ({
+          id: goal.id,
+          date: goal.data.due!,
+          title: goal.data.title,
+          kind: 'Prazo da meta',
+          path: '',
+          done: !goal.data.source && goal.data.current >= goal.data.target,
+        })),
+  },
+
   locales: { 'pt-BR': ptBR },
 })

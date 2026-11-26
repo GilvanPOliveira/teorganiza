@@ -12,5 +12,12 @@
   "empty.title": "Nenhuma meta ainda",
   "empty.body": "Uma meta é um alvo, uma medida e, se quiser, um prazo.",
   "widget.caption": "{count} metas em andamento",
-  "widget.caption.one": "1 meta em andamento"
+  "widget.caption.one": "1 meta em andamento",
+  "goal.link": "Medir por",
+  "goal.manual": "Número que eu anoto",
+  "goal.project": "Projeto: {name}",
+  "goal.followsProject": "Acompanha o projeto {name}",
+  "goal.sourceGone": "O projeto ligado foi apagado",
+  "goal.tasks": "{done} de {total} tarefas feitas",
+  "goal.auto": "Avança sozinha conforme as tarefas do projeto"
 }

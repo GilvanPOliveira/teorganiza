@@ -2404,3 +2404,108 @@ a.to-tag:hover {
   flex-basis: 100%;
   padding: 4px 0 4px 32px;
 }
+
+/* Agenda: entries other areas put on a day, apart from the agenda's own events. */
+.to-calendar__event--linked {
+  background: transparent;
+  border: 1px dashed var(--to-border-strong);
+}
+.to-calendar__event.is-done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.to-calendar__more {
+  font-size: 11px;
+  color: var(--to-text-2, inherit);
+}
+.to-inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.to-goal__source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  align-self: flex-start;
+}
+
+/* Shelf: star ratings. */
+.to-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+.to-stars__star {
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--to-text-2, inherit);
+  opacity: 0.45;
+  cursor: pointer;
+}
+.to-stars__star.is-on {
+  color: var(--to-warning, #e5b45a);
+  opacity: 1;
+}
+.to-stars__star.is-on svg {
+  fill: currentColor;
+}
+
+/* Filter chips, e.g. exam kinds. */
+.to-chip {
+  padding: 4px 12px;
+  border: 1px solid var(--to-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.to-chip.is-active {
+  border-color: var(--to-accent);
+  background: var(--to-accent-soft);
+}
+
+/* Arquivos: the player and the link field. */
+.to-player {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--to-border-strong);
+  border-radius: var(--to-radius-lg);
+  background: var(--to-surface);
+  position: sticky;
+  top: 8px;
+  z-index: 3;
+}
+.to-player__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.to-player__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.to-player__media {
+  width: 100%;
+}
+.to-player__video {
+  max-height: 60vh;
+  border-radius: var(--to-radius-md, 10px);
+  background: #000;
+}
+.to-linkadd {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  min-width: 240px;
+}
+.to-linkadd .to-field__input {
+  flex: 1;
+}

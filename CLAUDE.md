@@ -136,6 +136,26 @@ Concluídas:
      `TeOrganiza/_files/<hash>` depois dos registros. Qualquer módulo
      anexa com `<Attachments collection id />`; hoje: notas, tarefas,
      clientes e lançamentos.
+9. Módulos vivos, ligados pelo núcleo:
+   - Contrato `provides` no `Module`: `dated` (o que acontece num dia) e
+     `progress` (o que uma meta pode seguir). O núcleo chama cada módulo
+     com um leitor limitado às coleções dele (`core/providers/collect`) e
+     entrega o resultado por `useDated` e `useProgressSources`. Nenhum
+     módulo lê dados de outro.
+   - Projetos: lista com prazo; abrir um projeto abre o quadro dele
+     (A fazer · Fazendo · Feito). Metas podem seguir um projeto. A Agenda
+     mostra tarefas com data e prazos de projetos e metas.
+   - Início: Hoje (atrasados, hoje, próximos 7 dias, o que foi registrado),
+     Semana (a revisão) e Painel (widgets). Avisos do navegador enquanto o
+     app está aberto.
+   - Tarefas com seletor Todas/Trabalho/Lar. Estante com Livros, Filmes e
+     séries e Música, nos estados Quero · Em andamento · Concluído · Tenho.
+   - Saúde: Dia · Hábitos · Treino · Refeições · Exames (com laudo anexo).
+   - Agenda: Calendário · Lembretes · Notas · Diário.
+   - Arquivos como área: filtros, player de áudio e vídeo, e links
+     (`core/links`) que se anexam a qualquer registro.
+   - `src/migrations.ts` move dados entre módulos quando a forma muda
+     (filmes da lista antiga para a Estante, links para Arquivos).
 
 **Próximas etapas — aprofundar o que já existe, nessa ordem:**
 

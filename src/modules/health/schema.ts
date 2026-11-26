@@ -31,3 +31,19 @@ export const doseSchema = z.object({
 export type Day = z.infer<typeof daySchema>
 export type Medicine = z.infer<typeof medicineSchema>
 export type Dose = z.infer<typeof doseSchema>
+
+/**
+ * An exam or appointment: when, what, where and what it found. The report
+ * itself (a PDF, an image) is attached as a file to the record.
+ */
+export const examSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  name: z.string().trim().min(1),
+  kind: z.enum(['lab', 'image', 'consult', 'other']),
+  place: z.string(),
+  result: z.string(),
+  /** Follow-up date, when there is one. */
+  next: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+})
+
+export type Exam = z.infer<typeof examSchema>

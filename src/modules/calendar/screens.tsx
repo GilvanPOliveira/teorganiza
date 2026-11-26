@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Bell, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Bell, Check, ChevronLeft, ChevronRight, ExternalLink, Paperclip, Trash2 } from 'lucide-react'
 import {
+  Attachments,
   Badge,
   Button,
   EmptyState,
@@ -9,9 +10,12 @@ import {
   toLocalISODate,
   useAppContext,
   useCollection,
+  useDated,
   useFormat,
+  useOpenHref,
   useRecords,
   useT,
+  type CollectedDated,
   type Envelope,
 } from '@core/api'
 import { monthGrid } from './month'
@@ -21,12 +25,32 @@ function byTime(a: Envelope<CalendarEvent>, b: Envelope<CalendarEvent>) {
   return `${a.data.date}${a.data.time ?? '00:00'}`.localeCompare(`${b.data.date}${b.data.time ?? '00:00'}`)
 }
 
+/** A task, deadline or anything else another area put on this day. Opens where it lives. */
+function LinkedRow({ entry }: { entry: CollectedDated }) {
+  const open = useOpenHref()
+  return (
+    <li className={`to-list__item${entry.done ? ' is-done' : ''}`}>
+      <button type="button" className="to-list__main to-rowbutton" onClick={() => open(entry.href)}>
+        <span className="to-list__title">
+          {entry.done && <Check size={13} aria-hidden />} {entry.title}
+        </span>
+        <span className="to-list__meta">
+          <Badge>{entry.kind}</Badge>
+          {entry.time && <span>{entry.time}</span>}
+        </span>
+      </button>
+      <ExternalLink size={13} className="to-muted" aria-hidden />
+    </li>
+  )
+}
+
 function EventRow({ event, showDate }: { event: Envelope<CalendarEvent>; showDate?: boolean }) {
   const t = useT()
   const format = useFormat()
   const { update, remove } = useCollection<CalendarEvent>('events')
+  const [filesOpen, setFilesOpen] = useState(false)
   return (
-    <li className="to-list__item">
+    <li className="to-list__item to-list__item--wrap">
       <div className="to-list__main">
         <span className="to-list__title">{event.data.title}</span>
         <span className="to-list__meta">
@@ -41,6 +65,16 @@ function EventRow({ event, showDate }: { event: Envelope<CalendarEvent>; showDat
         </span>
       </div>
       <div className="to-list__actions">
+        <button
+          type="button"
+          className={`to-iconbutton to-iconbutton--small${filesOpen ? ' active' : ''}`}
+          aria-label={t('event.files')}
+          title={t('event.files')}
+          aria-expanded={filesOpen}
+          onClick={() => setFilesOpen((open) => !open)}
+        >
+          <Paperclip size={14} />
+        </button>
         <button
           type="button"
           className="to-iconbutton to-iconbutton--small"
@@ -58,6 +92,11 @@ function EventRow({ event, showDate }: { event: Envelope<CalendarEvent>; showDat
           <Trash2 size={14} />
         </button>
       </div>
+      {filesOpen && (
+        <div className="to-list__extra">
+          <Attachments collection="events" id={event.id} />
+        </div>
+      )}
     </li>
   )
 }
@@ -91,6 +130,13 @@ export function CalendarScreen() {
     }
     return map
   }, [events])
+  // What the other areas put on these days: tasks, project and goal deadlines.
+  const others = useDated(grid[0].date, grid[grid.length - 1].date, ['calendar'])
+  const othersByDay = useMemo(() => {
+    const map = new Map<string, CollectedDated[]>()
+    for (const entry of others) map.set(entry.date, [...(map.get(entry.date) ?? []), entry])
+    return map
+  }, [others])
 
   const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
     new Date(cursor.year, cursor.month, 1),
@@ -105,6 +151,7 @@ export function CalendarScreen() {
       return { year: next.getFullYear(), month: next.getMonth() }
     })
   const dayEvents = byDay.get(selected) ?? []
+  const dayOthers = othersByDay.get(selected) ?? []
   const selectedLabel = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     day: 'numeric',
@@ -159,6 +206,16 @@ export function CalendarScreen() {
                 {event.data.title}
               </span>
             ))}
+            {(othersByDay.get(date) ?? []).slice(0, Math.max(0, 3 - (byDay.get(date)?.length ?? 0))).map((entry) => (
+              <span key={entry.key} className={`to-calendar__event to-calendar__event--linked${entry.done ? ' is-done' : ''}`}>
+                {entry.title}
+              </span>
+            ))}
+            {(byDay.get(date)?.length ?? 0) + (othersByDay.get(date)?.length ?? 0) > 3 && (
+              <span className="to-calendar__more">
+                +{(byDay.get(date)?.length ?? 0) + (othersByDay.get(date)?.length ?? 0) - 3}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -176,12 +233,15 @@ export function CalendarScreen() {
           onChange={(event) => setTime(event.target.value)}
         />
       </QuickAdd>
-      {dayEvents.length === 0 ? (
+      {dayEvents.length === 0 && dayOthers.length === 0 ? (
         <p className="to-muted">{t('day.empty')}</p>
       ) : (
         <ul className="to-list">
           {dayEvents.map((event) => (
             <EventRow key={event.id} event={event} />
+          ))}
+          {dayOthers.map((entry) => (
+            <LinkedRow key={entry.key} entry={entry} />
           ))}
         </ul>
       )}

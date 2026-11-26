@@ -147,6 +147,25 @@ pode ser de outro módulo. Nenhum dado muda de lugar; só a navegação agrupa.
 - **Arquivos** são anexos em qualquer registro, e todos aparecem juntos na aba Arquivos.
 - **Nex** é o assistente do Ctrl+K e da Revisão, com a chave da Anthropic do próprio usuário.
 
+**Agora, módulos vivos:**
+
+| Área | Conteúdo |
+|---|---|
+| Início | Hoje · Semana · Painel |
+| Tarefas | Seletor Todas/Trabalho/Lar · Foco |
+| Projetos | Lista de projetos → quadro de cada um |
+| Agenda | Calendário (com tarefas e prazos das outras áreas) · Lembretes · Notas · Diário |
+| Metas | Metas manuais ou que seguem um projeto |
+| Saúde | Dia · Hábitos · Treino · Refeições · Exames |
+| Estudos | Cursos e cartões · Revisar |
+| Estante | Livros · Filmes e séries · Música, cada um com Quero · Em andamento · Concluído · Tenho |
+| Finanças | Lançamentos · Cobranças · Clientes |
+| Arquivos | Documentos · Exames · Imagens · Áudio · Vídeo · Links, com player |
+
+As áreas se falam pelo contrato `provides` (`dated` e `progress`), sempre
+pelo núcleo: um projeto alimenta uma meta e a agenda, um exame põe o
+retorno na agenda, e o Início junta tudo no Hoje.
+
 São primeiras versões: guardam e mostram os dados, sem a profundidade do
 NEXO. Notícias, Arquivos e Nex são prévias que explicam o motivo de não
 funcionarem ainda. Os textos dos módulos novos existem só em pt-BR.

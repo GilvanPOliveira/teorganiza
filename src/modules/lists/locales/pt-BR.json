@@ -13,7 +13,7 @@
   "when.today": "Hoje",
   "projects.placeholder": "Novo projeto",
   "projects.empty.title": "Nenhum projeto ainda",
-  "projects.empty.body": "Um projeto junta tarefas e mostra o progresso até o fim.",
+  "projects.empty.body": "Crie um projeto, abra e execute pelo quadro: A fazer, Fazendo, Feito. O progresso aparece nas Metas e o prazo na Agenda.",
   "projects.progress": "{done} de {total} tarefas",
   "projects.missing": "Projeto não encontrado",
   "projects.back": "Projetos",
@@ -22,7 +22,6 @@
   "status.todo": "A fazer",
   "status.doing": "Fazendo",
   "status.done": "Feito",
-  "kanban.hint": "As tarefas de todos os projetos aparecem aqui; mova com as setas.",
   "kanban.back": "Voltar uma coluna",
   "kanban.forward": "Avançar uma coluna",
   "kind.work": "Trabalho",
@@ -40,5 +39,12 @@
   "kind.media.done": "Assistidos",
   "widget.today.caption": "{count} tarefas para hoje ou atrasadas",
   "widget.today.caption.one": "1 tarefa para hoje ou atrasada",
-  "item.files": "Anexos"
+  "item.files": "Anexos",
+  "projects.deadline": "Prazo",
+  "projects.doing": "{count} em andamento",
+  "projects.doing.one": "1 em andamento",
+  "project.empty.body": "Adicione as tarefas acima. Elas entram em A fazer; mova pelas colunas com as setas até Feito.",
+  "tasks.scope": "Quais tarefas",
+  "tasks.scope.all": "Todas",
+  "project.files": "Arquivos e links do projeto"
 }

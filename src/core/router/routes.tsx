@@ -4,7 +4,6 @@ import { getModules } from '@core/registry/registry'
 import { ModuleScope } from '@core/runtime/module-context'
 import { Dashboard } from '@core/shell/Dashboard'
 import { Settings } from '@core/shell/Settings'
-import { Review } from '@core/shell/Review'
 import { Shell } from '@core/shell/Shell'
 import { TagPage, TagsPage } from '@core/shell/Tags'
 import { Trash } from '@core/shell/Trash'
@@ -33,9 +32,9 @@ export function buildRouter() {
         { path: 'settings', element: <Settings /> },
         { path: 'settings/trash', element: <Trash /> },
         { path: 'tags', element: <TagsPage /> },
-        { path: 'review', element: <Review /> },
+        { path: 'review', element: <Navigate to="/?ver=semana" replace /> },
         // Old addresses, kept so saved links still land somewhere useful.
-        { path: 'metrics', element: <Navigate to="/review" replace /> },
+        { path: 'metrics', element: <Navigate to="/?ver=semana" replace /> },
         { path: 'previews/*', element: <Navigate to="/" replace /> },
         { path: 'tags/:tagId', element: <TagPage /> },
         ...moduleRoutes,

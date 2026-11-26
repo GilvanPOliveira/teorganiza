@@ -80,6 +80,21 @@ export const fileSchema = z.object({
 
 export type StoredFile = z.infer<typeof fileSchema>
 
+/**
+ * A link kept in Arquivos: an article, a video, a page. Loose, to read
+ * later, or attached to any record (a project, a note, an event). The app
+ * never fetches it.
+ */
+export const savedLinkSchema = z.object({
+  url: z.string().trim().min(1),
+  title: z.string(),
+  note: z.string(),
+  read: z.boolean(),
+  attachedTo: z.object({ path: z.string(), id: z.string() }).nullable(),
+})
+
+export type StoredLink = z.infer<typeof savedLinkSchema>
+
 export const coreCollections: AnyCollectionDef[] = [
   {
     name: 'dashboard',
@@ -107,6 +122,13 @@ export const coreCollections: AnyCollectionDef[] = [
     schemaVersion: 1,
     describe: (record) => `${record.data.name} (${Math.max(1, Math.round(record.data.size / 1024))} KB)`,
     indexes: ['hash'],
+  },
+  {
+    name: 'links',
+    schema: savedLinkSchema,
+    schemaVersion: 1,
+    describe: (record) => record.data.title || record.data.url,
+    indexes: ['read'],
   },
   {
     name: 'tags',

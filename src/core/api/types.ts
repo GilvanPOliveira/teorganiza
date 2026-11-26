@@ -139,6 +139,41 @@ export interface AreaDef {
   tabLabel?: string
 }
 
+/** Reads one of the providing module's own collections, tombstones left out. */
+export type ProviderReader = <T>(collection: string) => Promise<Envelope<T>[]>
+
+/** Something that happens on a day: a task due, a deadline, an event, a dose. */
+export interface DatedEntry {
+  /** Unique within the module. */
+  id: string
+  /** 'YYYY-MM-DD'. */
+  date: string
+  /** 'HH:MM', when it has a time. */
+  time?: string | null
+  title: string
+  /** Short type label shown next to it: 'Tarefa', 'Prazo do projeto'. */
+  kind: string
+  /** Relative to the module, as in a route: '' or 'projects/abc'. */
+  path: string
+  done?: boolean
+}
+
+/** Something with measurable progress, that a goal can follow. */
+export interface ProgressEntry {
+  id: string
+  label: string
+  done: number
+  total: number
+  /** Relative to the module. */
+  path: string
+  due?: string | null
+}
+
+export interface Providers {
+  dated?: (read: ProviderReader, range: { from: string; to: string }) => Promise<DatedEntry[]>
+  progress?: (read: ProviderReader) => Promise<ProgressEntry[]>
+}
+
 export type WidgetSize = 'sm' | 'md' | 'lg'
 
 export interface WidgetDef {
@@ -210,6 +245,14 @@ export interface Module {
   widgets?: WidgetDef[]
   commands?: CommandDef[]
   settings?: ZodType<any>
+
+  /**
+   * What this module offers the rest of the app. The core calls these with
+   * a reader limited to the module's own collections and hands the result
+   * to whoever asks (the agenda, goals, the day summary). That is how
+   * modules connect without one ever reading another's data.
+   */
+  provides?: Providers
 
   /** Event names this module emits, without the module prefix. */
   emits?: string[]

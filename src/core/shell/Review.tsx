@@ -59,7 +59,7 @@ function ReviewForm({ initial, onSave }: { initial: WeeklyReview; onSave: (r: We
   )
 }
 
-export function Review() {
+export function Review({ embedded = false }: { embedded?: boolean }) {
   const t = useCoreT()
   const week = weekStart()
   const reviews = useCoreRecords<WeeklyReview>('reviews', { where: { week } })
@@ -75,7 +75,7 @@ export function Review() {
 
   return (
     <div className="to-settings">
-      <h1 className="to-settings__title">{t('nav.review')}</h1>
+      {!embedded && <h1 className="to-settings__title">{t('nav.review')}</h1>}
       <p className="to-muted">{t('review.lead')}</p>
       <div className="to-toolbar">
         <Button onClick={() => openNex(t('nex.review.prompt'))}>

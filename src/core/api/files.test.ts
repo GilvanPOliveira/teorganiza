@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { hostOf, normalizeUrl, parseLink } from './links'
+import { fileCategory, normalizeUrl, parseLink, urlHost } from './files'
 
-describe('saved links', () => {
+describe('links', () => {
   it('adds https to a bare address and keeps full ones', () => {
     expect(normalizeUrl('exemplo.com/artigo')).toBe('https://exemplo.com/artigo')
     expect(normalizeUrl('http://a.b/c')).toBe('http://a.b/c')
@@ -14,6 +14,16 @@ describe('saved links', () => {
   })
 
   it('shows the host without www', () => {
-    expect(hostOf('https://www.site.com/a')).toBe('site.com')
+    expect(urlHost('https://www.site.com/a')).toBe('site.com')
+  })
+})
+
+describe('file categories', () => {
+  it('reads the type first and the extension when the type is missing', () => {
+    expect(fileCategory({ type: 'audio/mpeg', name: 'x' })).toBe('audio')
+    expect(fileCategory({ type: '', name: 'Filme.MKV' })).toBe('video')
+    expect(fileCategory({ type: 'application/pdf', name: 'laudo' })).toBe('document')
+    expect(fileCategory({ type: '', name: 'foto.heic' })).toBe('image')
+    expect(fileCategory({ type: 'application/zip', name: 'a.zip' })).toBe('other')
   })
 })

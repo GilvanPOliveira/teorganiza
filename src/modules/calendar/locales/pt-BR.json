@@ -17,5 +17,6 @@
   "reminders.empty.body": "Crie um acima, ou toque no sino de um evento da agenda.",
   "reminders.past": "Passados",
   "widget.today.caption": "{count} compromissos hoje",
-  "widget.today.caption.one": "1 compromisso hoje"
+  "widget.today.caption.one": "1 compromisso hoje",
+  "event.files": "Arquivos e links"
 }
