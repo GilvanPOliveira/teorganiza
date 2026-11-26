@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Paperclip, Trash2 } from 'lucide-react'
 import {
   Attachments,
@@ -176,22 +176,38 @@ export function TasksScreen() {
 }
 
 /* ------------------------------------------------------------------ *
- * Projetos
+ * Projetos: a list to create them, and a board inside each one
  * ------------------------------------------------------------------ */
 
 export function ProjectsScreen() {
   const t = useT()
+  const format = useFormat()
   const navigate = useNavigate()
   const lists = useRecords<List>('lists', { where: { kind: 'project' } })
   const items = useRecords<Item>('items')
   const { create } = useCollection<List>('lists')
+  const [due, setDue] = useState('')
+  const today = toLocalISODate()
 
   return (
     <div className="to-stack">
       <QuickAdd
         placeholder={t('projects.placeholder')}
-        onAdd={(name) => void create({ name, kind: 'project', archived: false })}
-      />
+        onAdd={async (name) => {
+          const id = await create({ name, kind: 'project', archived: false, due: due || null })
+          setDue('')
+          navigate(`projects/${id}`)
+        }}
+      >
+        <input
+          type="date"
+          className="to-field__input"
+          value={due}
+          aria-label={t('projects.deadline')}
+          title={t('projects.deadline')}
+          onChange={(e) => setDue(e.target.value)}
+        />
+      </QuickAdd>
       {lists.length === 0 ? (
         <EmptyState title={t('projects.empty.title')} body={t('projects.empty.body')} />
       ) : (
@@ -199,6 +215,8 @@ export function ProjectsScreen() {
           {lists.map((list) => {
             const mine = items.filter((item) => item.data.listId === list.id)
             const done = mine.filter((item) => item.data.done).length
+            const doing = mine.filter((item) => item.data.status === 'doing').length
+            const late = Boolean(list.data.due && list.data.due < today && done < mine.length)
             return (
               <button
                 key={list.id}
@@ -206,12 +224,16 @@ export function ProjectsScreen() {
                 className="to-tile to-tile--button"
                 onClick={() => navigate(`projects/${list.id}`)}
               >
-                <h3 className="to-tile__title">{list.data.name}</h3>
+                <span className="to-tile__row">
+                  <h3 className="to-tile__title">{list.data.name}</h3>
+                  {list.data.due && <Badge tone={late ? 'negative' : undefined}>{format.date(list.data.due)}</Badge>}
+                </span>
                 <Progress value={done} max={Math.max(mine.length, 1)} label={list.data.name} />
                 <span className="to-tile__row">
                   <span>{t('projects.progress', { done, total: mine.length })}</span>
                   <span>{mine.length ? Math.round((done / mine.length) * 100) : 0}%</span>
                 </span>
+                {doing > 0 && <span className="to-muted">{t('projects.doing', { count: doing })}</span>}
               </button>
             )
           })}
@@ -221,15 +243,87 @@ export function ProjectsScreen() {
   )
 }
 
+/** The three columns. Cards move with the arrows. */
+function Board({ items }: { items: Envelope<Item>[] }) {
+  const t = useT()
+  const format = useFormat()
+  const actions = useItemActions()
+  const [filesFor, setFilesFor] = useState<string | null>(null)
+  return (
+    <div className="to-columns">
+      {STATUSES.map((status, index) => {
+        const column = items.filter((item) => item.data.status === status).sort(byDueThenCreated)
+        return (
+          <section key={status} className="to-column">
+            <h2 className="to-column__title">
+              <span>{t(`status.${status}`)}</span>
+              <Badge>{column.length}</Badge>
+            </h2>
+            {column.map((item) => (
+              <article key={item.id} className="to-column__card">
+                <span>{item.data.title}</span>
+                <span className="to-list__meta">
+                  {item.data.due && <Badge>{format.date(item.data.due)}</Badge>}
+                  <TagList ids={item.tags} />
+                </span>
+                <div className="to-column__moves">
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      className="to-iconbutton to-iconbutton--small"
+                      aria-label={t('kanban.back')}
+                      onClick={() => void actions.move(item, STATUSES[index - 1])}
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`to-iconbutton to-iconbutton--small${filesFor === item.id ? ' active' : ''}`}
+                    aria-label={t('item.files')}
+                    onClick={() => setFilesFor((open) => (open === item.id ? null : item.id))}
+                  >
+                    <Paperclip size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="to-iconbutton to-iconbutton--small"
+                    aria-label={t('item.remove')}
+                    onClick={() => void actions.remove(item)}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  {index < STATUSES.length - 1 && (
+                    <button
+                      type="button"
+                      className="to-iconbutton to-iconbutton--small"
+                      aria-label={t('kanban.forward')}
+                      onClick={() => void actions.move(item, STATUSES[index + 1])}
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  )}
+                </div>
+                {filesFor === item.id && <Attachments collection="items" id={item.id} />}
+              </article>
+            ))}
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Opening a project is opening its board: where it gets done. */
 export function ProjectScreen() {
   const t = useT()
   const navigate = useNavigate()
   const { projectId = '' } = useParams<{ projectId: string }>()
   const lists = useRecords<List>('lists')
   const project = lists.find((list) => list.id === projectId)
-  const items = useRecords<Item>('items', { where: { listId: projectId } }).sort(byDueThenCreated)
+  const items = useRecords<Item>('items', { where: { listId: projectId } })
   const add = useAddItem(projectId)
-  const { remove } = useCollection<List>('lists')
+  const { update, remove } = useCollection<List>('lists')
   const done = items.filter((item) => item.data.done).length
 
   if (!project) return <EmptyState title={t('projects.missing')} />
@@ -242,10 +336,26 @@ export function ProjectScreen() {
           {t('projects.back')}
         </Button>
       </div>
-      <h2 className="to-tile__title">{project.data.name}</h2>
+      <span className="to-tile__row">
+        <h2 className="to-tile__title">{project.data.name}</h2>
+        <label className="to-inline-field">
+          <span className="to-muted">{t('projects.deadline')}</span>
+          <input
+            type="date"
+            className="to-field__input"
+            value={project.data.due ?? ''}
+            onChange={(e) => void update(project.id, { due: e.target.value || null })}
+          />
+        </label>
+      </span>
       <Progress value={done} max={Math.max(items.length, 1)} label={project.data.name} />
+      <span className="to-muted">{t('projects.progress', { done, total: items.length })}</span>
       <QuickAdd placeholder={t('tasks.placeholder')} onAdd={add} />
-      {items.length === 0 ? <EmptyState title={t('project.empty')} /> : <ItemList items={items} />}
+      {items.length === 0 ? (
+        <EmptyState title={t('project.empty')} body={t('project.empty.body')} />
+      ) : (
+        <Board items={items} />
+      )}
       <div className="to-toolbar">
         <Button
           variant="danger"
@@ -262,58 +372,11 @@ export function ProjectScreen() {
   )
 }
 
-/* ------------------------------------------------------------------ *
- * Kanban
- * ------------------------------------------------------------------ */
-
-export function KanbanScreen() {
-  const t = useT()
-  const items = useRecords<Item>('items')
-  const projects = useRecords<List>('lists', { where: { kind: 'project' } })
-  const names = useListNames()
-  const actions = useItemActions()
-  const add = useAddItem(null)
-
-  return (
-    <div className="to-stack">
-      <QuickAdd placeholder={t('tasks.placeholder')} onAdd={add} />
-      {projects.length > 0 && <p className="to-muted">{t('kanban.hint')}</p>}
-      <div className="to-columns">
-        {STATUSES.map((status, index) => {
-          const column = items.filter((item) => item.data.status === status).sort(byDueThenCreated)
-          return (
-            <section key={status} className="to-column">
-              <h2 className="to-column__title">
-                <span>{t(`status.${status}`)}</span>
-                <Badge>{column.length}</Badge>
-              </h2>
-              {column.map((item) => (
-                <article key={item.id} className="to-column__card">
-                  <span>{item.data.title}</span>
-                  <span className="to-list__meta">
-                    {item.data.listId && names.get(item.data.listId)}
-                    <TagList ids={item.tags} />
-                  </span>
-                  <div className="to-column__moves">
-                    {index > 0 && (
-                      <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('kanban.back')} onClick={() => void actions.move(item, STATUSES[index - 1])}>
-                        <ChevronLeft size={14} />
-                      </button>
-                    )}
-                    {index < STATUSES.length - 1 && (
-                      <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('kanban.forward')} onClick={() => void actions.move(item, STATUSES[index + 1])}>
-                        <ChevronRight size={14} />
-                      </button>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </section>
-          )
-        })}
-      </div>
-    </div>
-  )
+/** The old board of every project at once now lives inside each project. */
+export function KanbanRedirect() {
+  const navigate = useNavigate()
+  useEffect(() => navigate('projects'), [navigate])
+  return null
 }
 
 /* ------------------------------------------------------------------ *
@@ -333,7 +396,7 @@ function KindScreen({ kind }: { kind: ListKind }) {
   // The area's list is created on the first item, so an unused area stays empty.
   const add = async (text: string) => {
     if (selected) return addTo(text)
-    const listId = await create({ name: t(`kind.${kind}`), kind, archived: false })
+    const listId = await create({ name: t(`kind.${kind}`), kind, archived: false, due: null })
     const parsed = parseTask(text)
     const tagIds = await Promise.all(parsed.tags.map((name) => createTag(name)))
     await createItem(

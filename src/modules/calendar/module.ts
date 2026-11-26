@@ -47,5 +47,20 @@ export default defineModule({
 
   widgets: [{ id: 'today', label: 'Agenda de hoje', size: 'sm', element: TodayAgenda }],
 
+  provides: {
+    /** Events and reminders, for the day summary. The agenda itself reads them directly. */
+    dated: async (read, { from, to }) =>
+      (await read<CalendarEvent>('events'))
+        .filter((event) => event.data.date >= from && event.data.date <= to)
+        .map((event) => ({
+          id: event.id,
+          date: event.data.date,
+          time: event.data.time,
+          title: event.data.title,
+          kind: event.data.remind ? 'Lembrete' : 'Evento',
+          path: event.data.remind ? 'reminders' : '',
+        })),
+  },
+
   locales: { 'pt-BR': ptBR },
 })

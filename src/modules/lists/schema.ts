@@ -9,6 +9,8 @@ export const listSchema = z.object({
   name: z.string().trim().min(1),
   kind: z.enum(['project', 'home', 'work', 'media', 'general']),
   archived: z.boolean(),
+  /** Deadline, for projects. Lists written before deadlines existed have none. */
+  due: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
 })
 
 export type List = z.infer<typeof listSchema>

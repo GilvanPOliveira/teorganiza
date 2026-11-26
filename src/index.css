@@ -2404,3 +2404,29 @@ a.to-tag:hover {
   flex-basis: 100%;
   padding: 4px 0 4px 32px;
 }
+
+/* Agenda: entries other areas put on a day, apart from the agenda's own events. */
+.to-calendar__event--linked {
+  background: transparent;
+  border: 1px dashed var(--to-border-strong);
+}
+.to-calendar__event.is-done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.to-calendar__more {
+  font-size: 11px;
+  color: var(--to-text-2, inherit);
+}
+.to-inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.to-goal__source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  align-self: flex-start;
+}

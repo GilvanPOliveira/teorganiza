@@ -20,6 +20,10 @@ export type {
   AreaDef,
   CollectionDef,
   CommandDef,
+  DatedEntry,
+  ProgressEntry,
+  ProviderReader,
+  Providers,
   IconProps,
   Envelope,
   EventHandler,
@@ -56,9 +60,13 @@ export {
   useCreateTag,
   useT,
   useTags,
+  useDated,
+  useProgressSources,
+  useOpenHref,
 } from './hooks'
 
 export type { CollectionWriter, Formatter, Tag } from './hooks'
+export type { CollectedDated, CollectedProgress } from '@core/providers/collect'
 
 export { TagList, TagPicker } from './tags'
 

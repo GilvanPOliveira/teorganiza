@@ -8,6 +8,7 @@ import { collectionPath } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { emitEvent, qualify } from '@core/runtime/events'
 import { useModuleId } from '@core/runtime/module-context'
+import { collectDated, collectProgress, type CollectedDated, type CollectedProgress } from '@core/providers/collect'
 import { parseDate } from './dates'
 
 /* ------------------------------------------------------------------ *
@@ -253,4 +254,34 @@ export function useNavigate(): (path: string) => void {
 
 export function useParams<T extends Record<string, string | undefined>>(): T {
   return useRouterParams() as T
+}
+
+/* ------------------------------------------------------------------ *
+ * Providers — what the modules offer each other, through the core
+ * ------------------------------------------------------------------ */
+
+const NO_DATED: CollectedDated[] = []
+const NO_PROGRESS: CollectedProgress[] = []
+
+/**
+ * Dated entries from every module in the range, live. `exclude` leaves
+ * modules out, typically the caller itself, which already has its own.
+ */
+export function useDated(from: string, to: string, exclude: string[] = []): CollectedDated[] {
+  const key = exclude.join(',')
+  return (
+    useLiveQuery(() => collectDated({ from, to }, { exclude: key ? key.split(',') : [] }), [from, to, key], NO_DATED) ??
+    NO_DATED
+  )
+}
+
+/** Everything a goal can follow: projects and anything else that measures progress. */
+export function useProgressSources(): CollectedProgress[] {
+  return useLiveQuery(() => collectProgress(), [], NO_PROGRESS) ?? NO_PROGRESS
+}
+
+/** Opens an entry another module offered (its `href` is already absolute). */
+export function useOpenHref(): (href: string) => void {
+  const navigate = useRouterNavigate()
+  return useCallback((href: string) => navigate(href), [navigate])
 }

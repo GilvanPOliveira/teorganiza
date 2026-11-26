@@ -1,7 +1,7 @@
-import { Briefcase, Clapperboard, FolderKanban, House, KanbanSquare, ListTodo } from 'lucide-react'
+import { Briefcase, Clapperboard, FolderKanban, House, ListTodo } from 'lucide-react'
 import { defineModule } from '@core/api'
 import { itemSchema, listSchema, type Item, type List } from './schema'
-import { HomeScreen, KanbanScreen, MediaScreen, ProjectScreen, ProjectsScreen, TasksScreen, WorkScreen } from './screens'
+import { HomeScreen, KanbanRedirect, MediaScreen, ProjectScreen, ProjectsScreen, TasksScreen, WorkScreen } from './screens'
 import { TodayTasks } from './widgets'
 import ptBR from './locales/pt-BR.json'
 
@@ -36,9 +36,10 @@ export default defineModule({
 
   routes: [
     { path: '', element: TasksScreen, area: { id: 'tasks', label: 'Tarefas', icon: ListTodo, order: 10, shortcut: 't', tabLabel: 'Todas' } },
-    { path: 'projects', element: ProjectsScreen, area: { id: 'projects', label: 'Projetos', icon: FolderKanban, order: 20, tabLabel: 'Lista' } },
+    { path: 'projects', element: ProjectsScreen, area: { id: 'projects', label: 'Projetos', icon: FolderKanban, order: 20 } },
     { path: 'projects/:projectId', element: ProjectScreen },
-    { path: 'kanban', element: KanbanScreen, area: { id: 'kanban', label: 'Kanban', icon: KanbanSquare, order: 30, within: 'lists/projects', tabLabel: 'Quadro' } },
+    // The board now lives inside each project; the old address goes to the list.
+    { path: 'kanban', element: KanbanRedirect },
     { path: 'work', element: WorkScreen, area: { id: 'work', label: 'Trabalho', icon: Briefcase, order: 60, within: 'lists/tasks' } },
     { path: 'home', element: HomeScreen, area: { id: 'home', label: 'Lar', icon: House, order: 80, within: 'lists/tasks' } },
     { path: 'media', element: MediaScreen, area: { id: 'media', label: 'Filmes e Séries', icon: Clapperboard, order: 190, within: 'reading/shelf' } },
@@ -50,6 +51,51 @@ export default defineModule({
   ],
 
   widgets: [{ id: 'today', label: 'Tarefas de hoje', size: 'sm', element: TodayTasks }],
+
+  provides: {
+    /** Tasks with a date, and project deadlines: what the agenda and the day summary show. */
+    dated: async (read, { from, to }) => {
+      const lists = await read<List>('lists')
+      const projects = new Map(lists.filter((l) => l.data.kind === 'project').map((l) => [l.id, l]))
+      const items = await read<Item>('items')
+      return [
+        ...items
+          .filter((item) => item.data.due && item.data.due >= from && item.data.due <= to)
+          .map((item) => {
+            const project = item.data.listId ? projects.get(item.data.listId) : undefined
+            return {
+              id: item.id,
+              date: item.data.due!,
+              title: project ? `${item.data.title} · ${project.data.name}` : item.data.title,
+              kind: 'Tarefa',
+              path: project ? `projects/${project.id}` : '',
+              done: item.data.done,
+            }
+          }),
+        ...[...projects.values()]
+          .filter((p) => !p.data.archived && p.data.due && p.data.due >= from && p.data.due <= to)
+          .map((p) => ({ id: p.id, date: p.data.due!, title: p.data.name, kind: 'Prazo do projeto', path: `projects/${p.id}` })),
+      ]
+    },
+    /** Each project's share of tasks done: what a goal can follow. */
+    progress: async (read) => {
+      const lists = await read<List>('lists')
+      const items = await read<Item>('items')
+      return lists
+        .filter((l) => l.data.kind === 'project' && !l.data.archived)
+        .map((project) => {
+          const mine = items.filter((item) => item.data.listId === project.id)
+          return {
+            id: project.id,
+            label: project.data.name,
+            done: mine.filter((item) => item.data.done).length,
+            total: mine.length,
+            path: `projects/${project.id}`,
+            due: project.data.due ?? null,
+          }
+        })
+    },
+  },
 
   locales: { 'pt-BR': ptBR },
 })
