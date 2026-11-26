@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CornerDownLeft, Hash, Moon, PanelBottom, PanelLeft, Plus, Search, Sun } from 'lucide-react'
+import { Bot, CornerDownLeft, Hash, Moon, PanelBottom, PanelLeft, Plus, Search, Sun } from 'lucide-react'
 import { useTags } from '@core/api/hooks'
 import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
+import { openNex } from '@core/nex/key'
 import { ModuleIcon } from './ModuleIcon'
 import { filterPalette, type PaletteItem } from './navigation'
 import type { ShellNavigation } from './useShell'
@@ -93,7 +94,17 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
     return [...actions, ...places, ...tagged, ...app]
   }, [nav, navigate, onClose, t, theme, preferences.navigation, setPreferences, tags])
 
-  const visible = filterPalette(items, query)
+  // Nex takes whatever was typed, so it is never filtered out: with text it
+  // is the last resort, without text it opens an empty conversation.
+  const ask: Item = {
+    id: 'app/nex',
+    group: 'app',
+    label: query.trim() ? t('palette.askNex', { query: query.trim() }) : t('palette.openNex'),
+    keywords: ['nex', 'ia', 'assistente', 'perguntar'],
+    icon: <Bot size={16} />,
+    run: () => openNex(query.trim() || undefined),
+  }
+  const visible = [...filterPalette(items, query), ask]
   const active = Math.min(cursor, Math.max(visible.length - 1, 0))
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

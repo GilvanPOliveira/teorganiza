@@ -1,7 +1,7 @@
 import type { Envelope } from '@core/api/types'
 import { evaluateLease, nextLease, parseLease, releasedLease, type Lease } from '@core/sync/lock'
 import { AuthExpiredError, EtagMismatchError } from './errors'
-import { fileName, LOCK_FILE, parsePartition, partitionFile } from './layout'
+import { fileName, FILES_FOLDER, isBlobName, LOCK_FILE, parsePartition, partitionFile } from './layout'
 import type { DeviceLease, LockResult, StorageAdapter } from './types'
 
 /**
@@ -17,7 +17,7 @@ export interface DirectoryLike {
 
 export interface FileLike {
   getFile(): Promise<{ text(): Promise<string> }>
-  createWritable(): Promise<{ write(data: string): Promise<void>; close(): Promise<void> }>
+  createWritable(): Promise<{ write(data: string | Blob): Promise<void>; close(): Promise<void> }>
 }
 
 export interface DiskWebOptions {
@@ -117,6 +117,49 @@ export class DiskWebAdapter implements StorageAdapter {
       await this.putJson(this.root, LOCK_FILE, releasedLease(lease, this.now()), etag, LOCK_FILE)
     } catch (error) {
       if (!(error instanceof EtagMismatchError)) throw error
+    }
+  }
+
+  // ── file contents ────────────────────────────────────────────────────
+
+  async listBlobs(): Promise<string[]> {
+    const folder = await this.filesFolder(false)
+    if (!folder) return []
+    const entries = await guard(() => collect(folder.values()))
+    return entries.filter((entry) => entry.kind === 'file' && isBlobName(entry.name)).map((entry) => entry.name)
+  }
+
+  async readBlob(hashName: string): Promise<Blob | null> {
+    const folder = await this.filesFolder(false)
+    if (!folder || !isBlobName(hashName)) return null
+    return guard(async () => {
+      try {
+        // A real File is a Blob; the narrow interface only spells out text().
+        return (await (await folder.getFileHandle(hashName)).getFile()) as unknown as Blob
+      } catch (error) {
+        if (isNotFound(error)) return null
+        throw error
+      }
+    })
+  }
+
+  async writeBlob(hashName: string, blob: Blob): Promise<void> {
+    if (!isBlobName(hashName)) throw new Error(`Invalid file hash: ${hashName}`)
+    const folder = (await this.filesFolder(true))!
+    await guard(async () => {
+      const file = await folder.getFileHandle(hashName, { create: true })
+      const writable = await file.createWritable()
+      await writable.write(blob)
+      await writable.close()
+    })
+  }
+
+  private async filesFolder(create: boolean): Promise<DirectoryLike | null> {
+    try {
+      return await guard(() => this.root.getDirectoryHandle(FILES_FOLDER, { create }))
+    } catch (error) {
+      if (!create && isNotFound(error)) return null
+      throw error
     }
   }
 

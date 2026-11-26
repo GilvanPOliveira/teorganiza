@@ -39,5 +39,6 @@
   "kind.home.done": "Feito",
   "kind.media.done": "Assistidos",
   "widget.today.caption": "{count} tarefas para hoje ou atrasadas",
-  "widget.today.caption.one": "1 tarefa para hoje ou atrasada"
+  "widget.today.caption.one": "1 tarefa para hoje ou atrasada",
+  "item.files": "Anexos"
 }

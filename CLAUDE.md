@@ -121,6 +121,21 @@ Concluídas:
    Métricas virou o cartão "Uso por módulo" da Revisão da semana; as três
    prévias saíram e voltam quando funcionarem. `/metrics` e `/previews/*`
    redirecionam.
+8. 11 áreas, e o que tinha saído voltou dentro delas:
+   - Junções: Diário e Arquivos em Notas, Hábitos em Metas, Foco em
+     Tarefas, Cobranças e Clientes em Finanças.
+   - Links salvos: aba da Estante, coleção `reading/links`.
+   - Nex: assistente com a chave da Anthropic do próprio usuário,
+     guardada só no navegador (`core/nex`). Fala direto com a API, sem
+     servidor; lê um retrato dos registros recentes e cria ou altera
+     registros por ferramentas genéricas, validadas pelo schema de cada
+     coleção. Abre pelo Ctrl+K, pela Revisão e pelas Configurações.
+   - Arquivos: coleção `core/files` (metadados, sincroniza como qualquer
+     registro) e conteúdo por hash num IndexedDB próprio
+     (`core/files/blobs`). Com destino, o conteúdo vai para
+     `TeOrganiza/_files/<hash>` depois dos registros. Qualquer módulo
+     anexa com `<Attachments collection id />`; hoje: notas, tarefas,
+     clientes e lançamentos.
 
 **Próximas etapas — aprofundar o que já existe, nessa ordem:**
 

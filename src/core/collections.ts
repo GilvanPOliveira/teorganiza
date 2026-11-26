@@ -62,6 +62,24 @@ export const moduleSettingsSchema = z.object({
   values: z.record(z.unknown()),
 })
 
+/**
+ * A file the user added. The record carries only what describes the file;
+ * the bytes live in the browser (see `core/files/blobs`) and, with a
+ * destination, in `TeOrganiza/_files/<hash>`. Same content, same hash, so
+ * a file is stored once however many records it is attached to.
+ */
+export const fileSchema = z.object({
+  name: z.string().trim().min(1),
+  type: z.string(),
+  size: z.number().int().min(0),
+  /** SHA-256 of the content, hex. */
+  hash: z.string().regex(/^[0-9a-f]{64}$/),
+  /** The record it belongs to, as '<module>/<collection>' and id; null when loose. */
+  attachedTo: z.object({ path: z.string(), id: z.string() }).nullable(),
+})
+
+export type StoredFile = z.infer<typeof fileSchema>
+
 export const coreCollections: AnyCollectionDef[] = [
   {
     name: 'dashboard',
@@ -82,6 +100,13 @@ export const coreCollections: AnyCollectionDef[] = [
     schemaVersion: 1,
     describe: (record) => record.data.nickname,
     indexes: ['deviceId'],
+  },
+  {
+    name: 'files',
+    schema: fileSchema,
+    schemaVersion: 1,
+    describe: (record) => `${record.data.name} (${Math.max(1, Math.round(record.data.size / 1024))} KB)`,
+    indexes: ['hash'],
   },
   {
     name: 'tags',

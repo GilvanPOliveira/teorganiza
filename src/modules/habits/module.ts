@@ -12,6 +12,7 @@ export default defineModule({
   version: '0.1.0',
   icon: Repeat,
   order: 100,
+  within: 'goals',
   shortcut: 'h',
 
   collections: [

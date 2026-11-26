@@ -62,6 +62,9 @@ export type { CollectionWriter, Formatter, Tag } from './hooks'
 
 export { TagList, TagPicker } from './tags'
 
+export { Attachments, FileDrop, FileRows, formatSize, useAddFiles, useFiles } from './files'
+export type { StoredFile } from '@core/collections'
+
 export {
   Badge,
   Button,

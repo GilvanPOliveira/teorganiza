@@ -10,6 +10,7 @@ import {
   type SyncCollection,
   type SyncOptions,
 } from './engine'
+import { syncBlobs } from '@core/files/sync'
 import { LEASE_RENEW_MS } from './lock'
 import type { ConflictChoice } from './merge'
 import type { Conflict } from './types'
@@ -291,6 +292,7 @@ export class SyncController {
       if (outcome.status === 'first-sync') {
         this.set({ phase: 'first-sync' })
       } else {
+        await this.syncFileContents()
         const lastSyncAt = this.now().toISOString()
         await this.deps.bases.setMeta(META_LAST_SYNC, lastSyncAt)
         this.set({
@@ -310,6 +312,20 @@ export class SyncController {
     } finally {
       await this.refreshCounts()
     }
+  }
+
+  /**
+   * After the records: the bytes of the files those records describe. Only
+   * live records count, so a file in the trash is not fetched again.
+   */
+  private async syncFileContents(): Promise<void> {
+    const adapter = this.adapter
+    if (!adapter?.listBlobs) return
+    const rows = await this.deps.local.read('core/files')
+    const wanted = new Set(
+      rows.filter((row) => row.deletedAt === null).map((row) => (row.data as { hash: string }).hash),
+    )
+    await syncBlobs(adapter, wanted)
   }
 
   /** True when sync may go ahead. */

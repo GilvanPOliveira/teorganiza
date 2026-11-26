@@ -128,7 +128,24 @@ pode ser de outro módulo. Nenhum dado muda de lugar; só a navegação agrupa.
 | Clientes | Cadastro · Cobranças (`finance`) |
 | Revisão da semana | inclui o cartão "Uso por módulo", que era Métricas |
 
-Notícias, Arquivos e Nex saíram do menu e voltam quando funcionarem.
+**Depois, 11 áreas, com o que tinha saído de volta dentro delas:**
+
+| Área | Abas |
+|---|---|
+| Tarefas | Todas · Trabalho · Lar · Foco |
+| Projetos | Lista · Quadro |
+| Agenda | Calendário · Lembretes |
+| Metas | Metas · Hábitos |
+| Saúde | Dia · Treino · Refeições |
+| Estudos | Cursos e cartões · Revisar |
+| Estante | Livros · Filmes e Séries · Links salvos |
+| Finanças | Lançamentos · Cobranças · Clientes |
+| Notas | Notas · Diário · Arquivos |
+| Revisão da semana | inclui "Uso por módulo" e o resumo pelo Nex |
+
+- **Notícias** virou **Links salvos**. Ler feeds exigiria um servidor intermediário.
+- **Arquivos** são anexos em qualquer registro, e todos aparecem juntos na aba Arquivos.
+- **Nex** é o assistente do Ctrl+K e da Revisão, com a chave da Anthropic do próprio usuário.
 
 São primeiras versões: guardam e mostram os dados, sem a profundidade do
 NEXO. Notícias, Arquivos e Nex são prévias que explicam o motivo de não

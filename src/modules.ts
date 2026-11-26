@@ -2,6 +2,7 @@ import type { Module } from '@core/api'
 import calendar from '@modules/calendar/module'
 import clients from '@modules/clients/module'
 import diet from '@modules/diet/module'
+import files from '@modules/files/module'
 import finance from '@modules/finance/module'
 import focus from '@modules/focus/module'
 import goals from '@modules/goals/module'
@@ -35,6 +36,7 @@ export const modules: Module[] = [
   study,
   reading,
   notes,
+  files,
   finance,
   clients,
   focus,

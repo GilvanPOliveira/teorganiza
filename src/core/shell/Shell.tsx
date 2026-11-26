@@ -5,6 +5,8 @@ import { Button, EmptyState } from '@core/api/ui'
 import { useAppState } from '@core/runtime/app-context'
 import { ModuleScope } from '@core/runtime/module-context'
 import { CommandPalette } from './CommandPalette'
+import { NexPanel } from './NexPanel'
+import { OPEN_NEX_EVENT } from '@core/nex/key'
 import { Logo } from './Logo'
 import { MOD_KEY, OPEN_PALETTE_EVENT } from './palette-event'
 import { ModuleIcon } from './ModuleIcon'
@@ -24,6 +26,16 @@ export function Shell() {
   const { preferences } = useAppState()
   const nav = useShellNavigation()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  // Each opening is a fresh conversation; the key remounts the panel.
+  const [nex, setNex] = useState<{ prompt?: string; at: number } | null>(null)
+  useEffect(() => {
+    const open = (event: Event) => {
+      setPaletteOpen(false)
+      setNex({ prompt: (event as CustomEvent<{ prompt?: string }>).detail?.prompt, at: Date.now() })
+    }
+    window.addEventListener(OPEN_NEX_EVENT, open)
+    return () => window.removeEventListener(OPEN_NEX_EVENT, open)
+  }, [])
   const openPalette = useCallback(() => setPaletteOpen(true), [])
   const shortcutTargets = useMemo(() => [...nav.all, nav.trash, nav.tags], [nav])
   useShortcuts(shortcutTargets, openPalette)
@@ -60,6 +72,7 @@ export function Shell() {
         rows={dock.rows}
       />
       {paletteOpen && <CommandPalette nav={nav} onClose={() => setPaletteOpen(false)} />}
+      {nex && <NexPanel key={nex.at} initialPrompt={nex.prompt} onClose={() => setNex(null)} />}
       <SyncDialogs />
     </div>
   )

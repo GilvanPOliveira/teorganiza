@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Card, Field, Stat, StatGrid, TextArea } from '@core/api/ui'
+import { Bot } from 'lucide-react'
+import { Button, Card, Field, Stat, StatGrid, TextArea } from '@core/api/ui'
+import { openNex } from '@core/nex/key'
 import { getModule } from '@core/registry/registry'
 import { daysAgo, readActivity, weekStart } from './activity'
 import { UsageByModule } from './Metrics'
@@ -75,6 +77,12 @@ export function Review() {
     <div className="to-settings">
       <h1 className="to-settings__title">{t('nav.review')}</h1>
       <p className="to-muted">{t('review.lead')}</p>
+      <div className="to-toolbar">
+        <Button onClick={() => openNex(t('nex.review.prompt'))}>
+          <Bot size={15} />
+          {t('nex.review')}
+        </Button>
+      </div>
       <StatGrid>
         <Stat label={t('review.created')} value={activity.reduce((sum, a) => sum + a.created, 0)} hint={t('review.last7')} />
         <Stat label={t('review.touched')} value={activity.reduce((sum, a) => sum + a.touched, 0)} hint={t('review.last7')} />
