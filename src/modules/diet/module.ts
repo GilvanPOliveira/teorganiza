@@ -7,7 +7,7 @@ import ptBR from './locales/pt-BR.json'
 
 export default defineModule({
   id: 'diet',
-  name: 'Dieta',
+  name: 'Refeições',
   apiVersion: 1,
   version: '0.1.0',
   icon: Apple,

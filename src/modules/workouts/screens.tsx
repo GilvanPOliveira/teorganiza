@@ -119,14 +119,21 @@ export function WorkoutsScreen() {
   const thisMonth = sessions.filter((session) => session.data.date.startsWith(month))
 
   // Best estimated 1RM per exercise name, across every session.
-  const records = new Map<string, number>()
+  // Grouped ignoring case; shown with the name as it was typed.
+  const records = new Map<string, { name: string; kg: number }>()
   for (const session of sessions) {
     for (const exercise of session.data.exercises) {
       const key = exercise.name.trim().toLocaleLowerCase()
-      records.set(key, Math.max(records.get(key) ?? 0, oneRepMax(exercise)))
+      const best = records.get(key)
+      const kg = oneRepMax(exercise)
+      if (!best || kg > best.kg) records.set(key, { name: best?.name ?? exercise.name.trim(), kg })
     }
   }
-  const top = [...records.entries()].filter(([, kg]) => kg > 0).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  const top = [...records.entries()]
+    .map(([key, best]) => [key, best.name, best.kg] as const)
+    .filter(([, , kg]) => kg > 0)
+    .sort((a, b) => b[2] - a[2])
+    .slice(0, 6)
 
   return (
     <div className="to-stack">
@@ -159,8 +166,8 @@ export function WorkoutsScreen() {
       {top.length > 0 && (
         <Card title={<span className="to-card__titleicon"><Trophy size={15} />{t('records.title')}</span>}>
           <ul className="to-plainlist">
-            {top.map(([name, kg]) => (
-              <li key={name} className="to-tile__row">
+            {top.map(([key, name, kg]) => (
+              <li key={key} className="to-tile__row">
                 <span className="to-capitalize-first">
                   <Dumbbell size={13} /> {name}
                 </span>

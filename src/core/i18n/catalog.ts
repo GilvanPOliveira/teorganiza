@@ -49,6 +49,14 @@ export function translate(
 
   if (!vars) return template
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
-    name in vars ? String(vars[name]) : match,
+    name in vars ? formatVar(vars[name], locale) : match,
   )
+}
+
+/** Whole numbers stay as written (years, counts); decimals take the locale's comma or point. */
+function formatVar(value: unknown, locale: string): string {
+  if (typeof value === 'number' && Number.isFinite(value) && !Number.isInteger(value)) {
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)
+  }
+  return String(value)
 }

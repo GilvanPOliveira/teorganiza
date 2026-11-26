@@ -74,6 +74,21 @@ export default defineModule({
 
   widgets: [{ id: 'month-balance', label: 'Saldo do mês', size: 'sm', element: MonthBalance }],
 
+  provides: {
+    /** Charges by due date: on the agenda, and overdue in the day summary until paid. */
+    dated: async (read, { from, to }) =>
+      (await read<Charge>('charges'))
+        .filter((charge) => charge.data.due >= from && charge.data.due <= to)
+        .map((charge) => ({
+          id: charge.id,
+          date: charge.data.due,
+          title: charge.data.client ? `${charge.data.description} · ${charge.data.client}` : charge.data.description,
+          kind: 'Cobrança',
+          path: 'charges',
+          done: charge.data.paid,
+        })),
+  },
+
   emits: ['transaction-created', 'due-soon'],
 
   locales: { 'pt-BR': ptBR, en },

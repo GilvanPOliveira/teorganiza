@@ -246,6 +246,8 @@ export function MusicScreen() {
 /** Saved links now live in Arquivos, where they can be attached to anything. */
 export function LinksRedirect() {
   const open = useOpenHref()
-  useEffect(() => open('/files?tipo=links'), [open])
+  useEffect(() => {
+    open('/files?tipo=links')
+  }, [open])
   return null
 }

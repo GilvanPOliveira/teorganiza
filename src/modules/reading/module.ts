@@ -7,7 +7,7 @@ import ptBR from './locales/pt-BR.json'
 
 export default defineModule({
   id: 'reading',
-  name: 'Leitura',
+  name: 'Estante',
   apiVersion: 1,
   version: '0.1.0',
   icon: Library,

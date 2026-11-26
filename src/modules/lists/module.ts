@@ -12,7 +12,7 @@ import ptBR from './locales/pt-BR.json'
  */
 export default defineModule({
   id: 'lists',
-  name: 'Listas',
+  name: 'Tarefas e projetos',
   apiVersion: 1,
   version: '0.1.0',
   icon: ListTodo,

@@ -21,6 +21,9 @@ describe('migrations', () => {
       ['Severance', 'want'],
     ])
     expect((await readAll<{ title: string }>('lists/items')).map((i) => i.data.title)).toEqual(['Comprar pão'])
+    // The old rows are tombstones marked as moved, so the trash does not offer them back.
+    const old = (await readAll<{ _movedTo?: string }>('lists/items', { includeDeleted: true })).filter((i) => i.deletedAt)
+    expect(old.map((i) => i.data._movedTo)).toEqual(['reading/media', 'reading/media'])
   })
 
   it('moves saved links from the shelf to Arquivos', async () => {

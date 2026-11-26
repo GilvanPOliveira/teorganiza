@@ -204,5 +204,7 @@
   "links.placeholder": "Paste the link, and a title if you like",
   "links.save": "Save link",
   "links.read": "Mark as read",
-  "links.unread": "Back to read later"
+  "links.unread": "Back to read later",
+  "trash.files": "Files",
+  "trash.links": "Links"
 }

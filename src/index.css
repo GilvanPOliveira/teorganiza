@@ -552,6 +552,9 @@ h3 {
 .to-tabs {
   display: inline-flex;
   align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--to-border);

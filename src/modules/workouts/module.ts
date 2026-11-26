@@ -6,7 +6,7 @@ import ptBR from './locales/pt-BR.json'
 
 export default defineModule({
   id: 'workouts',
-  name: 'Academia',
+  name: 'Treino',
   apiVersion: 1,
   version: '0.1.0',
   icon: Dumbbell,

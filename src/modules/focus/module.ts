@@ -15,7 +15,7 @@ export type FocusSession = z.infer<typeof sessionSchema>
 
 export default defineModule({
   id: 'focus',
-  name: 'Produtividade',
+  name: 'Foco',
   apiVersion: 1,
   version: '0.1.0',
   icon: Timer,
