@@ -38,7 +38,7 @@ function BookTile({ book }: { book: Envelope<Book> }) {
         <span>{Math.round((read / pages) * 100)}%</span>
       </span>
       <span className="to-toolbar">
-        {status === 'want' && (
+        {(status === 'want' || status === 'own') && (
           <button type="button" className="to-button" onClick={() => void update(book.id, { status: 'reading' })}>
             <Play size={14} />
             {t('book.start')}
@@ -99,6 +99,7 @@ export function ReadingScreen() {
           { value: 'reading', label: <><BookOpen size={14} />{t('shelf.reading')}</> },
           { value: 'want', label: t('shelf.want') },
           { value: 'done', label: t('shelf.done') },
+          { value: 'own', label: t('shelf.own') },
         ]}
       />
       {shown.length === 0 ? (

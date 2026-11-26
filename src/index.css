@@ -2430,3 +2430,24 @@ a.to-tag:hover {
   font-size: 13px;
   align-self: flex-start;
 }
+
+/* Shelf: star ratings. */
+.to-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+.to-stars__star {
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--to-text-2, inherit);
+  opacity: 0.45;
+  cursor: pointer;
+}
+.to-stars__star.is-on {
+  color: var(--to-warning, #e5b45a);
+  opacity: 1;
+}
+.to-stars__star.is-on svg {
+  fill: currentColor;
+}

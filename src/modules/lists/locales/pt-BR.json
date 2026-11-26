@@ -43,5 +43,7 @@
   "projects.deadline": "Prazo",
   "projects.doing": "{count} em andamento",
   "projects.doing.one": "1 em andamento",
-  "project.empty.body": "Adicione as tarefas acima. Elas entram em A fazer; mova pelas colunas com as setas até Feito."
+  "project.empty.body": "Adicione as tarefas acima. Elas entram em A fazer; mova pelas colunas com as setas até Feito.",
+  "tasks.scope": "Quais tarefas",
+  "tasks.scope.all": "Todas"
 }

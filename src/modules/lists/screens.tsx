@@ -8,19 +8,21 @@ import {
   EmptyState,
   Progress,
   QuickAdd,
+  Segmented,
   TagList,
   toLocalISODate,
   useCollection,
   useCreateTag,
   useFormat,
   useNavigate,
+  useOpenHref,
   useParams,
   useRecords,
   useT,
   type Envelope,
 } from '@core/api'
 import { parseTask } from './parse'
-import type { Item, List, ListKind, Status } from './schema'
+import type { Item, List, Status } from './schema'
 
 const STATUSES: Status[] = ['todo', 'doing', 'done']
 
@@ -126,30 +128,83 @@ function useListNames(): Map<string, string> {
 }
 
 /* ------------------------------------------------------------------ *
- * Tarefas
+ * Tarefas, with a switch for what is from work and what is from home
  * ------------------------------------------------------------------ */
 
-export function TasksScreen() {
+type Scope = 'all' | 'work' | 'home'
+
+/** The list that holds a scope's tasks, created with its first task. */
+function useScopeList(scope: Scope) {
   const t = useT()
+  const lists = useRecords<List>('lists')
+  const { create } = useCollection<List>('lists')
+  const kind = scope === 'all' ? null : scope
+  const existing = kind ? lists.find((list) => list.data.kind === kind) : undefined
+  return {
+    lists,
+    ensure: async (): Promise<string | null> => {
+      if (!kind) return null
+      if (existing) return existing.id
+      return create({ name: t(`kind.${kind}`), kind, archived: false, due: null })
+    },
+  }
+}
+
+export function TasksScreen({ scope = 'all' }: { scope?: Scope }) {
+  const t = useT()
+  const navigate = useNavigate()
   const items = useRecords<Item>('items')
   const names = useListNames()
-  const add = useAddItem(null)
+  const { lists, ensure } = useScopeList(scope)
+  const { create } = useCollection<Item>('items')
+  const createTag = useCreateTag()
   const today = toLocalISODate()
 
-  const open = items.filter((item) => !item.data.done).sort(byDueThenCreated)
+  const kindOf = new Map(lists.map((list) => [list.id, list.data.kind]))
+  // Films and series moved to the shelf; their old rows never count as tasks.
+  const mine = items.filter((item) => {
+    const kind = item.data.listId ? kindOf.get(item.data.listId) : undefined
+    if (kind === 'media') return false
+    return scope === 'all' || kind === scope
+  })
+
+  const add = async (text: string) => {
+    const parsed = parseTask(text)
+    const listId = await ensure()
+    const tagIds = await Promise.all(parsed.tags.map((name) => createTag(name)))
+    await create(
+      { listId, title: parsed.title, status: 'todo', done: false, due: parsed.due, priority: parsed.priority },
+      tagIds,
+    )
+  }
+
+  const open = mine.filter((item) => !item.data.done).sort(byDueThenCreated)
   const groups = [
     { key: 'late', items: open.filter((i) => i.data.due !== null && i.data.due < today) },
     { key: 'today', items: open.filter((i) => i.data.due === today) },
     { key: 'next', items: open.filter((i) => i.data.due !== null && i.data.due > today) },
     { key: 'someday', items: open.filter((i) => i.data.due === null) },
   ]
-  const done = items.filter((item) => item.data.done).slice(-10).reverse()
+  const done = mine.filter((item) => item.data.done).slice(-10).reverse()
 
   return (
     <div className="to-stack">
-      <QuickAdd placeholder={t('tasks.placeholder')} onAdd={add} />
-      {items.length === 0 ? (
-        <EmptyState title={t('tasks.empty.title')} body={t('tasks.empty.body')} />
+      <Segmented<Scope>
+        label={t('tasks.scope')}
+        value={scope}
+        onChange={(next) => navigate(next === 'all' ? '' : next)}
+        options={[
+          { value: 'all', label: t('tasks.scope.all') },
+          { value: 'work', label: t('kind.work') },
+          { value: 'home', label: t('kind.home') },
+        ]}
+      />
+      <QuickAdd placeholder={t(scope === 'all' ? 'tasks.placeholder' : `kind.${scope}.placeholder`)} onAdd={add} />
+      {mine.length === 0 ? (
+        <EmptyState
+          title={t(scope === 'all' ? 'tasks.empty.title' : `kind.${scope}.empty`)}
+          body={t(scope === 'all' ? 'tasks.empty.body' : 'kind.empty.body')}
+        />
       ) : (
         <>
           {groups.map(
@@ -159,14 +214,14 @@ export function TasksScreen() {
                   <h2 className="to-section-title">
                     {t(`tasks.group.${group.key}`)} · {group.items.length}
                   </h2>
-                  <ItemList items={group.items} lists={names} />
+                  <ItemList items={group.items} lists={scope === 'all' ? names : undefined} />
                 </section>
               ),
           )}
           {done.length > 0 && (
             <section className="to-stack">
               <h2 className="to-section-title">{t('tasks.group.done')}</h2>
-              <ItemList items={done} lists={names} />
+              <ItemList items={done} lists={scope === 'all' ? names : undefined} />
             </section>
           )}
         </>
@@ -174,6 +229,9 @@ export function TasksScreen() {
     </div>
   )
 }
+
+export const WorkScreen = () => <TasksScreen scope="work" />
+export const HomeScreen = () => <TasksScreen scope="home" />
 
 /* ------------------------------------------------------------------ *
  * Projetos: a list to create them, and a board inside each one
@@ -379,56 +437,9 @@ export function KanbanRedirect() {
   return null
 }
 
-/* ------------------------------------------------------------------ *
- * One list per kind: Trabalho, Lar, Filmes e Séries
- * ------------------------------------------------------------------ */
-
-function KindScreen({ kind }: { kind: ListKind }) {
-  const t = useT()
-  const lists = useRecords<List>('lists', { where: { kind } })
-  const { create } = useCollection<List>('lists')
-  const [selected] = lists
-  const items = useRecords<Item>('items', { where: { listId: selected?.id ?? '__none__' } }).sort(byDueThenCreated)
-  const addTo = useAddItem(selected?.id ?? null)
-  const createItem = useCollection<Item>('items').create
-  const createTag = useCreateTag()
-
-  // The area's list is created on the first item, so an unused area stays empty.
-  const add = async (text: string) => {
-    if (selected) return addTo(text)
-    const listId = await create({ name: t(`kind.${kind}`), kind, archived: false, due: null })
-    const parsed = parseTask(text)
-    const tagIds = await Promise.all(parsed.tags.map((name) => createTag(name)))
-    await createItem(
-      { listId, title: parsed.title, status: 'todo', done: false, due: parsed.due, priority: parsed.priority },
-      tagIds,
-    )
-  }
-
-  const open = items.filter((item) => !item.data.done)
-  const done = items.filter((item) => item.data.done)
-
-  return (
-    <div className="to-stack">
-      <QuickAdd placeholder={t(`kind.${kind}.placeholder`)} onAdd={add} />
-      {items.length === 0 ? (
-        <EmptyState title={t(`kind.${kind}.empty`)} body={t('kind.empty.body')} />
-      ) : (
-        <>
-          <ItemList items={open} />
-          {done.length > 0 && (
-            <>
-              <h2 className="to-section-title">{t(`kind.${kind}.done`)}</h2>
-              <ItemList items={done} />
-            </>
-          )}
-        </>
-      )}
-    </div>
-  )
+/** Films and series now live on the shelf, with states of their own. */
+export function MediaRedirect() {
+  const open = useOpenHref()
+  useEffect(() => open('/reading/media'), [open])
+  return null
 }
-
-export const WorkScreen = () => <KindScreen kind="work" />
-export const HomeScreen = () => <KindScreen kind="home" />
-export const MediaScreen = () => <KindScreen kind="media" />
-

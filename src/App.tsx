@@ -6,6 +6,7 @@ import { registerModules } from '@core/registry/registry'
 import { buildRouter } from '@core/router/routes'
 import { AppProvider } from '@core/runtime/app-context'
 import { wireListeners } from '@core/runtime/events'
+import { runMigrations } from './migrations'
 import { modules } from './modules'
 
 /**
@@ -17,6 +18,7 @@ registerModules(modules)
 wireListeners(modules)
 buildCatalog(modules)
 openDatabase()
+void runMigrations()
 
 export default function App() {
   const router = useMemo(() => buildRouter(), [])

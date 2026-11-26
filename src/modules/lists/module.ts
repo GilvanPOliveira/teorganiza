@@ -1,7 +1,7 @@
-import { Briefcase, Clapperboard, FolderKanban, House, ListTodo } from 'lucide-react'
+import { FolderKanban, ListTodo } from 'lucide-react'
 import { defineModule } from '@core/api'
 import { itemSchema, listSchema, type Item, type List } from './schema'
-import { HomeScreen, KanbanRedirect, MediaScreen, ProjectScreen, ProjectsScreen, TasksScreen, WorkScreen } from './screens'
+import { HomeScreen, KanbanRedirect, MediaRedirect, ProjectScreen, ProjectsScreen, TasksScreen, WorkScreen } from './screens'
 import { TodayTasks } from './widgets'
 import ptBR from './locales/pt-BR.json'
 
@@ -35,14 +35,15 @@ export default defineModule({
   ],
 
   routes: [
-    { path: '', element: TasksScreen, area: { id: 'tasks', label: 'Tarefas', icon: ListTodo, order: 10, shortcut: 't', tabLabel: 'Todas' } },
+    { path: '', element: TasksScreen, area: { id: 'tasks', label: 'Tarefas', icon: ListTodo, order: 10, shortcut: 't', tabLabel: 'Tarefas' } },
     { path: 'projects', element: ProjectsScreen, area: { id: 'projects', label: 'Projetos', icon: FolderKanban, order: 20 } },
     { path: 'projects/:projectId', element: ProjectScreen },
     // The board now lives inside each project; the old address goes to the list.
     { path: 'kanban', element: KanbanRedirect },
-    { path: 'work', element: WorkScreen, area: { id: 'work', label: 'Trabalho', icon: Briefcase, order: 60, within: 'lists/tasks' } },
-    { path: 'home', element: HomeScreen, area: { id: 'home', label: 'Lar', icon: House, order: 80, within: 'lists/tasks' } },
-    { path: 'media', element: MediaScreen, area: { id: 'media', label: 'Filmes e Séries', icon: Clapperboard, order: 190, within: 'reading/shelf' } },
+    // Trabalho and Lar are the switch inside Tarefas; each keeps its address.
+    { path: 'work', element: WorkScreen },
+    { path: 'home', element: HomeScreen },
+    { path: 'media', element: MediaRedirect },
   ],
 
   commands: [
