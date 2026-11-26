@@ -120,7 +120,7 @@ export const coreCollections: AnyCollectionDef[] = [
     name: 'files',
     schema: fileSchema,
     schemaVersion: 1,
-    describe: (record) => `${record.data.name} (${Math.max(1, Math.round(record.data.size / 1024))} KB)`,
+    describe: (record) => `${record.data.name} (${sizeLabel(record.data.size)})`,
     indexes: ['hash'],
   },
   {
@@ -152,3 +152,10 @@ export const coreCollections: AnyCollectionDef[] = [
     indexes: ['moduleId'],
   },
 ]
+
+/** "14 B", "820 KB", "3,4 MB": the size as people read it. */
+function sizeLabel(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
+}

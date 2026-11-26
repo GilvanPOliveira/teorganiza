@@ -144,6 +144,9 @@ describe('translation counts', () => {
     expect(translate('pt-BR', 'demo', 'items', { count: 2 })).toBe('2 itens')
     // Without a singular, the plain key is used even for one.
     expect(translate('pt-BR', 'demo', 'plain', { count: 1 })).toBe('1 coisas')
+    // Decimals follow the language; whole numbers (years, counts) stay as written.
+    expect(translate('pt-BR', 'demo', 'plain', { count: 7.5 })).toBe('7,5 coisas')
+    expect(translate('pt-BR', 'demo', 'plain', { count: 2026 })).toBe('2026 coisas')
   })
 })
 

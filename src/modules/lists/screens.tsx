@@ -435,13 +435,17 @@ export function ProjectScreen() {
 /** The old board of every project at once now lives inside each project. */
 export function KanbanRedirect() {
   const navigate = useNavigate()
-  useEffect(() => navigate('projects'), [navigate])
+  useEffect(() => {
+    navigate('projects')
+  }, [navigate])
   return null
 }
 
 /** Films and series now live on the shelf, with states of their own. */
 export function MediaRedirect() {
   const open = useOpenHref()
-  useEffect(() => open('/reading/media'), [open])
+  useEffect(() => {
+    open('/reading/media')
+  }, [open])
   return null
 }

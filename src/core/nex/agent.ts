@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import type Anthropic from '@anthropic-ai/sdk'
 import type { ZodTypeAny } from 'zod'
 import { toLocalISODate } from '@core/api/dates'
 import type { Envelope } from '@core/api/types'
@@ -7,6 +7,17 @@ import { getCollection, getCollections, getModule } from '@core/registry/registr
 import { describeShape } from './shape'
 
 export const NEX_MODEL = 'claude-opus-5-5'
+
+/**
+ * The SDK is loaded the first time Nex is asked something, so the app's
+ * first load does not carry it for people who never use Nex.
+ */
+type Sdk = typeof import('@anthropic-ai/sdk')
+let sdk: Sdk | null = null
+async function loadSdk(): Promise<Sdk> {
+  sdk ??= await import('@anthropic-ai/sdk')
+  return sdk
+}
 
 /** How many recent records of each collection go into the snapshot. */
 const SNAPSHOT_PER_COLLECTION = 25
@@ -183,7 +194,8 @@ export async function askNex({
 }): Promise<NexTurn> {
   // The key is the user's own, typed into this device; the request goes
   // straight from the browser to the API, as there is no server of ours.
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
+  const { default: AnthropicClient } = await loadSdk()
+  const client = new AnthropicClient({ apiKey, dangerouslyAllowBrowser: true })
   const conversation = [...messages]
   const actions: NexAction[] = []
 
@@ -229,6 +241,8 @@ export async function askNex({
 
 /** A readable message for the errors a user can act on. */
 export function nexErrorMessage(error: unknown): string {
+  const Anthropic = sdk?.default
+  if (!Anthropic) return error instanceof Error ? error.message : String(error)
   if (error instanceof Anthropic.AuthenticationError) return 'A chave da API foi recusada. Confira em Configurações › Nex.'
   if (error instanceof Anthropic.PermissionDeniedError) return 'Esta chave não tem permissão para usar o modelo.'
   if (error instanceof Anthropic.RateLimitError) return 'Muitos pedidos seguidos. Espere um pouco e tente de novo.'

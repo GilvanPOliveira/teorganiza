@@ -204,5 +204,7 @@
   "links.placeholder": "Cole o link — e, se quiser, um título",
   "links.save": "Salvar link",
   "links.read": "Marcar como lido",
-  "links.unread": "Voltar para ler depois"
+  "links.unread": "Voltar para ler depois",
+  "trash.files": "Arquivos",
+  "trash.links": "Links"
 }

@@ -1,4 +1,4 @@
-import { createRecord, readAll, removeRecord } from '@core/db/repository'
+import { createRecord, readAll, retireRecord } from '@core/db/repository'
 import { getDeviceId } from '@core/device'
 
 /**
@@ -48,9 +48,9 @@ async function moveMediaToShelf(): Promise<void> {
       deviceId,
       item.tags ?? [],
     )
-    await removeRecord('lists/items', item.id, deviceId)
+    await retireRecord('lists/items', item.id, 'reading/media', deviceId)
   }
-  for (const id of mediaLists) await removeRecord('lists/lists', id, deviceId)
+  for (const id of mediaLists) await retireRecord('lists/lists', id, 'reading/media', deviceId)
 }
 
 interface LegacyLink {
@@ -68,6 +68,6 @@ async function moveLinksToFiles(): Promise<void> {
   for (const link of links) {
     const { url, title, note, read } = link.data
     await createRecord('core/links', { url, title, note, read, attachedTo: null }, deviceId, link.tags ?? [])
-    await removeRecord('reading/links', link.id, deviceId)
+    await retireRecord('reading/links', link.id, 'core/links', deviceId)
   }
 }
