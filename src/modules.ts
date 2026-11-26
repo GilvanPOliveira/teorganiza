@@ -9,7 +9,6 @@ import habits from '@modules/habits/module'
 import health from '@modules/health/module'
 import lists from '@modules/lists/module'
 import notes from '@modules/notes/module'
-import previews from '@modules/previews/module'
 import reading from '@modules/reading/module'
 import study from '@modules/study/module'
 import workouts from '@modules/workouts/module'
@@ -39,5 +38,4 @@ export const modules: Module[] = [
   finance,
   clients,
   focus,
-  previews,
 ]

@@ -6,7 +6,7 @@ import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ACCENTS, type Accent, type Navigation, type ThemeChoice } from '@core/runtime/preferences'
 import { ModuleIcon } from './ModuleIcon'
-import { moduleAreas } from './navigation'
+import { hostOf, moduleAreas } from './navigation'
 import { StorageSettings } from './SyncPanels'
 import { SHELL_AREAS, useCoreT } from './useShell'
 
@@ -14,9 +14,20 @@ export function Settings() {
   const t = useCoreT()
   const { preferences, setPreferences } = useAppState()
 
+  const moduleEntries = getModules().flatMap(moduleAreas)
   const areas = [
     ...getModules().flatMap((mod) =>
-      moduleAreas(mod).map((area) => ({ ...area, module: mod.name, version: mod.version })),
+      moduleAreas(mod).map((area) => {
+        // A tab is listed right after its host, named after both.
+        const host = hostOf(area, moduleEntries)
+        return {
+          ...area,
+          label: host === area ? area.label : `${host.label} · ${area.tabLabel}`,
+          order: host === area ? area.order : host.order + area.order / 10000,
+          module: mod.name,
+          version: mod.version,
+        }
+      }),
     ),
     ...SHELL_AREAS.map((area) => ({
       id: area.id,

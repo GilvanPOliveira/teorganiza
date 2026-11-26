@@ -109,6 +109,9 @@ export interface ModuleArea {
   icon?: NavTarget['icon']
   order: number
   shortcut?: string
+  /** Id of the area this one is a tab of; absent for entries in the navigation. */
+  within?: string
+  tabLabel: string
 }
 
 const DEFAULT_ORDER = 1000
@@ -129,6 +132,8 @@ export function moduleAreas(mod: Module): ModuleArea[] {
         icon: mod.icon,
         order: mod.order ?? DEFAULT_ORDER,
         shortcut: mod.shortcut,
+        within: mod.within,
+        tabLabel: mod.tabLabel ?? mod.name,
       },
     ]
   }
@@ -140,6 +145,8 @@ export function moduleAreas(mod: Module): ModuleArea[] {
     icon: route.area!.icon ?? mod.icon,
     order: route.area!.order ?? mod.order ?? DEFAULT_ORDER,
     shortcut: route.area!.shortcut,
+    within: route.area!.within,
+    tabLabel: route.area!.tabLabel ?? route.area!.label,
   }))
 }
 
@@ -153,4 +160,18 @@ export function enabledAreas(modules: Module[], disabled: readonly string[]): Mo
     .flatMap(moduleAreas)
     .filter((area) => !disabled.includes(area.id) && !disabled.includes(area.moduleId))
     .sort((a, b) => a.order - b.order)
+}
+
+/** The area an entry is shown under: its host when it is a tab, itself otherwise. */
+export function hostOf(area: ModuleArea, all: ModuleArea[]): ModuleArea {
+  return (area.within && all.find((candidate) => candidate.id === area.within)) || area
+}
+
+/**
+ * The tabs of an area: the area itself, then the entries placed inside it,
+ * in navigation order. A single entry is no tab bar at all.
+ */
+export function areaTabs(host: ModuleArea, enabled: ModuleArea[]): ModuleArea[] {
+  const guests = enabled.filter((area) => area.within === host.id)
+  return guests.length === 0 ? [] : [host, ...guests]
 }

@@ -24,8 +24,6 @@ export function StorageSettings() {
   if (sync.kind === null) {
     return (
       <Card title={t('settings.storage')}>
-        <p>{t('storage.none')}</p>
-        <p className="to-muted">{t('storage.warning.body', { count: sync.liveCount })}</p>
         {sync.persisted === false && <p className="to-muted">{t('storage.notPersisted')}</p>}
         {sync.error && <p className="to-negative">{sync.error}</p>}
 
@@ -122,9 +120,6 @@ export function SyncStatus() {
 
   let message: ReactNode
   switch (sync.phase) {
-    case 'local-only':
-      message = t('storage.none')
-      break
     case 'syncing':
       message = t('sync.status.syncing')
       break
@@ -148,11 +143,7 @@ export function SyncStatus() {
   return (
     <>
       <span>{message}</span>
-      <span>
-        {sync.kind === null
-          ? t('storage.warning.body', { count: sync.liveCount })
-          : t('sync.pending', { count: sync.pendingCount })}
-      </span>
+      <span>{t('sync.pending', { count: sync.pendingCount })}</span>
     </>
   )
 }

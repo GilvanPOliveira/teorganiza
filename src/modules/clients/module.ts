@@ -21,6 +21,7 @@ export default defineModule({
   version: '0.1.0',
   icon: Users,
   order: 200,
+  tabLabel: 'Cadastro',
 
   collections: [
     {

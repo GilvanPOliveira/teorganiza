@@ -31,12 +31,12 @@ export default defineModule({
     {
       path: '',
       element: CalendarScreen,
-      area: { id: 'calendar', label: 'Calendário', icon: CalendarDays, order: 40 },
+      area: { id: 'calendar', label: 'Agenda', icon: CalendarDays, order: 40, tabLabel: 'Calendário' },
     },
     {
       path: 'reminders',
       element: RemindersScreen,
-      area: { id: 'reminders', label: 'Lembretes', icon: Bell, order: 50 },
+      area: { id: 'reminders', label: 'Lembretes', icon: Bell, order: 50, within: 'calendar/calendar' },
     },
   ],
 

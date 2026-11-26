@@ -1,13 +1,15 @@
 import { useCallback, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { CalendarCheck, ChartLine, Hash, House, Settings, Trash2 } from 'lucide-react'
+import { CalendarCheck, Hash, House, Settings, Trash2 } from 'lucide-react'
 import { translate } from '@core/i18n/catalog'
 import { getModule, getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import {
   assignShortcuts,
+  areaTabs,
   enabledAreas,
   HOME_SHORTCUT,
+  hostOf,
   moduleAreas,
   type ModuleArea,
   type NavTarget,
@@ -22,16 +24,20 @@ export function useCoreT(): (key: string, vars?: Record<string, unknown>) => str
   )
 }
 
-/** Areas the shell itself owns, placed among the modules' areas. */
+/**
+ * Areas the shell itself owns, placed among the modules' areas. The
+ * review also carries the usage numbers that once had a page of their own.
+ */
 export const SHELL_AREAS = [
   { id: 'review', path: '/review', labelKey: 'nav.review', icon: CalendarCheck, order: 240 },
-  { id: 'metrics', path: '/metrics', labelKey: 'nav.metrics', icon: ChartLine, order: 260 },
 ] as const
 
 export interface ShellNavigation {
   home: NavTarget
   /** Module and shell areas the user left on, in navigation order. */
   areas: NavTarget[]
+  /** Entries shown as tabs inside another area, labelled "Area · Tab" for search. */
+  tabs: NavTarget[]
   /** Modules with at least one area on: their commands reach the palette. */
   enabledModuleIds: ReadonlySet<string>
   settings: NavTarget
@@ -48,8 +54,13 @@ export function useShellNavigation(): ShellNavigation {
 
   return useMemo(() => {
     const disabled = disabledKey ? disabledKey.split(',') : []
+    const modules = getModules()
+    const everyArea = modules.flatMap(moduleAreas)
+    const enabled = enabledAreas(modules, disabled)
+    // A tab whose host is off has nowhere to show.
+    const guests = enabled.filter((area) => area.within && enabled.some((host) => host.id === area.within))
     const fromModules: (ModuleArea | (NavTarget & { order: number; moduleId: null }))[] = [
-      ...enabledAreas(getModules(), disabled),
+      ...enabled.filter((area) => !area.within),
       ...SHELL_AREAS.filter((area) => !disabled.includes(area.id)).map((area) => ({
         id: area.id,
         label: t(area.labelKey),
@@ -92,11 +103,17 @@ export function useShellNavigation(): ShellNavigation {
     const settings = place('settings', settingsLabel, '/settings', Settings)
     const trash = place('trash', trashLabel, '/settings/trash', Trash2)
     const tags = place('tags', tagsLabel, '/tags', Hash)
+    const tabs: NavTarget[] = guests.map((area) => ({
+      id: area.id,
+      label: `${hostOf(area, everyArea).label} · ${area.tabLabel}`,
+      path: area.path,
+      icon: area.icon,
+    }))
     const enabledModuleIds = new Set(
-      fromModules.flatMap((area) => (area.moduleId ? [area.moduleId] : [])),
+      [...fromModules, ...guests].flatMap((area) => (area.moduleId ? [area.moduleId] : [])),
     )
 
-    return { home, areas, enabledModuleIds, settings, trash, tags, all: [home, ...areas, settings] }
+    return { home, areas, tabs, enabledModuleIds, settings, trash, tags, all: [home, ...areas, settings] }
   }, [t, disabledKey])
 }
 
@@ -106,9 +123,10 @@ export function useShellNavigation(): ShellNavigation {
  */
 export function useActiveRoute() {
   const { pathname } = useLocation()
+  const { preferences } = useAppState()
   const [, first = '', ...rest] = pathname.split('/')
   const active = getModule(first)
-  if (!active) return { active: undefined, route: undefined, area: undefined, section: first }
+  if (!active) return { active: undefined, route: undefined, area: undefined, host: undefined, tabs: [], section: first }
 
   const relative = rest.join('/')
   const route =
@@ -125,5 +143,11 @@ export function useActiveRoute() {
           .filter((candidate) => pathname === candidate.path || pathname.startsWith(`${candidate.path}/`))
           .sort((a, b) => b.path.length - a.path.length)[0])
 
-  return { active, route, area, section: first }
+  // An entry shown as a tab answers to its host: the title, the lit menu
+  // item and the tab bar all belong to the host.
+  const modules = getModules()
+  const host = area && hostOf(area, modules.flatMap(moduleAreas))
+  const tabs = host ? areaTabs(host, enabledAreas(modules, preferences.disabledModules)) : []
+
+  return { active, route, area, host, tabs, section: first }
 }

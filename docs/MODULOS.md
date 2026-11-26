@@ -113,6 +113,23 @@ declara `area` para virar entrada própria; assim `lists` oferece Tarefas,
 Projetos, Kanban, Trabalho, Lar e Filmes e Séries sem virar seis módulos.
 Cada área pode ser desligada sozinha em Configurações.
 
+**Enxugada para 15 áreas.** Várias entradas mostravam o mesmo dado de outro
+jeito. Uma entrada que declara `within` (na `area` da rota, ou no módulo
+quando ele é uma entrada só) sai do menu e vira aba da área indicada, que
+pode ser de outro módulo. Nenhum dado muda de lugar; só a navegação agrupa.
+
+| Área | Abas |
+|---|---|
+| Tarefas | Todas · Trabalho · Lar |
+| Projetos | Lista · Quadro (o antigo Kanban) |
+| Agenda | Calendário · Lembretes |
+| Saúde | Dia · Treino (`workouts`) · Refeições (`diet`) |
+| Estante | Livros (`reading`) · Filmes e Séries (`lists`) |
+| Clientes | Cadastro · Cobranças (`finance`) |
+| Revisão da semana | inclui o cartão "Uso por módulo", que era Métricas |
+
+Notícias, Arquivos e Nex saíram do menu e voltam quando funcionarem.
+
 São primeiras versões: guardam e mostram os dados, sem a profundidade do
 NEXO. Notícias, Arquivos e Nex são prévias que explicam o motivo de não
 funcionarem ainda. Os textos dos módulos novos existem só em pt-BR.

@@ -35,13 +35,13 @@ export default defineModule({
   ],
 
   routes: [
-    { path: '', element: TasksScreen, area: { id: 'tasks', label: 'Tarefas', icon: ListTodo, order: 10, shortcut: 't' } },
-    { path: 'projects', element: ProjectsScreen, area: { id: 'projects', label: 'Projetos', icon: FolderKanban, order: 20 } },
+    { path: '', element: TasksScreen, area: { id: 'tasks', label: 'Tarefas', icon: ListTodo, order: 10, shortcut: 't', tabLabel: 'Todas' } },
+    { path: 'projects', element: ProjectsScreen, area: { id: 'projects', label: 'Projetos', icon: FolderKanban, order: 20, tabLabel: 'Lista' } },
     { path: 'projects/:projectId', element: ProjectScreen },
-    { path: 'kanban', element: KanbanScreen, area: { id: 'kanban', label: 'Kanban', icon: KanbanSquare, order: 30 } },
-    { path: 'work', element: WorkScreen, area: { id: 'work', label: 'Trabalho', icon: Briefcase, order: 60 } },
-    { path: 'home', element: HomeScreen, area: { id: 'home', label: 'Lar', icon: House, order: 80 } },
-    { path: 'media', element: MediaScreen, area: { id: 'media', label: 'Filmes e Séries', icon: Clapperboard, order: 190 } },
+    { path: 'kanban', element: KanbanScreen, area: { id: 'kanban', label: 'Kanban', icon: KanbanSquare, order: 30, within: 'lists/projects', tabLabel: 'Quadro' } },
+    { path: 'work', element: WorkScreen, area: { id: 'work', label: 'Trabalho', icon: Briefcase, order: 60, within: 'lists/tasks' } },
+    { path: 'home', element: HomeScreen, area: { id: 'home', label: 'Lar', icon: House, order: 80, within: 'lists/tasks' } },
+    { path: 'media', element: MediaScreen, area: { id: 'media', label: 'Filmes e Séries', icon: Clapperboard, order: 190, within: 'reading/shelf' } },
   ],
 
   commands: [
