@@ -125,11 +125,11 @@ Concluídas:
    - Junções: Diário e Arquivos em Notas, Hábitos em Metas, Foco em
      Tarefas, Cobranças e Clientes em Finanças.
    - Links salvos: aba da Estante, coleção `reading/links`.
-   - Nex: assistente com a chave da Anthropic do próprio usuário,
-     guardada só no navegador (`core/nex`). Fala direto com a API, sem
-     servidor; lê um retrato dos registros recentes e cria ou altera
-     registros por ferramentas genéricas, validadas pelo schema de cada
-     coleção. Abre pelo Ctrl+K, pela Revisão e pelas Configurações.
+   - Nex: por decisão, **sem IA e sem API por enquanto**. Existe só como
+     lugar no app (`core/nex/open.ts`, `NexPanel`): um item no Ctrl+K e um
+     cartão em Configurações dizendo que ainda não está ativo. Nada sai do
+     navegador. Não adicionar SDK, chave ou chamada de API sem pedido
+     explícito.
    - Arquivos: coleção `core/files` (metadados, sincroniza como qualquer
      registro) e conteúdo por hash num IndexedDB próprio
      (`core/files/blobs`). Com destino, o conteúdo vai para

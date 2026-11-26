@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight, Hash, Monitor, Moon, PanelBottom, PanelLeft, PanelLeftDashed, Sun, Trash2 } from 'lucide-react'
 import { Button, Card, Segmented, Switch } from '@core/api/ui'
-import { openNex, saveNexKey } from '@core/nex/key'
+import { openNex } from '@core/nex/open'
 import { AVAILABLE_LOCALES } from '@core/i18n/catalog'
 import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ACCENTS, type Accent, type Navigation, type ThemeChoice } from '@core/runtime/preferences'
 import { ModuleIcon } from './ModuleIcon'
 import { hostOf, moduleAreas } from './navigation'
-import { NexKeyForm, useNexKey } from './NexPanel'
 import { StorageSettings } from './SyncPanels'
 import { SHELL_AREAS, useCoreT } from './useShell'
 
@@ -178,29 +177,16 @@ export function Settings() {
   )
 }
 
-/** The assistant's key: kept on this device only, never in sync. */
+/** Nex has a place, and nothing behind it yet: no AI, no API. */
 function NexSettings() {
   const t = useCoreT()
-  const key = useNexKey()
   return (
     <Card title={t('settings.nex')}>
-      <p className="to-muted">{t('nex.privacy')}</p>
-      {key ? (
-        <div className="to-toolbar">
-          <span>{t('nex.key.saved')}</span>
-          <Button variant="primary" onClick={() => openNex()}>
-            {t('palette.openNex')}
-          </Button>
-          <Button variant="ghost" onClick={() => saveNexKey('')}>
-            {t('nex.key.remove')}
-          </Button>
-        </div>
-      ) : (
-        <>
-          <p>{t('nex.setup')}</p>
-          <NexKeyForm />
-        </>
-      )}
+      <p>{t('nex.soon')}</p>
+      <p className="to-muted">{t('nex.soon.body')}</p>
+      <div className="to-toolbar">
+        <Button onClick={() => openNex()}>{t('palette.openNex')}</Button>
+      </div>
     </Card>
   )
 }

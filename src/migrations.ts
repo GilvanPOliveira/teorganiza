@@ -12,6 +12,7 @@ import { getDeviceId } from '@core/device'
 export async function runMigrations(): Promise<void> {
   await moveMediaToShelf()
   await moveLinksToFiles()
+  forgetNexKey()
 }
 
 interface LegacyList {
@@ -69,5 +70,14 @@ async function moveLinksToFiles(): Promise<void> {
     const { url, title, note, read } = link.data
     await createRecord('core/links', { url, title, note, read, attachedTo: null }, deviceId, link.tags ?? [])
     await retireRecord('reading/links', link.id, 'core/links', deviceId)
+  }
+}
+
+/** Nex no longer talks to any API: a key kept from when it did is erased. */
+function forgetNexKey(): void {
+  try {
+    localStorage.removeItem('teorganiza.nex.apiKey')
+  } catch {
+    // Without storage there is nothing to erase.
   }
 }

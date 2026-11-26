@@ -141,11 +141,11 @@ pode ser de outro módulo. Nenhum dado muda de lugar; só a navegação agrupa.
 | Estante | Livros · Filmes e Séries · Links salvos |
 | Finanças | Lançamentos · Cobranças · Clientes |
 | Notas | Notas · Diário · Arquivos |
-| Revisão da semana | inclui "Uso por módulo" e o resumo pelo Nex |
+| Revisão da semana | inclui "Uso por módulo" |
 
 - **Notícias** virou **Links salvos**. Ler feeds exigiria um servidor intermediário.
 - **Arquivos** são anexos em qualquer registro, e todos aparecem juntos na aba Arquivos.
-- **Nex** é o assistente do Ctrl+K e da Revisão, com a chave da Anthropic do próprio usuário.
+- **Nex** existe só como lugar no app (Ctrl+K e Configurações), sem IA e sem API por enquanto.
 
 **Agora, módulos vivos:**
 

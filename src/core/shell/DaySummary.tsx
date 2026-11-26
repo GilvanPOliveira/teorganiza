@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlertTriangle, Bell, Bot, CalendarClock, Check, ExternalLink, Sun } from 'lucide-react'
+import { AlertTriangle, Bell, CalendarClock, Check, ExternalLink, Sun } from 'lucide-react'
 import { toLocalISODate } from '@core/api/dates'
 import { useDated, useOpenHref } from '@core/api/hooks'
 import { Badge, Button, Card, EmptyState } from '@core/api/ui'
-import { openNex } from '@core/nex/key'
 import type { CollectedDated } from '@core/providers/collect'
 import { getModule } from '@core/registry/registry'
 import { daysAgo, readActivity } from './activity'
-import { useNexKey } from './NexPanel'
 import { notificationsSupported, requestNotifications } from './notifier'
 import { useCoreT } from './useShell'
 
@@ -47,7 +45,6 @@ function EntryList({ entries, showDate }: { entries: CollectedDated[]; showDate?
  */
 export function DaySummary() {
   const t = useCoreT()
-  const apiKey = useNexKey()
   const today = toLocalISODate()
   const [permission, setPermission] = useState(() =>
     notificationsSupported() ? Notification.permission : 'unsupported',
@@ -62,12 +59,6 @@ export function DaySummary() {
   return (
     <div className="to-stack">
       <div className="to-toolbar">
-        {apiKey && (
-          <Button onClick={() => openNex(t('summary.nexPrompt'))}>
-            <Bot size={15} />
-            {t('summary.nex')}
-          </Button>
-        )}
         {permission === 'default' && (
           <Button onClick={() => void requestNotifications().then(setPermission)}>
             <Bell size={15} />
