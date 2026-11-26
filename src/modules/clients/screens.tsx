@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Building2, Mail, Phone, Search, Trash2 } from 'lucide-react'
-import { EmptyState, Field, QuickAdd, TagList, useCollection, useRecords, useT, type Envelope } from '@core/api'
+import { Attachments, EmptyState, Field, QuickAdd, TagList, useCollection, useRecords, useT, type Envelope } from '@core/api'
 import type { Client } from './module'
 
 function ClientRow({ client }: { client: Envelope<Client> }) {
@@ -46,6 +46,7 @@ function ClientRow({ client }: { client: Envelope<Client> }) {
             <Trash2 size={14} />
             {t('client.remove')}
           </button>
+          <Attachments collection="clients" id={client.id} />
         </div>
       )}
     </li>

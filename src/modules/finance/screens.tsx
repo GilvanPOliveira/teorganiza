@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
+import { Paperclip } from 'lucide-react'
 import {
+  Attachments,
   Button,
   EmptyState,
   Field,
@@ -32,6 +34,7 @@ export function TransactionList() {
   })
 
   const [description, setDescription] = useState('')
+  const [filesFor, setFilesFor] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
   const [tags, setTags] = useState<string[]>([])
 
@@ -84,7 +87,8 @@ export function TransactionList() {
       ) : (
         <Table headers={[t('column.date'), t('column.description'), t('column.amount'), '']}>
           {transactions.map((record) => (
-            <tr key={record.id}>
+            <Fragment key={record.id}>
+            <tr>
               <td>{fmt.date(record.data.date)}</td>
               <td>
                 {record.data.description} <TagList ids={record.tags} />
@@ -94,11 +98,29 @@ export function TransactionList() {
                 {fmt.money(record.data.amount)}
               </td>
               <td>
+                <button
+                  type="button"
+                  className={`to-iconbutton to-iconbutton--small${filesFor === record.id ? ' active' : ''}`}
+                  aria-label={t('action.files')}
+                  title={t('action.files')}
+                  aria-expanded={filesFor === record.id}
+                  onClick={() => setFilesFor((open) => (open === record.id ? null : record.id))}
+                >
+                  <Paperclip size={14} />
+                </button>
                 <Button variant="ghost" onClick={() => void remove(record.id)}>
                   {t('action.remove')}
                 </Button>
               </td>
             </tr>
+            {filesFor === record.id && (
+              <tr>
+                <td colSpan={4}>
+                  <Attachments collection="transactions" id={record.id} />
+                </td>
+              </tr>
+            )}
+            </Fragment>
           ))}
         </Table>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Lock, Pin, Plus, Search, Trash2 } from 'lucide-react'
 import {
+  Attachments,
   Badge,
   Button,
   EmptyState,
@@ -134,6 +135,7 @@ function NoteEditor({ note }: { note: Envelope<Note> }) {
       <Field label={t('notes.title')} value={title} onChange={(event) => setTitle(event.target.value)} />
       <TextArea label={t('notes.body')} value={body} rows={14} onChange={(event) => setBody(event.target.value)} />
       <TagPicker label={t('notes.tags')} value={note.tags ?? []} onChange={(tags) => void setTags(note.id, tags)} />
+      <Attachments collection="notes" id={note.id} />
       <p className="to-muted">{t('notes.autosave')}</p>
     </div>
   )

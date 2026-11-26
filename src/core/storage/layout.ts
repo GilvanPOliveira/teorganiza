@@ -12,6 +12,12 @@ import type { Envelope } from '@core/api/types'
  */
 export const ROOT_NAME = 'TeOrganiza'
 export const LOCK_FILE = '_lock.json'
+/** File contents, one per hash. The `_` keeps it apart from module folders. */
+export const FILES_FOLDER = '_files'
+
+export function isBlobName(name: string): boolean {
+  return /^[0-9a-f]{64}$/.test(name)
+}
 
 export interface PartitionFile {
   schemaVersion: number

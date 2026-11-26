@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Trash2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Flag, Paperclip, Trash2 } from 'lucide-react'
 import {
+  Attachments,
   Badge,
   Button,
   Checkbox,
@@ -53,9 +54,10 @@ function ItemRow({ item, listName }: { item: Envelope<Item>; listName?: string }
   const actions = useItemActions()
   const today = toLocalISODate()
   const late = item.data.due !== null && item.data.due < today && !item.data.done
+  const [filesOpen, setFilesOpen] = useState(false)
 
   return (
-    <li className={`to-list__item${item.data.done ? ' is-done' : ''}`}>
+    <li className={`to-list__item to-list__item--wrap${item.data.done ? ' is-done' : ''}`}>
       <Checkbox checked={item.data.done} label={t('item.toggle', { title: item.data.title })} onChange={() => void actions.toggle(item)} />
       <div className="to-list__main">
         <span className="to-list__title">{item.data.title}</span>
@@ -78,10 +80,25 @@ function ItemRow({ item, listName }: { item: Envelope<Item>; listName?: string }
         )}
       </div>
       <div className="to-list__actions">
+        <button
+          type="button"
+          className={`to-iconbutton to-iconbutton--small${filesOpen ? ' active' : ''}`}
+          aria-label={t('item.files')}
+          title={t('item.files')}
+          aria-expanded={filesOpen}
+          onClick={() => setFilesOpen((open) => !open)}
+        >
+          <Paperclip size={14} />
+        </button>
         <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('item.remove')} onClick={() => void actions.remove(item)}>
           <Trash2 size={14} />
         </button>
       </div>
+      {filesOpen && (
+        <div className="to-list__extra">
+          <Attachments collection="items" id={item.id} />
+        </div>
+      )}
     </li>
   )
 }

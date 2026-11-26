@@ -24,5 +24,6 @@
   "charges.markPaid": "Mark {description} as paid",
   "charges.remove": "Delete charge",
   "charges.empty.title": "No charges",
-  "charges.empty.body": "Record what you are owed, by whom and by when."
+  "charges.empty.body": "Record what you are owed, by whom and by when.",
+  "action.files": "Attachments"
 }

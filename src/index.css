@@ -2298,3 +2298,109 @@ a.to-tag:hover {
     transition: none !important;
   }
 }
+
+/* Nex: the assistant panel, built on the palette's frame. */
+.to-nex {
+  max-height: 80vh;
+}
+.to-nex__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--to-border);
+}
+.to-nex__header .to-iconbutton {
+  margin-left: auto;
+}
+.to-nex__setup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+.to-nex__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 160px;
+  padding: 14px;
+  overflow-y: auto;
+}
+.to-nex__bubble {
+  max-width: 88%;
+  padding: 9px 12px;
+  border-radius: var(--to-radius-md, 10px);
+  background: var(--to-surface-2, rgba(255, 255, 255, 0.05));
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+.to-nex__bubble p {
+  margin: 0;
+}
+.to-nex__bubble--user {
+  align-self: flex-end;
+  background: var(--to-accent-soft, rgba(120, 140, 255, 0.18));
+}
+.to-nex__bubble.is-error {
+  color: var(--to-negative);
+}
+.to-nex__actions {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--to-text-muted, inherit);
+}
+.to-nex__composer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--to-border);
+}
+.to-nex__composer .to-field__input {
+  flex: 1;
+}
+
+/* Files: rows, thumbnails, the drop zone and attachments under a record. */
+.to-file__thumb {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--to-surface-2);
+}
+.to-file__thumb--icon {
+  display: grid;
+  place-items: center;
+  color: var(--to-text-2, inherit);
+}
+.to-filedrop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px dashed var(--to-border-strong);
+  border-radius: var(--to-radius-lg);
+}
+.to-filedrop--compact {
+  padding: 0;
+  border: none;
+}
+.to-filedrop.is-over {
+  border-color: var(--to-accent);
+  background: var(--to-accent-soft);
+}
+.to-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.to-list__item--wrap {
+  flex-wrap: wrap;
+}
+.to-list__extra {
+  flex-basis: 100%;
+  padding: 4px 0 4px 32px;
+}

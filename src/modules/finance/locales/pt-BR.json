@@ -24,5 +24,6 @@
   "charges.markPaid": "Marcar {description} como paga",
   "charges.remove": "Apagar cobrança",
   "charges.empty.title": "Nenhuma cobrança",
-  "charges.empty.body": "Registre o que tem a receber, de quem e até quando."
+  "charges.empty.body": "Registre o que tem a receber, de quem e até quando.",
+  "action.files": "Anexos"
 }

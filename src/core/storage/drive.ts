@@ -12,7 +12,7 @@ import {
   EtagMismatchError,
   StorageRequestError,
 } from './errors'
-import { fileName, LOCK_FILE, parsePartition, partitionFile, ROOT_NAME } from './layout'
+import { fileName, FILES_FOLDER, isBlobName, LOCK_FILE, parsePartition, partitionFile, ROOT_NAME } from './layout'
 import type { DeviceLease, LockResult, StorageAdapter } from './types'
 
 const API = 'https://www.googleapis.com/drive/v3'
@@ -114,6 +114,52 @@ export class DriveAdapter implements StorageAdapter {
     const folder = await this.folder(collectionPath, true)
     const body = partitionFile(records)
     return this.putJson(folder!, fileName(partition), body, expectedEtag, `${collectionPath}/${partition}`)
+  }
+
+  async listBlobs(): Promise<string[]> {
+    const folder = await this.filesFolder(false)
+    if (!folder) return []
+    return (await this.listChildren(folder)).filter((f) => f.mimeType !== FOLDER && isBlobName(f.name)).map((f) => f.name)
+  }
+
+  async readBlob(hashName: string): Promise<Blob | null> {
+    const folder = await this.filesFolder(false)
+    if (!folder || !isBlobName(hashName)) return null
+    const file = await this.findChild(folder, hashName)
+    if (!file) return null
+    return this.request<Blob>(`${API}/files/${file.id}?alt=media`, {}, 'blob')
+  }
+
+  /** Same name, same bytes: a file already there is left alone. */
+  async writeBlob(hashName: string, blob: Blob): Promise<void> {
+    if (!isBlobName(hashName)) throw new Error(`Invalid file hash: ${hashName}`)
+    const folder = (await this.filesFolder(true))!
+    if (await this.findChild(folder, hashName)) return
+    const boundary = `teorganiza-${crypto.randomUUID()}`
+    const metadata = JSON.stringify({ name: hashName, parents: [folder] })
+    const crlf = '\r\n'
+    const body = new Blob([
+      `--${boundary}${crlf}Content-Type: application/json; charset=UTF-8${crlf}${crlf}${metadata}${crlf}`,
+      `--${boundary}${crlf}Content-Type: ${blob.type || 'application/octet-stream'}${crlf}${crlf}`,
+      blob,
+      `${crlf}--${boundary}--`,
+    ])
+    await this.request(`${UPLOAD}/files?uploadType=multipart&fields=id`, {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body,
+    })
+  }
+
+  private async filesFolder(create: boolean): Promise<string | null> {
+    const cached = this.folderIds.get(FILES_FOLDER)
+    if (cached) return cached
+    const root = await this.root(create)
+    if (!root) return null
+    const found = await this.findChild(root, FILES_FOLDER, true)
+    const id = found?.id ?? (create ? await this.createFolder(root, FILES_FOLDER) : null)
+    if (id) this.folderIds.set(FILES_FOLDER, id)
+    return id
   }
 
   /**
@@ -346,7 +392,7 @@ export class DriveAdapter implements StorageAdapter {
    * how data gets overwritten — that one surfaces, and the next sync,
    * which starts from a fresh read, settles it.
    */
-  private async request<T>(url: string, init: RequestInit = {}, parse = true): Promise<T> {
+  private async request<T>(url: string, init: RequestInit = {}, parse: boolean | 'blob' = true): Promise<T> {
     const method = init.method ?? 'GET'
     for (let attempt = 0; ; attempt++) {
       const token = await this.options.getAccessToken()
@@ -355,7 +401,10 @@ export class DriveAdapter implements StorageAdapter {
         headers: { ...(init.headers as Record<string, string>), Authorization: `Bearer ${token}` },
       })
       if (response.status === 401) throw new AuthExpiredError()
-      if (response.ok) return (parse ? await response.json() : undefined) as T
+      if (response.ok) {
+        if (parse === 'blob') return (await response.blob()) as T
+        return (parse ? await response.json() : undefined) as T
+      }
 
       const body = await response.text()
       const rateLimited =

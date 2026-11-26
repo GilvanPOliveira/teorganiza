@@ -16,5 +16,15 @@
   "shelf.reading.empty": "Nenhum livro em leitura",
   "shelf.want.empty": "Nenhum livro na fila",
   "shelf.done.empty": "Nenhum livro terminado ainda",
-  "shelf.body": "Adicione um livro acima; ele entra na prateleira que está aberta."
+  "shelf.body": "Adicione um livro acima; ele entra na prateleira que está aberta.",
+  "link.placeholder": "Cole um link — e, se quiser, um título",
+  "link.read": "Marcar como lido",
+  "link.unread": "Voltar para ler depois",
+  "link.remove": "Apagar link",
+  "links.label": "Links",
+  "links.later": "Ler depois ({count})",
+  "links.done": "Lidos",
+  "links.later.empty": "Nada para ler depois",
+  "links.done.empty": "Nenhum link lido ainda",
+  "links.body": "Guarde artigos, vídeos e notícias que você quer ver com calma. O link abre no navegador; nada é baixado."
 }

@@ -53,12 +53,12 @@ export default defineModule({
       element: TransactionList,
       label: 'Lançamentos',
       actions: TransactionListActions,
-      area: { id: 'ledger', label: 'Finanças', icon: Wallet, order: 160, shortcut: 'f' },
+      area: { id: 'ledger', label: 'Finanças', icon: Wallet, order: 160, shortcut: 'f', tabLabel: 'Lançamentos' },
     },
     {
       path: 'charges',
       element: ChargesScreen,
-      area: { id: 'charges', label: 'Cobranças', icon: Receipt, order: 210, within: 'clients' },
+      area: { id: 'charges', label: 'Cobranças', icon: Receipt, order: 210, within: 'finance/ledger' },
     },
   ],
 

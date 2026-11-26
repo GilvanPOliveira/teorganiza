@@ -54,6 +54,15 @@ export interface StorageAdapter {
    * over here?". The lock is soft: it never forbids, it only warns.
    */
   acquireLock?(device: DeviceLease, options?: { takeOver?: boolean }): Promise<LockResult>
+
+  /**
+   * File contents, by SHA-256, in `TeOrganiza/_files/<hash>`. Content
+   * addressed, so a write never conflicts: the same name always holds the
+   * same bytes. Optional; without them files stay on the device.
+   */
+  listBlobs?(): Promise<string[]>
+  readBlob?(hash: string): Promise<Blob | null>
+  writeBlob?(hash: string, blob: Blob): Promise<void>
   releaseLock?(): Promise<void>
 }
 

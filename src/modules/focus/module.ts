@@ -20,6 +20,8 @@ export default defineModule({
   version: '0.1.0',
   icon: Timer,
   order: 250,
+  within: 'lists/tasks',
+  tabLabel: 'Foco',
 
   collections: [
     {

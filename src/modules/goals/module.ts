@@ -12,6 +12,7 @@ export default defineModule({
   version: '0.1.0',
   icon: Target,
   order: 70,
+  tabLabel: 'Metas',
 
   collections: [
     {
