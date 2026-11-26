@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Bell, Check, ChevronLeft, ChevronRight, ExternalLink, Trash2 } from 'lucide-react'
+import { Bell, Check, ChevronLeft, ChevronRight, ExternalLink, Paperclip, Trash2 } from 'lucide-react'
 import {
+  Attachments,
   Badge,
   Button,
   EmptyState,
@@ -47,8 +48,9 @@ function EventRow({ event, showDate }: { event: Envelope<CalendarEvent>; showDat
   const t = useT()
   const format = useFormat()
   const { update, remove } = useCollection<CalendarEvent>('events')
+  const [filesOpen, setFilesOpen] = useState(false)
   return (
-    <li className="to-list__item">
+    <li className="to-list__item to-list__item--wrap">
       <div className="to-list__main">
         <span className="to-list__title">{event.data.title}</span>
         <span className="to-list__meta">
@@ -63,6 +65,16 @@ function EventRow({ event, showDate }: { event: Envelope<CalendarEvent>; showDat
         </span>
       </div>
       <div className="to-list__actions">
+        <button
+          type="button"
+          className={`to-iconbutton to-iconbutton--small${filesOpen ? ' active' : ''}`}
+          aria-label={t('event.files')}
+          title={t('event.files')}
+          aria-expanded={filesOpen}
+          onClick={() => setFilesOpen((open) => !open)}
+        >
+          <Paperclip size={14} />
+        </button>
         <button
           type="button"
           className="to-iconbutton to-iconbutton--small"
@@ -80,6 +92,11 @@ function EventRow({ event, showDate }: { event: Envelope<CalendarEvent>; showDat
           <Trash2 size={14} />
         </button>
       </div>
+      {filesOpen && (
+        <div className="to-list__extra">
+          <Attachments collection="events" id={event.id} />
+        </div>
+      )}
     </li>
   )
 }

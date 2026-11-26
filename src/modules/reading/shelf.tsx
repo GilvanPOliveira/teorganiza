@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Play, Plus, Star, Trash2 } from 'lucide-react'
 import {
   Badge,
@@ -7,6 +7,7 @@ import {
   Segmented,
   TagList,
   useCollection,
+  useOpenHref,
   useRecords,
   useT,
   type Envelope,
@@ -240,4 +241,11 @@ export function MusicScreen() {
       )}
     </div>
   )
+}
+
+/** Saved links now live in Arquivos, where they can be attached to anything. */
+export function LinksRedirect() {
+  const open = useOpenHref()
+  useEffect(() => open('/files?tipo=links'), [open])
+  return null
 }

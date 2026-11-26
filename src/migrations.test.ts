@@ -22,4 +22,13 @@ describe('migrations', () => {
     ])
     expect((await readAll<{ title: string }>('lists/items')).map((i) => i.data.title)).toEqual(['Comprar pão'])
   })
+
+  it('moves saved links from the shelf to Arquivos', async () => {
+    await createRecord('reading/links', { url: 'https://a.com', title: 'A', note: '', read: true }, 'dev')
+    await runMigrations()
+    await runMigrations()
+    const moved = await readAll<{ url: string; read: boolean; attachedTo: unknown }>('core/links')
+    expect(moved.map((l) => [l.data.url, l.data.read, l.data.attachedTo])).toEqual([['https://a.com', true, null]])
+    expect(await readAll('reading/links')).toEqual([])
+  })
 })

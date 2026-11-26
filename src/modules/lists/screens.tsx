@@ -414,6 +414,8 @@ export function ProjectScreen() {
       ) : (
         <Board items={items} />
       )}
+      <h2 className="to-section-title">{t('project.files')}</h2>
+      <Attachments collection="lists" id={project.id} />
       <div className="to-toolbar">
         <Button
           variant="danger"

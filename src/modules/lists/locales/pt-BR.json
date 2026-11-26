@@ -45,5 +45,6 @@
   "projects.doing.one": "1 em andamento",
   "project.empty.body": "Adicione as tarefas acima. Elas entram em A fazer; mova pelas colunas com as setas até Feito.",
   "tasks.scope": "Quais tarefas",
-  "tasks.scope.all": "Todas"
+  "tasks.scope.all": "Todas",
+  "project.files": "Arquivos e links do projeto"
 }

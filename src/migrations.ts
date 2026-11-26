@@ -11,6 +11,7 @@ import { getDeviceId } from '@core/device'
  */
 export async function runMigrations(): Promise<void> {
   await moveMediaToShelf()
+  await moveLinksToFiles()
 }
 
 interface LegacyList {
@@ -50,4 +51,23 @@ async function moveMediaToShelf(): Promise<void> {
     await removeRecord('lists/items', item.id, deviceId)
   }
   for (const id of mediaLists) await removeRecord('lists/lists', id, deviceId)
+}
+
+interface LegacyLink {
+  url: string
+  title: string
+  note: string
+  read: boolean
+}
+
+/** Saved links were a shelf tab (`reading/links`); they now live in Arquivos (`core/links`). */
+async function moveLinksToFiles(): Promise<void> {
+  const links = await readAll<LegacyLink>('reading/links')
+  if (links.length === 0) return
+  const deviceId = getDeviceId()
+  for (const link of links) {
+    const { url, title, note, read } = link.data
+    await createRecord('core/links', { url, title, note, read, attachedTo: null }, deviceId, link.tags ?? [])
+    await removeRecord('reading/links', link.id, deviceId)
+  }
 }

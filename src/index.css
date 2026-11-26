@@ -2466,3 +2466,46 @@ a.to-tag:hover {
   border-color: var(--to-accent);
   background: var(--to-accent-soft);
 }
+
+/* Arquivos: the player and the link field. */
+.to-player {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--to-border-strong);
+  border-radius: var(--to-radius-lg);
+  background: var(--to-surface);
+  position: sticky;
+  top: 8px;
+  z-index: 3;
+}
+.to-player__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.to-player__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.to-player__media {
+  width: 100%;
+}
+.to-player__video {
+  max-height: 60vh;
+  border-radius: var(--to-radius-md, 10px);
+  background: #000;
+}
+.to-linkadd {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  min-width: 240px;
+}
+.to-linkadd .to-field__input {
+  flex: 1;
+}

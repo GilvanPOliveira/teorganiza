@@ -198,5 +198,11 @@
   "summary.recorded": "Registrado desde ontem",
   "summary.nex": "Resumir o dia com o Nex",
   "summary.notify": "Ativar avisos",
-  "summary.nexPrompt": "Faça um resumo curto do meu dia: o que está atrasado, o que tenho hoje, o que vem nos próximos dias e o que sugere priorizar."
+  "summary.nexPrompt": "Faça um resumo curto do meu dia: o que está atrasado, o que tenho hoje, o que vem nos próximos dias e o que sugere priorizar.",
+  "files.play": "Tocar",
+  "links.attach": "Anexar link",
+  "links.placeholder": "Cole o link — e, se quiser, um título",
+  "links.save": "Salvar link",
+  "links.read": "Marcar como lido",
+  "links.unread": "Voltar para ler depois"
 }
