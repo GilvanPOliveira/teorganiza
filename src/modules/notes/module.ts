@@ -27,9 +27,9 @@ export default defineModule({
   ],
 
   routes: [
-    { path: '', element: NotesScreen, area: { id: 'notes', label: 'Notas', icon: StickyNote, order: 170, tabLabel: 'Notas' } },
+    { path: '', element: NotesScreen, area: { id: 'notes', label: 'Notas', icon: StickyNote, order: 60, within: 'calendar/calendar' } },
     { path: 'edit/:noteId', element: NoteScreen },
-    { path: 'journal', element: JournalScreen, area: { id: 'journal', label: 'Diário', icon: BookHeart, order: 175, within: 'notes/notes' } },
+    { path: 'journal', element: JournalScreen, area: { id: 'journal', label: 'Diário', icon: BookHeart, order: 65, within: 'calendar/calendar' } },
   ],
 
   commands: [

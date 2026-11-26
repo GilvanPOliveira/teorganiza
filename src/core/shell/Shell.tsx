@@ -6,6 +6,7 @@ import { useAppState } from '@core/runtime/app-context'
 import { ModuleScope } from '@core/runtime/module-context'
 import { CommandPalette } from './CommandPalette'
 import { NexPanel } from './NexPanel'
+import { useDayNotifier } from './notifier'
 import { OPEN_NEX_EVENT } from '@core/nex/key'
 import { Logo } from './Logo'
 import { MOD_KEY, OPEN_PALETTE_EVENT } from './palette-event'
@@ -26,6 +27,7 @@ export function Shell() {
   const { preferences } = useAppState()
   const nav = useShellNavigation()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  useDayNotifier()
   // Each opening is a fresh conversation; the key remounts the panel.
   const [nex, setNex] = useState<{ prompt?: string; at: number } | null>(null)
   useEffect(() => {

@@ -1,10 +1,13 @@
 import { createElement, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Check, Pencil, Plus, Search, X } from 'lucide-react'
-import { Button, Card, EmptyState } from '@core/api/ui'
+import { Button, Card, EmptyState, Segmented } from '@core/api/ui'
 import { getModules } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { ModuleScope } from '@core/runtime/module-context'
 import { Cover } from './Cover'
+import { DaySummary } from './DaySummary'
+import { Review } from './Review'
 import { ModuleIcon } from './ModuleIcon'
 import { enabledModules, greetingKey } from './navigation'
 import { MOD_KEY, OPEN_PALETTE_EVENT } from './palette-event'
@@ -31,6 +34,9 @@ export function Dashboard() {
   const { locale, preferences } = useAppState()
   const [editing, setEditing] = useState(false)
   const [now] = useState(() => new Date())
+  // The view is in the address, so "Semana" can be linked and survives a reload.
+  const [params, setParams] = useSearchParams()
+  const view = (['hoje', 'semana', 'painel'] as const).find((v) => v === params.get('ver')) ?? 'hoje'
 
   const entries = useCoreRecords<DashboardEntry>('dashboard', {
     sort: { field: 'order', dir: 'asc' },
@@ -90,6 +96,21 @@ export function Dashboard() {
         </div>
       </section>
 
+      <Segmented<'hoje' | 'semana' | 'painel'>
+        label={t('home.views')}
+        value={view}
+        onChange={(next) => setParams(next === 'hoje' ? {} : { ver: next }, { replace: true })}
+        options={[
+          { value: 'hoje', label: t('home.view.today') },
+          { value: 'semana', label: t('home.view.week') },
+          { value: 'painel', label: t('home.view.panel') },
+        ]}
+      />
+
+      {view === 'hoje' && <DaySummary />}
+      {view === 'semana' && <Review embedded />}
+
+      {view === 'painel' && (
       <section className="to-section">
         <header className="to-section__header">
           <h2 className="to-section__title">{t('home.today')}</h2>
@@ -179,6 +200,7 @@ export function Dashboard() {
           </div>
         )}
       </section>
+      )}
     </div>
   )
 }

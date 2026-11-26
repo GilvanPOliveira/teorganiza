@@ -14,8 +14,7 @@ export default defineModule({
   apiVersion: 1,
   version: '0.1.0',
   icon: Paperclip,
-  order: 178,
-  within: 'notes/notes',
+  order: 220,
 
   collections: [],
 

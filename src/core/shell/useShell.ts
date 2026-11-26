@@ -28,9 +28,7 @@ export function useCoreT(): (key: string, vars?: Record<string, unknown>) => str
  * Areas the shell itself owns, placed among the modules' areas. The
  * review also carries the usage numbers that once had a page of their own.
  */
-export const SHELL_AREAS = [
-  { id: 'review', path: '/review', labelKey: 'nav.review', icon: CalendarCheck, order: 240 },
-] as const
+export const SHELL_AREAS: { id: string; path: string; labelKey: string; icon: typeof CalendarCheck; order: number }[] = []
 
 export interface ShellNavigation {
   home: NavTarget
