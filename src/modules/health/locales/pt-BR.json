@@ -27,5 +27,22 @@
   "stats.week": "últimos 7 registros",
   "history.title": "Últimos dias",
   "history.empty": "Nenhum dia registrado ainda",
-  "history.date": "Dia"
+  "history.date": "Dia",
+  "exam.placeholder": "Exame ou consulta — ex.: hemograma",
+  "exam.date": "Data",
+  "exam.kind": "Tipo",
+  "exam.place": "Local ou médico",
+  "exam.kind.lab": "Laboratório",
+  "exam.kind.image": "Imagem",
+  "exam.kind.consult": "Consulta",
+  "exam.kind.other": "Outro",
+  "exam.all": "Todos",
+  "exam.result": "Resultado e observações",
+  "exam.nextLabel": "Retorno",
+  "exam.next": "Retorno {date}",
+  "exam.files": "{count} anexos",
+  "exam.files.one": "1 anexo",
+  "exam.remove": "Apagar exame",
+  "exam.empty": "Nenhum exame registrado",
+  "exam.body": "Registre exames e consultas e anexe o laudo (PDF ou foto). O histórico fica num lugar só, e o retorno aparece na Agenda."
 }

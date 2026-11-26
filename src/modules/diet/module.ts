@@ -12,7 +12,7 @@ export default defineModule({
   version: '0.1.0',
   icon: Apple,
   order: 120,
-  within: 'health',
+  within: 'health/day',
   tabLabel: 'Refeições',
 
   collections: [

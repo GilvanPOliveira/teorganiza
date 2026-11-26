@@ -12,8 +12,7 @@ export default defineModule({
   version: '0.1.0',
   icon: Repeat,
   order: 100,
-  within: 'goals',
-  shortcut: 'h',
+  within: 'health/day',
 
   collections: [
     {
@@ -38,6 +37,24 @@ export default defineModule({
   commands: [{ id: 'new-habit', label: 'Novo hábito', path: '', keywords: ['hábito', 'rotina'] }],
 
   widgets: [{ id: 'today', label: 'Hábitos de hoje', size: 'sm', element: TodayHabits }],
+
+  provides: {
+    /** For a single day only (the day summary): each active habit, done or not. A month of them would bury the agenda. */
+    dated: async (read, { from, to }) => {
+      if (from !== to) return []
+      const checks = (await read<Check>('checks')).filter((check) => check.data.date === from)
+      return (await read<Habit>('habits'))
+        .filter((habit) => !habit.data.archived)
+        .map((habit) => ({
+          id: habit.id,
+          date: from,
+          title: habit.data.name,
+          kind: 'Hábito',
+          path: '',
+          done: checks.some((check) => check.data.habitId === habit.id),
+        }))
+    },
+  },
 
   locales: { 'pt-BR': ptBR },
 })
