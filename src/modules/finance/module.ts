@@ -58,7 +58,7 @@ export default defineModule({
     {
       path: 'charges',
       element: ChargesScreen,
-      area: { id: 'charges', label: 'Cobranças', icon: Receipt, order: 210 },
+      area: { id: 'charges', label: 'Cobranças', icon: Receipt, order: 210, within: 'clients' },
     },
   ],
 

@@ -11,6 +11,7 @@ export default defineModule({
   version: '0.1.0',
   icon: HeartPulse,
   order: 90,
+  tabLabel: 'Dia',
 
   collections: [
     {

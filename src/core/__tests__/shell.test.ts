@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { Module } from '@core/api/types'
 import {
+  areaTabs,
+  hostOf,
   assignShortcuts,
   enabledAreas,
   enabledModules,
@@ -179,5 +181,47 @@ describe('areas', () => {
 
   it('treats a whole module turned off (saved before areas existed) as all its areas off', () => {
     expect(enabledAreas([single, multi], ['lists']).map((a) => a.id)).toEqual(['habits'])
+  })
+
+  describe('tabs', () => {
+    const lists = {
+      id: 'lists',
+      name: 'Listas',
+      routes: [
+        { path: '', element: Screen, area: { id: 'tasks', label: 'Tarefas', order: 10, tabLabel: 'Todas' } },
+        { path: 'work', element: Screen, area: { id: 'work', label: 'Trabalho', order: 60, within: 'lists/tasks' } },
+      ],
+    } as unknown as Module
+    const health = { id: 'health', name: 'Saúde', order: 90, tabLabel: 'Dia', routes: [{ path: '', element: Screen }] } as unknown as Module
+    const workouts = {
+      id: 'workouts',
+      name: 'Academia',
+      order: 110,
+      within: 'health',
+      tabLabel: 'Treino',
+      routes: [{ path: '', element: Screen }],
+    } as unknown as Module
+    const all = [lists, health, workouts].flatMap(moduleAreas)
+    const byId = (id: string) => all.find((a) => a.id === id)!
+
+    it('names a tab by its tab label, falling back to the label', () => {
+      expect(byId('lists/tasks').tabLabel).toBe('Todas')
+      expect(byId('lists/work').tabLabel).toBe('Trabalho')
+      expect(byId('workouts').within).toBe('health')
+    })
+
+    it('resolves a tab to its host, in the same module or another', () => {
+      expect(hostOf(byId('lists/work'), all).id).toBe('lists/tasks')
+      expect(hostOf(byId('workouts'), all).id).toBe('health')
+      expect(hostOf(byId('health'), all).id).toBe('health')
+    })
+
+    it('gives a host a tab bar of itself and its guests, and none without guests', () => {
+      const enabled = enabledAreas([lists, health, workouts], [])
+      expect(areaTabs(byId('health'), enabled).map((a) => a.tabLabel)).toEqual(['Dia', 'Treino'])
+      expect(areaTabs(byId('lists/tasks'), enabled).map((a) => a.tabLabel)).toEqual(['Todas', 'Trabalho'])
+      const noWorkouts = enabledAreas([lists, health, workouts], ['workouts'])
+      expect(areaTabs(byId('health'), noWorkouts)).toEqual([])
+    })
   })
 })

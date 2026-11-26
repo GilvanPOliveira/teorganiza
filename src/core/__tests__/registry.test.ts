@@ -84,6 +84,14 @@ describe('registry', () => {
     expect(() => registerModules([twice])).toThrow(/Duplicate area/)
   })
 
+  it('refuses a tab of an area that does not exist, or of another tab', () => {
+    const host = moduleFixture({ id: 'host' })
+    const tab = moduleFixture({ id: 'tab', within: 'host' })
+    expect(() => registerModules([host, tab])).not.toThrow()
+    expect(() => registerModules([moduleFixture({ within: 'nowhere' })])).toThrow(/not an area/)
+    expect(() => registerModules([host, tab, moduleFixture({ id: 'deeper', within: 'tab' })])).toThrow(/itself a tab/)
+  })
+
   it('refuses an unknown collection instead of failing silently', () => {
     registerModules([moduleFixture()])
     expect(() => getCollection('demo/nope')).toThrow(/Unknown collection/)

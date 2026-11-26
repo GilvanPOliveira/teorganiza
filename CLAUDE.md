@@ -114,6 +114,13 @@ Concluídas:
    e Métricas no shell, e Notícias, Arquivos e Nex como prévias que explicam
    por que ainda não funcionam. Um módulo oferece várias áreas pela
    propriedade `area` das rotas. Os módulos novos só têm textos em pt-BR.
+7. Navegação enxugada para 15 áreas. Uma entrada com `within` vira aba de
+   outra área, do mesmo módulo ou de outro, sem mover dado: Trabalho e Lar
+   em Tarefas, Kanban (Quadro) em Projetos, Lembretes na Agenda, Academia e
+   Dieta em Saúde, Filmes e Séries na Estante, Cobranças em Clientes.
+   Métricas virou o cartão "Uso por módulo" da Revisão da semana; as três
+   prévias saíram e voltam quando funcionarem. `/metrics` e `/previews/*`
+   redirecionam.
 
 **Próximas etapas — aprofundar o que já existe, nessa ordem:**
 

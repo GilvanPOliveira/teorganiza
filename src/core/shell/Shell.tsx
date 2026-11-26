@@ -76,7 +76,7 @@ function TopBar({
   const t = useCoreT()
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { active, area } = useActiveRoute()
+  const { active, host } = useActiveRoute()
   const inSettings = pathname === '/settings' || pathname.startsWith('/settings/')
 
   return (
@@ -98,7 +98,7 @@ function TopBar({
           <Logo size={26} />
         </Link>
       )}
-      {active && <span className="to-topbar__crumb">/ {area?.label ?? active.name}</span>}
+      {active && <span className="to-topbar__crumb">/ {host?.label ?? active.name}</span>}
 
       <div className="to-topbar__end">
         <button type="button" className="to-search" onClick={onSearch}>
@@ -125,11 +125,11 @@ function TopBar({
 function ActiveScreen() {
   const t = useCoreT()
   const { preferences } = useAppState()
-  const { active, route, area } = useActiveRoute()
+  const { active, route, area, host, tabs: areaTabs } = useActiveRoute()
 
   if (!active) return <Outlet />
 
-  const title = area?.label ?? active.name
+  const title = host?.label ?? active.name
   const off = preferences.disabledModules
   if (off.includes(active.id) || (area && off.includes(area.id))) {
     return (
@@ -152,7 +152,7 @@ function ActiveScreen() {
     <div className="to-page">
       <header className="to-page__header">
         <div className="to-page__title">
-          <ModuleIcon icon={area?.icon ?? active.icon} label={title} size={20} boxed />
+          <ModuleIcon icon={host?.icon ?? active.icon} label={title} size={20} boxed />
           <h1>{title}</h1>
         </div>
         {route?.actions && (
@@ -161,6 +161,21 @@ function ActiveScreen() {
           </div>
         )}
       </header>
+
+      {areaTabs.length > 1 && (
+        <nav className="to-tabs" aria-label={title}>
+          {areaTabs.map((tab) => (
+            <Link
+              key={tab.id}
+              to={tab.path}
+              className={`to-tabs__item${tab.id === area?.id ? ' active' : ''}`}
+              aria-current={tab.id === area?.id ? 'page' : undefined}
+            >
+              {tab.tabLabel}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {tabs.length > 1 && (
         <nav className="to-tabs">
@@ -205,8 +220,13 @@ function Sidebar({ targets }: { targets: NavTarget[] }) {
 }
 
 function SidebarLink({ target, targets }: { target: NavTarget; targets: NavTarget[] }) {
+  const { host } = useActiveRoute()
   return (
-    <NavLink to={target.path} end={exactMatch(target, targets)} className="to-sidebar__item">
+    <NavLink
+      to={target.path}
+      end={exactMatch(target, targets)}
+      className={({ isActive }) => `to-sidebar__item${(host ? host.id === target.id : isActive) ? ' active' : ''}`}
+    >
       <ModuleIcon icon={target.icon} label={target.label} size={17} />
       <span>{target.label}</span>
       {target.shortcut && (
@@ -234,6 +254,7 @@ function Dock({
 }) {
   const t = useCoreT()
   const { pathname } = useLocation()
+  const { host } = useActiveRoute()
   const [moreOpenAt, setMoreOpenAt] = useState<string | null>(null)
   // The sheet belongs to the page it was opened on: navigating closes it.
   const moreOpen = moreOpenAt === pathname
@@ -251,7 +272,9 @@ function Dock({
             key={target.id}
             to={target.path}
             end={exactMatch(target, targets)}
-            className={`to-dock__item${index >= MOBILE_DOCK_ITEMS ? ' to-dock__item--desktop' : ''}`}
+            className={({ isActive }) =>
+              `to-dock__item${index >= MOBILE_DOCK_ITEMS ? ' to-dock__item--desktop' : ''}${(host ? host.id === target.id : isActive) ? ' active' : ''}`
+            }
             title={
               target.shortcut ? `${target.label} · G ${target.shortcut.toUpperCase()}` : target.label
             }
@@ -277,7 +300,11 @@ function Dock({
         <div className="to-sheet__backdrop" onClick={() => setMoreOpenAt(null)}>
           <div className="to-sheet" onClick={(event) => event.stopPropagation()}>
             {overflow.map((target) => (
-              <NavLink key={target.id} to={target.path} className="to-sheet__item">
+              <NavLink
+                key={target.id}
+                to={target.path}
+                className={({ isActive }) => `to-sheet__item${(host ? host.id === target.id : isActive) ? ' active' : ''}`}
+              >
                 <ModuleIcon icon={target.icon} label={target.label} size={18} />
                 <span>{target.label}</span>
               </NavLink>
@@ -302,9 +329,10 @@ function useDockLayout(count: number, enabled: boolean) {
 
 function StatusBar() {
   const { storage } = useAppState()
-  const noDestination = storage.kind === null
+  // Without a destination there is nothing to report: choosing one lives in settings.
+  if (storage.kind === null) return null
   return (
-    <footer className={`to-status${noDestination ? ' to-status--warning' : ''}`}>
+    <footer className="to-status">
       <SyncStatus />
     </footer>
   )

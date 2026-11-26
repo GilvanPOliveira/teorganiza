@@ -1,10 +1,9 @@
 import { createElement } from 'react'
-import { createBrowserRouter, type RouteObject } from 'react-router-dom'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom'
 import { getModules } from '@core/registry/registry'
 import { ModuleScope } from '@core/runtime/module-context'
 import { Dashboard } from '@core/shell/Dashboard'
 import { Settings } from '@core/shell/Settings'
-import { Metrics } from '@core/shell/Metrics'
 import { Review } from '@core/shell/Review'
 import { Shell } from '@core/shell/Shell'
 import { TagPage, TagsPage } from '@core/shell/Tags'
@@ -35,7 +34,9 @@ export function buildRouter() {
         { path: 'settings/trash', element: <Trash /> },
         { path: 'tags', element: <TagsPage /> },
         { path: 'review', element: <Review /> },
-        { path: 'metrics', element: <Metrics /> },
+        // Old addresses, kept so saved links still land somewhere useful.
+        { path: 'metrics', element: <Navigate to="/review" replace /> },
+        { path: 'previews/*', element: <Navigate to="/" replace /> },
         { path: 'tags/:tagId', element: <TagPage /> },
         ...moduleRoutes,
       ],

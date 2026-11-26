@@ -129,6 +129,14 @@ export interface AreaDef {
   order?: number
   /** Letter for "G then letter". */
   shortcut?: string
+  /**
+   * Shows this entry as a tab inside another area instead of on its own in
+   * the navigation: '<moduleId>' or '<moduleId>/<areaId>', from this module
+   * or another. The data stays where it is; only the navigation groups it.
+   */
+  within?: string
+  /** Name of the tab, when this entry is a tab or hosts tabs. Defaults to the label. */
+  tabLabel?: string
 }
 
 export type WidgetSize = 'sm' | 'md' | 'lg'
@@ -188,6 +196,14 @@ export interface Module {
    * picks the first free letter of the name.
    */
   shortcut?: string
+  /**
+   * Shows this entry as a tab inside another area instead of on its own in
+   * the navigation: '<moduleId>' or '<moduleId>/<areaId>', from this module
+   * or another. The data stays where it is; only the navigation groups it.
+   */
+  within?: string
+  /** Name of the tab, when this entry is a tab or hosts tabs. Defaults to the name. */
+  tabLabel?: string
 
   collections: AnyCollectionDef[]
   routes: RouteDef[]

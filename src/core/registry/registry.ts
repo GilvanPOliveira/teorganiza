@@ -113,8 +113,30 @@ export function registerModules(modules: Module[]): void {
     }
   }
 
+  checkTabs(modules)
+
   registered = modules
   collectionIndex = index
+}
+
+/**
+ * An entry shown as a tab must point to an entry that stays in the
+ * navigation. One level only: a tab never hosts tabs of its own.
+ */
+function checkTabs(modules: Module[]): void {
+  const entries = modules.flatMap((mod) => {
+    const declared = mod.routes.filter((route) => route.area)
+    return declared.length === 0
+      ? [{ id: mod.id, within: mod.within }]
+      : declared.map((route) => ({ id: `${mod.id}/${route.area!.id}`, within: route.area!.within }))
+  })
+  const byId = new Map(entries.map((entry) => [entry.id, entry]))
+  for (const entry of entries) {
+    if (entry.within === undefined) continue
+    const host = byId.get(entry.within)
+    assert(host !== undefined, `"${entry.id}" is a tab of "${entry.within}", which is not an area.`)
+    assert(host.within === undefined, `"${entry.id}" is a tab of "${entry.within}", which is itself a tab.`)
+  }
 }
 
 export function getModules(): Module[] {

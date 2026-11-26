@@ -492,9 +492,6 @@ h3 {
   font-size: 0.75rem;
 }
 
-.to-status--warning {
-  color: var(--to-warning);
-}
 
 /* ------------------------------------------------------------------ *
  * Pages

@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Card, Field, Stat, StatGrid, TextArea } from '@core/api/ui'
 import { getModule } from '@core/registry/registry'
 import { daysAgo, readActivity, weekStart } from './activity'
+import { UsageByModule } from './Metrics'
 import { useCoreRecords, useCoreWriter } from './useCoreCollection'
 import { useCoreT } from './useShell'
 
@@ -86,6 +87,7 @@ export function Review() {
         {/* Keyed by the stored record: when it loads, the form shows it. */}
         <ReviewForm key={existing?.id ?? 'new'} initial={existing?.data ?? EMPTY(week)} onSave={onSave} />
       </Card>
+      <UsageByModule />
     </div>
   )
 }

@@ -11,6 +11,8 @@ export default defineModule({
   version: '0.1.0',
   icon: Dumbbell,
   order: 110,
+  within: 'health',
+  tabLabel: 'Treino',
 
   collections: [
     {

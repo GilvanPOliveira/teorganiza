@@ -45,7 +45,7 @@ export function CommandPalette({ nav, onClose }: { nav: ShellNavigation; onClose
         })),
       )
 
-    const places: Item[] = [nav.home, ...nav.areas, nav.tags, nav.settings, nav.trash].map((target) => ({
+    const places: Item[] = [nav.home, ...nav.areas, ...nav.tabs, nav.tags, nav.settings, nav.trash].map((target) => ({
       id: `goto/${target.id}`,
       group: 'goto' as const,
       label: target.label,

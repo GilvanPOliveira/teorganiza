@@ -25,7 +25,14 @@ export default defineModule({
     },
   ],
 
-  routes: [{ path: '', element: ReadingScreen }],
+  routes: [
+    {
+      path: '',
+      element: ReadingScreen,
+      // Books, and the films and series list from `lists`, share one shelf.
+      area: { id: 'shelf', label: 'Estante', icon: Library, order: 140, tabLabel: 'Livros' },
+    },
+  ],
 
   commands: [{ id: 'new-book', label: 'Adicionar livro', path: '', keywords: ['livro', 'leitura', 'estante'] }],
 
