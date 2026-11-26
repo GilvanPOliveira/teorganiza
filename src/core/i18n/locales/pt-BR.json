@@ -181,5 +181,9 @@
   "files.empty": "Nenhum arquivo ainda",
   "files.loose": "Avulso",
   "files.lead": "Tudo o que você guardou, solto ou anexado a notas, tarefas, clientes e lançamentos. Com um destino escolhido, os arquivos vão junto para a pasta ou o Drive.",
-  "files.search": "Buscar arquivo"
+  "files.search": "Buscar arquivo",
+  "metrics.week": "Alterações na semana",
+  "metrics.weekHint": "criados ou editados",
+  "metrics.active": "Módulos ativos",
+  "metrics.activeHint": "usados nos últimos 7 dias"
 }

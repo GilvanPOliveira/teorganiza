@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Card, EmptyState, Progress, Table } from '@core/api/ui'
+import { Card, EmptyState, Progress, Stat, StatGrid, Table } from '@core/api/ui'
 import { getModule } from '@core/registry/registry'
 import { daysAgo, readActivity } from './activity'
 import { ModuleIcon } from './ModuleIcon'
@@ -25,6 +25,11 @@ export function UsageByModule() {
   return (
     <Card title={t('metrics.byModule')}>
       <p className="to-muted">{t('metrics.lead')}</p>
+      <StatGrid>
+        <Stat label={t('metrics.records')} value={month.reduce((sum, m) => sum + m.total, 0)} />
+        <Stat label={t('metrics.week')} value={week.reduce((sum, w) => sum + w.touched, 0)} hint={t('metrics.weekHint')} />
+        <Stat label={t('metrics.active')} value={rows.filter((row) => row.week > 0).length} hint={t('metrics.activeHint')} />
+      </StatGrid>
       {rows.length === 0 ? (
         <EmptyState title={t('metrics.empty')} />
       ) : (

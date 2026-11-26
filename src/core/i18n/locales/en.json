@@ -181,5 +181,9 @@
   "files.empty": "No files yet",
   "files.loose": "Loose",
   "files.lead": "Everything you kept, loose or attached to notes, tasks, clients and transactions. With a destination, files travel to the folder or Drive too.",
-  "files.search": "Search files"
+  "files.search": "Search files",
+  "metrics.week": "Changes this week",
+  "metrics.weekHint": "created or edited",
+  "metrics.active": "Active modules",
+  "metrics.activeHint": "used in the last 7 days"
 }
