@@ -251,15 +251,24 @@ export function planFor(exercise: ExerciseDef, sessions: Session[], defaultRest 
 }
 
 /** A plan as a routine's item: that many equal work sets, with its load and rest. */
-export function itemFromPlan(exerciseId: string, plan: ExercisePlan, keep?: Pick<RoutineItem, 'superset' | 'note'>): RoutineItem {
+export function itemFromPlan(exerciseId: string, plan: ExercisePlan, keep?: Pick<RoutineItem, 'superset' | 'note' | 'sets'>): RoutineItem {
   return {
     exerciseId,
-    sets: Array.from({ length: Math.max(1, plan.sets) }, () => ({ type: 'normal' as const, reps: plan.reps, repsMax: null, seconds: plan.seconds })),
+    sets: [
+      ...(keep?.sets.filter((s) => s.type === 'warmup') ?? []),
+      ...Array.from({ length: Math.max(1, plan.sets) }, () => ({ type: 'normal' as const, reps: plan.reps, repsMax: null, seconds: plan.seconds })),
+    ],
     rest: plan.rest,
     superset: keep?.superset ?? null,
     note: keep?.note ?? '',
     weight: plan.weight,
   }
+}
+
+/** What a routine item plans, as the fields of the exercise card start from. */
+export function planOfItem(item: RoutineItem): Partial<ExercisePlan> {
+  const work = item.sets.filter((s) => s.type !== 'warmup')
+  return { sets: work.length || 1, reps: work[0]?.reps ?? null, seconds: work[0]?.seconds ?? null, weight: item.weight ?? null, rest: item.rest }
 }
 
 /**

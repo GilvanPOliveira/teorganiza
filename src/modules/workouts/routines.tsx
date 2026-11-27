@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, Dumbbell, Link2, Moon, Play, Plus, Repeat2, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Dumbbell, Minus, Moon, Plus, Repeat2, Trash2 } from 'lucide-react'
 import {
   Badge,
   Button,
-  Card,
   EmptyState,
   QuickAdd,
   Segmented,
@@ -15,21 +14,48 @@ import {
   type Envelope,
 } from '@core/api'
 import { BodyMap } from './BodyMap'
+import { ExerciseBrowser, ExercisePlanSheet, REST_OPTIONS, WEEK_ORDER } from './browser'
 import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
-import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds, weightStep } from './data'
-import { ExerciseBrowser } from './browser'
-import { ExerciseStrip } from './strip'
-import { SheetButton, usePlanRegister } from './library'
-import { clock, entryFor, itemFromPlan } from './logic'
+import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
+import { ExerciseSheet } from './detail'
+import { SheetButton } from './library'
+import { clock, entryFor, itemFromPlan, planOfItem } from './logic'
 import { ExerciseMedia } from './media'
+import { useMoveRoutine, usePlanRegister } from './register'
 import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
+import { ExerciseStrip } from './strip'
 import { TEMPLATES } from './templates'
 import { useRoutineMuscles } from './today'
 
-const REST_OPTIONS = [0, 30, 45, 60, 90, 120, 150, 180, 240, 300]
+/* ------------------------------------------------------------------ *
+ * Pieces
+ * ------------------------------------------------------------------ */
+
+/** A section that opens and closes from its title; all start closed. */
+function Fold({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className={`to-fold${open ? ' is-open' : ''}`}>
+      <button type="button" className="to-fold__head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <span className="to-fold__title">{title}</span>
+        {summary && <span className="to-muted to-fold__summary">{summary}</span>}
+        {open ? <Minus size={16} /> : <Plus size={16} />}
+      </button>
+      {open && <div className="to-fold__body">{children}</div>}
+    </section>
+  )
+}
+
+/** The exercise a thumbnail was tapped on, with the routine item it came from. */
+interface Editing {
+  exercise: ExerciseDef
+  item?: RoutineItem
+  /** The weekdays it is on, known here already so the popup starts with them. */
+  days: number[]
+}
 
 /* ------------------------------------------------------------------ *
- * The list, the plan mode and the ready-made plans
+ * The plan: how you train, your week, your routines
  * ------------------------------------------------------------------ */
 
 export function RoutinesScreen() {
@@ -39,8 +65,10 @@ export function RoutinesScreen() {
   const index = useExerciseIndex()
   const musclesOf = useRoutineMuscles()
   const [settings, setSettings] = useTrainingSettings()
-  const { create, update, remove } = useCollection<Routine>('routines')
+  const { create } = useCollection<Routine>('routines')
   const { count: registered } = usePlanRegister()
+  const moveRoutine = useMoveRoutine()
+  const [editing, setEditing] = useState<Editing | null>(null)
 
   const nextOrder = () => (routines.length ? Math.max(...routines.map((r) => r.data.order)) + 1 : 0)
 
@@ -52,12 +80,12 @@ export function RoutinesScreen() {
     if (settings.mode === 'rotation') await setSettings({ rotation: [...settings.rotation, ...ids] })
   }
 
-  /** One routine per weekday: giving a day a routine takes it off the day it had. */
-  const assignDay = async (day: number, routineId: string) => {
-    for (const r of routines) {
-      if (r.data.weekday === day && r.id !== routineId) await update(r.id, { weekday: null })
-    }
-    if (routineId) await update(routineId, { weekday: day })
+  /** Opens the exercise's card in a popup, starting from what this routine plans for it. */
+  const openExercise = (routine: Routine) => (exerciseId: string) => {
+    const exercise = index.get(exerciseId)
+    if (!exercise) return
+    const days = routines.filter((r) => r.data.weekday !== null && r.data.items.some((item) => item.exerciseId === exerciseId)).map((r) => r.data.weekday as number)
+    setEditing({ exercise, item: routine.items.find((item) => item.exerciseId === exerciseId), days })
   }
 
   const inRotation = (id: string) => settings.rotation.includes(id)
@@ -69,17 +97,12 @@ export function RoutinesScreen() {
     list.splice(at + delta, 0, id)
     void setSettings({ rotation: list })
   }
-  // Monday first, as people plan a training week.
-  const week = [1, 2, 3, 4, 5, 6, 0]
+  const loose = routines.filter((r) => r.data.weekday === null)
+  const trainingDays = routines.filter((r) => r.data.weekday !== null).length
 
   return (
     <div className="to-stack">
-      <div className="to-toolbar">
-        <span className="to-push">
-          <SheetButton count={registered} />
-        </span>
-      </div>
-      <section className="to-panel to-panel--row">
+      <section className="to-panel to-panel--row to-howpanel">
         <span className="to-today__icon to-today__icon--small">
           <Repeat2 size={14} />
         </span>
@@ -93,16 +116,18 @@ export function RoutinesScreen() {
             { value: 'rotation', label: t('plan.rotation') },
           ]}
         />
+        <span className="to-push">
+          <SheetButton count={registered} />
+        </span>
       </section>
       <p className="to-muted">{t(settings.mode === 'week' ? 'plan.weekHint' : 'plan.rotationHint')}</p>
 
       {settings.mode === 'week' ? (
-        <section className="to-stack to-stack--tight">
-          <h2 className="to-section-title">{t('plan.thisWeek')}</h2>
-          {week.map((day) => {
+        <Fold title={t('plan.thisWeek')} summary={t('plan.daysSummary', { count: trainingDays })}>
+          {WEEK_ORDER.map((day) => {
             const routine = routines.find((r) => r.data.weekday === day)
             return (
-              <div key={day} className={`to-dayrow${routine ? '' : ' is-rest'}`}>
+              <div key={day} className={`to-dayrow to-dayrow--line${routine ? '' : ' is-rest'}`}>
                 <span className="to-dayrow__day">{WEEKDAYS[day].slice(0, 3)}</span>
                 <span className={`to-today__icon to-today__icon--small${routine ? '' : ' to-today__icon--rest'}`}>
                   {routine ? <Dumbbell size={14} /> : <Moon size={14} />}
@@ -111,55 +136,75 @@ export function RoutinesScreen() {
                   <strong>{routine?.data.name ?? t('plan.rest')}</strong>
                   <span className="to-muted">{routine ? t('routine.exercises', { count: routine.data.items.length }) : t('plan.restHint')}</span>
                 </button>
-                {routine && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
-                <select className="to-field__input to-dayrow__select" value={routine?.id ?? ''} aria-label={t('plan.assign', { day: WEEKDAYS[day] })} onChange={(e) => void assignDay(day, e.target.value)}>
-                  <option value="">{t('plan.rest')}</option>
-                  {routines.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.data.name}
-                    </option>
-                  ))}
-                </select>
                 {routine && (
-                  <div className="to-dayrow__strip">
-                    <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small />
+                  <div className="to-dayrow__thumbs">
+                    <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(routine.data)} />
                   </div>
+                )}
+                {routine && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
+                {routine ? (
+                  <select
+                    className="to-field__input to-dayrow__select"
+                    value={String(day)}
+                    aria-label={t('plan.moveDay', { name: routine.data.name })}
+                    onChange={(e) => void moveRoutine(routine.id, e.target.value === 'rest' ? null : Number(e.target.value))}
+                  >
+                    {WEEK_ORDER.map((d) => (
+                      <option key={d} value={d}>
+                        {WEEKDAYS[d]}
+                      </option>
+                    ))}
+                    <option value="rest">{t('plan.rest')}</option>
+                  </select>
+                ) : (
+                  loose.length > 0 && (
+                    <select
+                      className="to-field__input to-dayrow__select"
+                      value=""
+                      aria-label={t('plan.assign', { day: WEEKDAYS[day] })}
+                      onChange={(e) => e.target.value && void moveRoutine(e.target.value, day)}
+                    >
+                      <option value="">{t('plan.rest')}</option>
+                      {loose.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.data.name}
+                        </option>
+                      ))}
+                    </select>
+                  )
                 )}
               </div>
             )
           })}
-        </section>
+        </Fold>
       ) : (
-        rotationList.length > 0 && (
-          <section className="to-stack to-stack--tight">
-            <h2 className="to-section-title">{t('plan.order')}</h2>
-            {rotationList.map((r, i) => (
-              <div key={r.id} className="to-dayrow">
-                <span className="to-dayrow__day">{String.fromCharCode(65 + i)}</span>
-                <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${r.id}`)}>
-                  <strong>{r.data.name}</strong>
-                  <span className="to-muted">{t('routine.exercises', { count: r.data.items.length })}</span>
-                </button>
-                <BodyMap primary={musclesOf(r.data)} size="tiny" />
-                <div className="to-dayrow__strip">
-                  <ExerciseStrip ids={r.data.items.map((item) => item.exerciseId)} small />
-                </div>
-                <span className="to-toolbar to-toolbar--tight">
-                  <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.up')} disabled={i === 0} onClick={() => moveInRotation(r.id, -1)}>
-                    <ArrowUp size={14} />
-                  </button>
-                  <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.down')} disabled={i === rotationList.length - 1} onClick={() => moveInRotation(r.id, 1)}>
-                    <ArrowDown size={14} />
-                  </button>
-                </span>
+        <Fold title={t('plan.order')} summary={t('plan.rotationSummary', { count: rotationList.length })}>
+          {rotationList.length === 0 && <p className="to-muted">{t('plan.rotationEmpty')}</p>}
+          {rotationList.map((r, i) => (
+            <div key={r.id} className="to-dayrow to-dayrow--line">
+              <span className="to-dayrow__day">{String.fromCharCode(65 + i)}</span>
+              <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${r.id}`)}>
+                <strong>{r.data.name}</strong>
+                <span className="to-muted">{t('routine.exercises', { count: r.data.items.length })}</span>
+              </button>
+              <div className="to-dayrow__thumbs">
+                <ExerciseStrip ids={r.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(r.data)} />
               </div>
-            ))}
-          </section>
-        )
+              <BodyMap primary={musclesOf(r.data)} size="tiny" />
+              <span className="to-toolbar to-toolbar--tight">
+                <button type="button" className="to-plainicon" aria-label={t('entry.up')} disabled={i === 0} onClick={() => moveInRotation(r.id, -1)}>
+                  <ArrowUp size={16} />
+                </button>
+                <button type="button" className="to-plainicon" aria-label={t('entry.down')} disabled={i === rotationList.length - 1} onClick={() => moveInRotation(r.id, 1)}>
+                  <ArrowDown size={16} />
+                </button>
+              </span>
+            </div>
+          ))}
+        </Fold>
       )}
 
-      <section className="to-stack to-stack--tight">
-        <h2 className="to-section-title">{t('plan.routines')}</h2>
+      <Fold title={t('plan.routines')} summary={t('plan.routinesSummary', { count: routines.length })}>
         <QuickAdd
           placeholder={t('routine.placeholder')}
           onAdd={async (name) => {
@@ -172,22 +217,19 @@ export function RoutinesScreen() {
           <EmptyState title={t('routine.empty')} body={t('routine.emptyBody')} />
         ) : (
           routines.map((routine) => (
-            <div key={routine.id} className="to-dayrow">
+            <div key={routine.id} className="to-dayrow to-dayrow--line">
               <span className="to-today__icon to-today__icon--small">
                 <Dumbbell size={14} />
               </span>
               <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${routine.id}`)}>
                 <strong>{routine.data.name}</strong>
                 <span className="to-muted">
-                  {[
-                    t('routine.exercises', { count: routine.data.items.length }),
-                    settings.mode === 'week' && routine.data.weekday !== null ? WEEKDAYS[routine.data.weekday] : null,
-                    routine.data.items.slice(0, 3).map((item) => index.get(item.exerciseId)?.name).filter(Boolean).join(', '),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
+                  {[t('routine.exercises', { count: routine.data.items.length }), routine.data.weekday !== null ? WEEKDAYS[routine.data.weekday] : t('routine.noDay')].join(' · ')}
                 </span>
               </button>
+              <div className="to-dayrow__thumbs">
+                <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(routine.data)} />
+              </div>
               {settings.mode === 'rotation' && (
                 <label className="to-inline-field">
                   <input
@@ -202,25 +244,13 @@ export function RoutinesScreen() {
                   <span className="to-muted">{t('plan.inRotation')}</span>
                 </label>
               )}
-              <button
-                type="button"
-                className="to-iconbutton to-iconbutton--small"
-                aria-label={t('routine.remove')}
-                onClick={() => {
-                  if (!confirm(t('routine.removeConfirm', { name: routine.data.name }))) return
-                  void remove(routine.id)
-                  if (inRotation(routine.id)) void setSettings({ rotation: settings.rotation.filter((id) => id !== routine.id) })
-                }}
-              >
-                <Trash2 size={14} />
-              </button>
-              <ChevronRight size={15} className="to-muted" aria-hidden />
+              <ChevronRight size={16} className="to-muted" aria-hidden />
             </div>
           ))
         )}
-      </section>
+      </Fold>
 
-      <Card title={t('templates.title')}>
+      <Fold title={t('templates.title')}>
         <p className="to-muted">{t('templates.body')}</p>
         <div className="to-cards">
           {TEMPLATES.map((template) => (
@@ -239,18 +269,24 @@ export function RoutinesScreen() {
             </article>
           ))}
         </div>
-      </Card>
+      </Fold>
 
-      <TrainingSettingsCard />
+      <Fold title={t('settings.title')}>
+        <TrainingSettingsFields />
+      </Fold>
+
+      {editing && (
+        <ExercisePlanSheet exercise={editing.exercise} initial={{ ...(editing.item ? planOfItem(editing.item) : {}), days: editing.days }} onClose={() => setEditing(null)} />
+      )}
     </div>
   )
 }
 
-function TrainingSettingsCard() {
+function TrainingSettingsFields() {
   const t = useT()
   const [settings, setSettings] = useTrainingSettings()
   return (
-    <Card title={t('settings.title')}>
+    <>
       <div className="to-toolbar">
         <label className="to-inline-field">
           <span className="to-muted">{t('settings.effort')}</span>
@@ -271,16 +307,6 @@ function TrainingSettingsCard() {
           </select>
         </label>
         <label className="to-inline-field">
-          <span className="to-muted">{t('settings.step')}</span>
-          <select className="to-field__input" value={weightStep(settings)} onChange={(e) => void setSettings({ step: Number(e.target.value) })}>
-            {[1, 1.25, 2, 2.5, 5].map((s) => (
-              <option key={s} value={s}>
-                {String(s).replace('.', ',')} kg
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="to-inline-field">
           <span className="to-muted">{t('settings.view')}</span>
           <select className="to-field__input" value={settings.view} onChange={(e) => void setSettings({ view: e.target.value as 'cards' | 'list' })}>
             <option value="cards">{t('settings.view.cards')}</option>
@@ -293,7 +319,7 @@ function TrainingSettingsCard() {
         </label>
       </div>
       <p className="to-muted">{t('settings.hint')}</p>
-    </Card>
+    </>
   )
 }
 
@@ -332,41 +358,48 @@ function num(text: string): number | null {
   return text.trim() === '' || !Number.isFinite(n) || n < 0 ? null : Math.round(n)
 }
 
+function ItemField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="to-itemfield">
+      <span>{label}</span>
+      {children}
+    </label>
+  )
+}
+
 function ItemEditor({
   item,
   def,
   index,
   count,
-  linked,
   onUpdate,
   onMove,
   onRemove,
-  onSuperset,
+  onOpen,
 }: {
   item: RoutineItem
   def?: ExerciseDef
   index: number
   count: number
-  linked: boolean
   onUpdate: (change: (item: RoutineItem) => RoutineItem) => void
   onMove: (delta: -1 | 1) => void
   onRemove: () => void
-  onSuperset: () => void
+  onOpen: () => void
 }) {
   const t = useT()
-  const navigate = useNavigate()
   const shape = shapeOf(item.sets)
   const timed = def?.kind === 'time' || def?.kind === 'cardio'
   const set = (patch: Partial<SetsShape>) => onUpdate((it) => ({ ...it, sets: setsOf({ ...shapeOf(it.sets), ...patch }) }))
 
   return (
-    <article className="to-entry">
-      <header className="to-entry__header">
+    <article className="to-entry to-item">
+      <div className="to-item__who">
         {def && (
-          <button type="button" className="to-entry__pic" aria-label={t('entry.howTo', { name: def.name })} onClick={() => navigate(`library/${encodeURIComponent(def.id)}`)}>
+          <button type="button" className="to-entry__pic" aria-label={t('entry.howTo', { name: def.name })} onClick={onOpen}>
             <ExerciseMedia exercise={def} size="thumb" />
           </button>
         )}
+        {def && <BodyMap primary={[def.muscle]} secondary={def.secondary} size="tiny" />}
         <div className="to-entry__title">
           <strong>{def?.name ?? item.exerciseId}</strong>
           {def && (
@@ -376,33 +409,27 @@ function ItemEditor({
           )}
           {item.superset && <Badge tone="accent">{t('entry.superset', { letter: item.superset })}</Badge>}
         </div>
-        <div className="to-toolbar to-toolbar--tight">
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.up')} disabled={index === 0} onClick={() => onMove(-1)}>
-            <ArrowUp size={14} />
+        <span className="to-item__tools">
+          <button type="button" className="to-plainicon" aria-label={t('entry.up')} title={t('entry.up')} disabled={index === 0} onClick={() => onMove(-1)}>
+            <ArrowUp size={16} />
           </button>
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.down')} disabled={index === count - 1} onClick={() => onMove(1)}>
-            <ArrowDown size={14} />
+          <button type="button" className="to-plainicon" aria-label={t('entry.down')} title={t('entry.down')} disabled={index === count - 1} onClick={() => onMove(1)}>
+            <ArrowDown size={16} />
           </button>
-          {index < count - 1 && (
-            <button type="button" className={`to-iconbutton to-iconbutton--small${linked ? ' active' : ''}`} aria-label={t('entry.supersetToggle')} title={t('entry.supersetToggle')} onClick={onSuperset}>
-              <Link2 size={14} />
-            </button>
-          )}
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.remove')} onClick={onRemove}>
-            <Trash2 size={14} />
+          <button type="button" className="to-plainicon" aria-label={t('entry.remove')} title={t('entry.remove')} onClick={onRemove}>
+            <Trash2 size={16} />
           </button>
-        </div>
-      </header>
-      <div className="to-toolbar">
-        <label className="to-inline-field">
-          <span className="to-muted">{t('routine.sets')}</span>
-          <input className="to-field__input to-input--tiny" inputMode="numeric" defaultValue={shape.count} aria-label={t('routine.sets')} onBlur={(e) => set({ count: Math.max(1, num(e.target.value) ?? 1) })} />
-        </label>
+        </span>
+      </div>
+
+      <div className="to-item__fields">
+        <ItemField label={t('routine.sets')}>
+          <input className="to-field__input" inputMode="numeric" defaultValue={shape.count} aria-label={t('routine.sets')} onBlur={(e) => set({ count: Math.max(1, num(e.target.value) ?? 1) })} />
+        </ItemField>
         {timed ? (
-          <label className="to-inline-field">
-            <span className="to-muted">{t(def?.kind === 'cardio' ? 'routine.minutes' : 'routine.seconds')}</span>
+          <ItemField label={t(def?.kind === 'cardio' ? 'routine.minutes' : 'routine.seconds')}>
             <input
-              className="to-field__input to-input--tiny"
+              className="to-field__input"
               inputMode="numeric"
               defaultValue={shape.seconds === null ? '' : def?.kind === 'cardio' ? Math.round(shape.seconds / 60) : shape.seconds}
               aria-label={t('routine.seconds')}
@@ -411,24 +438,21 @@ function ItemEditor({
                 set({ seconds: value === null ? null : def?.kind === 'cardio' ? value * 60 : value, reps: null, repsMax: null })
               }}
             />
-          </label>
+          </ItemField>
         ) : (
           <>
-            <label className="to-inline-field">
-              <span className="to-muted">{t('routine.reps')}</span>
-              <input className="to-field__input to-input--tiny" inputMode="numeric" defaultValue={shape.reps ?? ''} aria-label={t('routine.reps')} onBlur={(e) => set({ reps: num(e.target.value) })} />
-            </label>
-            <label className="to-inline-field">
-              <span className="to-muted">{t('routine.repsMax')}</span>
-              <input className="to-field__input to-input--tiny" inputMode="numeric" defaultValue={shape.repsMax ?? ''} aria-label={t('routine.repsMax')} onBlur={(e) => set({ repsMax: num(e.target.value) })} />
-            </label>
+            <ItemField label={t('routine.reps')}>
+              <input className="to-field__input" inputMode="numeric" defaultValue={shape.reps ?? ''} aria-label={t('routine.reps')} onBlur={(e) => set({ reps: num(e.target.value) })} />
+            </ItemField>
+            <ItemField label={t('routine.repsMax')}>
+              <input className="to-field__input" inputMode="numeric" defaultValue={shape.repsMax ?? ''} aria-label={t('routine.repsMax')} onBlur={(e) => set({ repsMax: num(e.target.value) })} />
+            </ItemField>
           </>
         )}
         {(def?.kind === 'weight' || def?.kind === 'bodyweight') && (
-          <label className="to-inline-field">
-            <span className="to-muted">{t('routine.weight')}</span>
+          <ItemField label={t('routine.weight')}>
             <input
-              className="to-field__input to-input--tiny"
+              className="to-field__input"
               inputMode="decimal"
               defaultValue={item.weight ? String(item.weight).replace('.', ',') : ''}
               aria-label={t('routine.weight')}
@@ -439,33 +463,92 @@ function ItemEditor({
                 if (weight !== (item.weight ?? null)) onUpdate((it) => ({ ...it, weight }))
               }}
             />
-          </label>
+          </ItemField>
         )}
         {def?.kind === 'weight' && (
-          <label className="to-inline-field">
-            <span className="to-muted">{t('routine.warmups')}</span>
-            <input className="to-field__input to-input--tiny" inputMode="numeric" defaultValue={shape.warmups} aria-label={t('routine.warmups')} onBlur={(e) => set({ warmups: num(e.target.value) ?? 0 })} />
-          </label>
+          <ItemField label={t('routine.warmups')}>
+            <input className="to-field__input" inputMode="numeric" defaultValue={shape.warmups} aria-label={t('routine.warmups')} onBlur={(e) => set({ warmups: num(e.target.value) ?? 0 })} />
+          </ItemField>
         )}
-        <label className="to-inline-field">
-          <span className="to-muted">{t('entry.rest')}</span>
-          <select className="to-field__input" value={item.rest} aria-label={t('entry.rest')} onChange={(e) => {
-            const rest = Number(e.target.value)
-            onUpdate((it) => ({ ...it, rest }))
-          }}>
+        <ItemField label={t('entry.rest')}>
+          <select
+            className="to-field__input"
+            value={item.rest}
+            aria-label={t('entry.rest')}
+            onChange={(e) => {
+              const rest = Number(e.target.value)
+              onUpdate((it) => ({ ...it, rest }))
+            }}
+          >
             {REST_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 {s === 0 ? t('entry.noRest') : clock(s)}
               </option>
             ))}
           </select>
-        </label>
+        </ItemField>
+        <ItemField label={t('routine.noteShort')}>
+          <input
+            className="to-field__input"
+            defaultValue={item.note}
+            placeholder={t('routine.note')}
+            aria-label={t('routine.note')}
+            onBlur={(e) => {
+              const note = e.target.value
+              if (note !== item.note) onUpdate((it) => ({ ...it, note }))
+            }}
+          />
+        </ItemField>
       </div>
-      <input className="to-field__input" defaultValue={item.note} placeholder={t('routine.note')} aria-label={t('routine.note')} onBlur={(e) => {
-          const note = e.target.value
-          if (note !== item.note) onUpdate((it) => ({ ...it, note }))
-        }} />
     </article>
+  )
+}
+
+/** The routine's title: its name and its weekday, changed from the title itself. */
+function RoutineTitle({ routine }: { routine: Envelope<Routine> }) {
+  const t = useT()
+  const { update } = useCollection<Routine>('routines')
+  const moveRoutine = useMoveRoutine()
+  const { name, weekday } = routine.data
+  // A routine named after its day reads "Treino de [Domingo ▾]"; any other keeps its own name.
+  const dayNamed = weekday !== null && name === t('sheet.dayRoutine', { day: WEEKDAYS[weekday] })
+
+  const daySelect = (
+    <span className="to-titleselect">
+      <select value={weekday ?? 'none'} aria-label={t('routine.weekday')} onChange={(e) => void moveRoutine(routine.id, e.target.value === 'none' ? null : Number(e.target.value))}>
+        {WEEK_ORDER.map((d) => (
+          <option key={d} value={d}>
+            {WEEKDAYS[d]}
+          </option>
+        ))}
+        <option value="none">{t('routine.noDay')}</option>
+      </select>
+      <ChevronDown size={18} aria-hidden />
+    </span>
+  )
+
+  return (
+    <h1 className="to-routinetitle">
+      {dayNamed ? (
+        <>
+          <span>{t('routine.of')}</span>
+          {daySelect}
+        </>
+      ) : (
+        <>
+          <input
+            key={name}
+            className="to-titleinput"
+            defaultValue={name}
+            aria-label={t('routine.name')}
+            size={Math.max(8, name.length)}
+            onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== name && void update(routine.id, { name: e.target.value.trim() })}
+          />
+          <span className="to-muted">·</span>
+          {daySelect}
+        </>
+      )}
+    </h1>
   )
 }
 
@@ -477,10 +560,11 @@ export function RoutineScreen() {
   const routine = routines.find((r) => r.id === id)
   const index = useExerciseIndex()
   const sessions = useSessions()
-  const [settings] = useTrainingSettings()
-  const { update } = useCollection<Routine>('routines')
+  const [settings, setSettings] = useTrainingSettings()
+  const { update, remove } = useCollection<Routine>('routines')
   const sessionsWriter = useCollection<Session>('sessions')
   const [picking, setPicking] = useState(false)
+  const [viewing, setViewing] = useState<ExerciseDef | null>(null)
 
   // Edits apply to the newest items, so two quick changes both stay.
   const stored = routine?.data.items
@@ -501,17 +585,6 @@ export function RoutineScreen() {
     })
   }
 
-  const toggleSuperset = (at: number) =>
-    mutate((list) => {
-      const a = list[at]
-      const b = list[at + 1]
-      if (!a || !b) return list
-      if (a.superset && a.superset === b.superset) return list.map((it, i) => (i === at || i === at + 1 ? { ...it, superset: null } : it))
-      const used = new Set(list.map((it) => it.superset).filter(Boolean))
-      const letter = a.superset ?? b.superset ?? 'ABCDEFGH'.split('').find((l) => !used.has(l)) ?? 'Z'
-      return list.map((it, i) => (i === at || i === at + 1 ? { ...it, superset: letter } : it))
-    })
-
   const startNow = async () => {
     const finished = withIds(sessions).filter((s) => s.finishedAt)
     await sessionsWriter.create({
@@ -529,64 +602,51 @@ export function RoutineScreen() {
     navigate('')
   }
 
+  const removeRoutine = () => {
+    if (!confirm(t('routine.removeConfirm', { name: routine.data.name }))) return
+    void remove(routine.id)
+    if (settings.rotation.includes(routine.id)) void setSettings({ rotation: settings.rotation.filter((r) => r !== routine.id) })
+    navigate('routines')
+  }
+
   return (
     <div className="to-stack">
-      <div className="to-toolbar">
-        <Button variant="ghost" onClick={() => navigate('routines')}>
-          <ArrowLeft size={15} />
-          {t('routine.back')}
-        </Button>
+      <header className="to-routinehead">
+        <button type="button" className="to-linkbutton" onClick={() => navigate('routines')}>
+          <ArrowLeft size={15} /> {t('routine.back')}
+        </button>
+        <RoutineTitle routine={routine} />
         <Button variant="primary" onClick={() => void startNow()} disabled={items.length === 0}>
-          <Play size={15} />
           {t('routine.startNow')}
         </Button>
-      </div>
-      <div className="to-toolbar">
-        <input
-          className="to-field__input to-workout__name"
-          defaultValue={routine.data.name}
-          aria-label={t('routine.name')}
-          onBlur={(e) => e.target.value.trim() && e.target.value !== routine.data.name && void update(routine.id, { name: e.target.value.trim() })}
-        />
-        <select
-          className="to-field__input"
-          value={routine.data.weekday ?? ''}
-          aria-label={t('routine.weekday')}
-          onChange={(e) => void update(routine.id, { weekday: e.target.value === '' ? null : Number(e.target.value) })}
-        >
-          <option value="">{t('routine.noDay')}</option>
-          {WEEKDAYS.map((day, i) => (
-            <option key={day} value={i}>
-              {day}
-            </option>
-          ))}
-        </select>
-      </div>
+      </header>
 
       {items.length === 0 ? (
         <EmptyState title={t('routine.noItems')} body={t('routine.noItemsBody')} />
       ) : (
-        items.map((item, i) => (
-          <ItemEditor
-            key={`${i}-${item.exerciseId}`}
-            item={item}
-            def={index.get(item.exerciseId)}
-            index={i}
-            count={items.length}
-            linked={Boolean(item.superset && items[i + 1]?.superset === item.superset)}
-            onUpdate={(change) => mutate((list) => list.map((it, j) => (j === i ? change(it) : it)))}
-            onMove={(delta) =>
-              mutate((list) => {
-                const next = [...list]
-                const [moved] = next.splice(i, 1)
-                next.splice(i + delta, 0, moved)
-                return next
-              })
-            }
-            onRemove={() => mutate((list) => list.filter((_, j) => j !== i))}
-            onSuperset={() => toggleSuperset(i)}
-          />
-        ))
+        items.map((item, i) => {
+          const def = index.get(item.exerciseId)
+          return (
+            <ItemEditor
+              key={`${i}-${item.exerciseId}`}
+              item={item}
+              def={def}
+              index={i}
+              count={items.length}
+              onOpen={() => def && setViewing(def)}
+              onUpdate={(change) => mutate((list) => list.map((it, j) => (j === i ? change(it) : it)))}
+              onMove={(delta) =>
+                mutate((list) => {
+                  const next = [...list]
+                  const [moved] = next.splice(i, 1)
+                  next.splice(i + delta, 0, moved)
+                  return next
+                })
+              }
+              onRemove={() => mutate((list) => list.filter((_, j) => j !== i))}
+            />
+          )
+        })
       )}
 
       {picking ? (
@@ -606,8 +666,13 @@ export function RoutineScreen() {
             <Plus size={15} />
             {t('workout.addExercise')}
           </Button>
+          <button type="button" className="to-linkbutton to-linkbutton--danger to-push" onClick={removeRoutine}>
+            <Trash2 size={14} /> {t('routine.remove')}
+          </button>
         </div>
       )}
+
+      {viewing && <ExerciseSheet exercise={viewing} onClose={() => setViewing(null)} />}
     </div>
   )
 }

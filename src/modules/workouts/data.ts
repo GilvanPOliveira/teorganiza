@@ -30,8 +30,8 @@ export const TRAINING_DEFAULTS: TrainingSettings = {
   view: 'cards',
 }
 
-/** How much a − or + changes a weight: never under 1 kg, the smallest plate pair in a gym. */
-export const weightStep = (settings: Pick<TrainingSettings, 'step'>) => Math.max(1, settings.step)
+/** How much a − or + changes a weight. Any other weight is typed in the field. */
+export const weightStep = () => 0.5
 
 export function useTrainingSettings() {
   return useSettings<TrainingSettings>(TRAINING_DEFAULTS)
