@@ -238,17 +238,6 @@ export function RoutinesScreen() {
         ) : (
           routines.map((routine) => (
             <div key={routine.id} className="to-dayrow to-dayrow--line to-dayrow--week to-dayrow--link" onClick={() => navigate(`routines/${routine.id}`)}>
-              <span className="to-rowtool" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className="to-plainicon to-plainicon--danger"
-                  aria-label={t('routine.removeNamed', { name: routine.data.name })}
-                  title={t('routine.remove')}
-                  onClick={() => removeRoutine(routine)}
-                >
-                  <Trash2 size={17} />
-                </button>
-              </span>
               <span className="to-today__icon to-today__icon--small">
                 <Dumbbell size={14} />
               </span>
@@ -275,6 +264,17 @@ export function RoutinesScreen() {
                   <span className="to-muted">{t('plan.inRotation')}</span>
                 </label>
               )}
+              <span className="to-rowtool" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="to-plainicon to-plainicon--danger"
+                  aria-label={t('routine.removeNamed', { name: routine.data.name })}
+                  title={t('routine.remove')}
+                  onClick={() => removeRoutine(routine)}
+                >
+                  <Trash2 size={17} />
+                </button>
+              </span>
             </div>
           ))
         )}
