@@ -3328,3 +3328,30 @@ a.to-tag:hover {
 .to-exsheet--plan .to-excard.is-open { border: none; }
 .to-workout__settings { display: flex; flex-direction: column; gap: 10px; }
 .to-workout__settingshead { display: flex; align-items: center; justify-content: space-between; }
+
+/* Rotinas, fine tuning */
+.to-dayselect {
+  flex: none;
+  width: 74px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.to-dayselect:disabled { opacity: 1; cursor: default; color: var(--to-text-2, inherit); background: transparent; }
+.to-dayrow.is-rest { opacity: 0.5; }
+.to-dayrow__thumbs { display: flex; justify-content: flex-end; }
+.to-dayrow__thumbs .to-today__strip { justify-content: flex-end; }
+.to-dayrow--line > .to-bodymap--tiny { flex: none; }
+.to-titleselect select:focus,
+.to-titleselect select:focus-visible { outline: none; box-shadow: none; }
+.to-plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
+.to-plans > .to-tile { display: flex; flex-direction: column; gap: 8px; height: 100%; margin: 0; padding: 16px; }
+.to-plans > .to-tile .to-tile__title { margin: 0; }
+.to-plans > .to-tile > .to-muted { min-height: 3.2em; }
+.to-plans > .to-tile .to-list__meta { flex: 1; align-content: flex-start; }
+.to-plans > .to-tile > button { align-self: stretch; justify-content: center; margin-top: auto; }
+@media (max-width: 720px) {
+  .to-dayrow--line .to-dayrow__main { flex: 1 1 calc(100% - 140px); }
+}
