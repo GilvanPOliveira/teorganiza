@@ -91,6 +91,8 @@ export interface PlanSettings {
   rotation: string[]
   /** Per date: a routine moved there, or 'rest' for a day whose routine was moved away. */
   moved: Record<string, string>
+  /** Weekdays set to rest (0 = Sunday): their routine stays on the day, but is not planned. */
+  off?: number[]
 }
 
 function weekdayOf(isoDate: string): number {
@@ -124,6 +126,7 @@ export function plannedRoutine<R extends { id: string; data: Routine }>(
   }
 
   const day = weekdayOf(date)
+  if (plan.off?.includes(day)) return null
   return routines.find((r) => r.data.weekday === day) ?? null
 }
 

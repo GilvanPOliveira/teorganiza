@@ -80,6 +80,9 @@ describe('planning', () => {
   it('takes the routine of the weekday', () => {
     expect(plannedRoutine('2026-11-30', routines, week, [])?.id).toBe('a') // Monday
     expect(plannedRoutine('2026-12-01', routines, week, [])).toBeNull() // Tuesday
+    // Monday set to rest: nothing planned, and the routine is back once the day is on again.
+    expect(plannedRoutine('2026-11-30', routines, { ...week, off: [1] }, [])).toBeNull()
+    expect(plannedRoutine('2026-11-30', routines, { ...week, off: [] }, [])?.id).toBe('a')
   })
 
   it('moves a day without touching the week', () => {
