@@ -1,97 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Accessibility, Plus, Star, Trash2, X } from 'lucide-react'
-import { Attachments, Button, Card, useCollection, useFormat, useT } from '@core/api'
+import { Accessibility, Plus, Star } from 'lucide-react'
+import { Button, Card, useCollection, useT } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { EQUIPMENT, MUSCLES, equipmentLabel, muscleLabel, type Equipment, type ExerciseDef, type ExerciseKind, type Muscle } from './catalog'
 import { useExerciseIndex, useSessions, useTrainingSettings, withIds } from './data'
-import { bestOf, entryFor, lastEntry } from './logic'
+import { ExerciseSheet } from './detail'
+import { entryFor } from './logic'
 import { ExerciseMedia } from './media'
-import { PHOTOS } from './photos'
 import { EMPTY_FILTER, ExerciseFilters, filterExercises, type ExerciseFilter } from './picker'
 import type { CustomExercise, Session } from './schema'
 
 const KINDS: ExerciseKind[] = ['weight', 'bodyweight', 'time', 'cardio']
-
-/** Everything about one exercise: picture, muscles, how to do it, your marks. */
-function ExerciseSheet({ exercise, onClose }: { exercise: ExerciseDef; onClose: () => void }) {
-  const t = useT()
-  const format = useFormat()
-  const [settings, setSettings] = useTrainingSettings()
-  const sessions = withIds(useSessions()).filter((s) => s.finishedAt)
-  const { remove } = useCollection<CustomExercise>('exercises')
-  const favorite = settings.favorites.includes(exercise.id)
-  const best = bestOf(sessions, { exerciseId: exercise.id, name: exercise.name })
-  const last = lastEntry(sessions, { exerciseId: exercise.id, name: exercise.name })
-  const lastDate = last ? sessions.find((s) => s.entries.includes(last))?.date : undefined
-
-  return (
-    <div className="to-palette__backdrop" onMouseDown={onClose}>
-      <section className="to-palette to-exsheet" role="dialog" aria-modal="true" aria-label={exercise.name} onMouseDown={(e) => e.stopPropagation()}>
-        <header className="to-nex__header">
-          <strong>{exercise.name}</strong>
-          <button
-            type="button"
-            className={`to-iconbutton to-iconbutton--small${favorite ? ' active' : ''}`}
-            aria-pressed={favorite}
-            aria-label={t(favorite ? 'library.unfavorite' : 'library.favorite')}
-            onClick={() =>
-              void setSettings({ favorites: favorite ? settings.favorites.filter((id) => id !== exercise.id) : [...settings.favorites, exercise.id] })
-            }
-          >
-            <Star size={15} />
-          </button>
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('action.close')} onClick={onClose}>
-            <X size={15} />
-          </button>
-        </header>
-        <div className="to-exsheet__body">
-          <ExerciseMedia exercise={exercise} size="large" />
-          <div className="to-exercise__tags">
-            <span className="to-tag">{muscleLabel(exercise.muscle)}</span>
-            <span className="to-tag">{equipmentLabel(exercise.equipment)}</span>
-            {t(`kind.${exercise.kind}`) !== equipmentLabel(exercise.equipment) && <span className="to-tag">{t(`kind.${exercise.kind}`)}</span>}
-            {exercise.perSide && <span className="to-tag">{t('library.perSide')}</span>}
-          </div>
-          {exercise.instructions && <p>{exercise.instructions}</p>}
-          <div className="to-exsheet__muscles">
-            {(exercise.custom || PHOTOS.has(exercise.id)) && <BodyMap primary={[exercise.muscle]} secondary={exercise.secondary} size="small" />}
-            <div className="to-stack to-stack--tight">
-              <span>
-                <strong>{t('library.main')}</strong> {muscleLabel(exercise.muscle)}
-              </span>
-              {exercise.secondary.length > 0 && (
-                <span>
-                  <strong>{t('library.helps')}</strong> {exercise.secondary.map(muscleLabel).join(', ')}
-                </span>
-              )}
-              {best.oneRepMax > 0 && <span>{t('library.best1rm', { kg: best.oneRepMax })}</span>}
-              {exercise.kind === 'bodyweight' && best.reps > 0 && <span>{t('library.bestReps', { reps: best.reps })}</span>}
-              {exercise.kind === 'time' && best.seconds > 0 && <span>{t('library.bestTime', { s: best.seconds })}</span>}
-              {lastDate && <span className="to-muted">{t('library.last', { date: format.date(lastDate) })}</span>}
-            </div>
-          </div>
-          {exercise.custom && (
-            <>
-              <h3 className="to-section-title">{t('library.media')}</h3>
-              <Attachments collection="exercises" id={exercise.id.slice(2)} />
-              <Button
-                variant="danger"
-                onClick={() => {
-                  if (!confirm(t('library.removeConfirm', { name: exercise.name }))) return
-                  void remove(exercise.id.slice(2))
-                  onClose()
-                }}
-              >
-                <Trash2 size={14} />
-                {t('library.remove')}
-              </Button>
-            </>
-          )}
-        </div>
-      </section>
-    </div>
-  )
-}
 
 function CustomForm({ onDone }: { onDone: () => void }) {
   const t = useT()

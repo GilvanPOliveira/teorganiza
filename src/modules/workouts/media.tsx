@@ -41,7 +41,7 @@ export function ExerciseMedia({ exercise, size }: { exercise: ExerciseDef; size:
     content = (
       <>
         <img className="to-media__img" src={`/exercises/${exercise.id}/0.jpg`} alt="" loading="lazy" hidden={frame !== 0} />
-        <img className="to-media__img" src={`/exercises/${exercise.id}/1.jpg`} alt="" loading="lazy" hidden={frame !== 1} />
+        {size === 'large' && <img className="to-media__img" src={`/exercises/${exercise.id}/1.jpg`} alt="" loading="lazy" hidden={frame !== 1} />}
       </>
     )
   } else {
