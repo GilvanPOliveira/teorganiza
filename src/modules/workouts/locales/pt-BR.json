@@ -252,5 +252,6 @@
   "routine.of": "Treino de",
   "routine.noteShort": "Observação",
   "plan.restingHint": "{name} volta ao marcar o dia",
-  "plan.trainOn": "Treinar na semana: {day}"
+  "plan.trainOn": "Treinar na semana: {day}",
+  "routine.removeNamed": "Apagar a rotina {name}"
 }

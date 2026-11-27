@@ -3380,3 +3380,16 @@ a.to-tag:hover {
   .to-dayrow--week { height: auto; min-height: 112px; padding: 12px 14px; align-content: center; }
   .to-daycheck { width: 78px; height: auto; padding-right: 10px; }
 }
+/* Suas rotinas: the delete button in its own column, like the week's checkbox */
+.to-rowtool {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  margin-left: auto;
+  padding-left: 14px;
+  border-left: 1px solid var(--to-border);
+}
+.to-plainicon--danger { color: var(--to-danger, #e06c6c); }
+.to-plainicon--danger:hover { color: var(--to-danger, #e06c6c); background: color-mix(in srgb, var(--to-danger, #e06c6c) 14%, transparent); }
+@media (max-width: 720px) { .to-rowtool { height: auto; padding-left: 10px; } }
