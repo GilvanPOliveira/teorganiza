@@ -2552,8 +2552,6 @@ a.to-tag:hover {
   box-shadow: var(--to-shadow);
   max-width: calc(100vw - 32px);
 }
-.to-picker { max-height: 85vh; width: min(720px, 100%); }
-.to-picker__body { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; overflow-y: auto; }
 @media (max-width: 560px) {
   .to-setinput .to-field__input { width: 60px; }
   .to-setrow__end { margin-left: 0; }
@@ -3019,12 +3017,8 @@ a.to-tag:hover {
   .to-exercise--card .to-exercise__name { font-size: 17px; }
 }
 
-.to-picker { display: flex; flex-direction: column; }
-.to-picker__body { flex: 1; min-height: 0; }
-.to-picker__hint { margin: 0; font-size: 12px; }
-.to-exgrid--picker { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .to-excard.is-chosen { border-color: var(--to-accent); box-shadow: 0 0 0 1px var(--to-accent); }
-.to-picker__foot, .to-exsheet__foot {
+.to-exsheet__foot {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -3032,8 +3026,6 @@ a.to-tag:hover {
   padding: 10px 14px;
   border-top: 1px solid var(--to-border);
 }
-.to-picker__chosen { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; }
-.to-picker__chosen .to-media--thumb { width: 40px; height: 40px; border-radius: 9px; }
 .to-exsheet__howto { margin: 0; line-height: 1.5; }
 
 .to-today__strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: thin; }
@@ -3056,3 +3048,39 @@ a.to-tag:hover {
 }
 .to-today__ex .to-media--thumb { width: 72px; height: 72px; }
 .to-today__ex span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* The exercise list on the page, and the card that opens in place */
+.to-browser { display: flex; flex-direction: column; gap: 10px; scroll-margin-top: 12px; }
+.to-browser--inline { padding: 14px; border: 1px solid var(--to-border); border-radius: 16px; background: var(--to-surface); }
+.to-browser__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.to-browser__head strong { font-size: 16px; }
+.to-browser__hint { margin: 0; font-size: 12px; }
+.to-excard--plain .to-excard__open { padding: 11px 14px; }
+.to-excard.is-added { border-color: var(--to-accent); }
+.to-excard__added { flex: none; margin-right: 12px; color: var(--to-accent); display: grid; place-items: center; }
+.to-excard--form { grid-column: 1 / -1; }
+.to-excard--new { text-align: left; color: inherit; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px; background: none; }
+.to-excard.is-open {
+  grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: 14px;
+  border-color: var(--to-accent);
+  scroll-margin: 12px;
+}
+.to-excard__openhead { display: flex; align-items: center; gap: 8px; }
+.to-excard__openhead strong { flex: 1; min-width: 0; font-size: 17px; }
+.to-exdetail { display: flex; flex-direction: column; gap: 12px; }
+.to-exdetail__about { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (min-width: 760px) {
+  .to-excard.is-open .to-exdetail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .to-excard.is-open .to-exdetail__visual { position: sticky; top: 12px; }
+}
+.to-plan { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: var(--to-surface-2); }
+.to-plan__fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.to-plan__field { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--to-text-2, inherit); }
+.to-plan__last { margin: 0; font-size: 12px; }
+.to-plan__add { align-self: flex-start; }
+.to-exdetail .to-exsheet__muscles .to-bodymap--small { height: 150px; }
+@media (max-width: 640px) { .to-exdetail .to-exsheet__muscles .to-bodymap--small { height: 120px; } }
