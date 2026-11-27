@@ -218,3 +218,49 @@ export function clock(totalSeconds: number): string {
   const sec = String(s % 60).padStart(2, '0')
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`
 }
+
+/** How an exercise goes into a workout or a routine: sets, reps, load or time. */
+export interface ExercisePlan {
+  sets: number
+  reps: number | null
+  /** Kilograms; added load for body-weight work. */
+  weight: number | null
+  seconds: number | null
+}
+
+/**
+ * Where to start: what was done last time, or a sensible default (3 × 10,
+ * 4 × 8 for a compound lift, 30 s held, 20 min of cardio).
+ */
+export function planFor(exercise: ExerciseDef, sessions: Session[]): ExercisePlan {
+  const work = lastEntry(sessions, { exerciseId: exercise.id, name: exercise.name })?.sets.filter((s) => s.type !== 'warmup') ?? []
+  const timed = exercise.kind === 'time' || exercise.kind === 'cardio'
+  return {
+    sets: work.length || (exercise.kind === 'cardio' ? 1 : exercise.compound ? 4 : 3),
+    reps: timed ? null : (work[0]?.reps ?? (exercise.compound ? 8 : 10)),
+    weight: timed ? null : (work.reduce<number | null>((top, s) => (s.weight !== null && (top === null || s.weight > top) ? s.weight : top), null)),
+    seconds: timed ? (work[0]?.seconds ?? (exercise.kind === 'time' ? 30 : 1200)) : null,
+  }
+}
+
+/**
+ * A workout entry made from a plan: that many equal sets. `base` keeps the
+ * rest and superset of the entry it replaces, when swapping.
+ */
+export function entryFromPlan(
+  exercise: ExerciseDef,
+  plan: ExercisePlan,
+  sessions: Session[],
+  defaultRest: number,
+  base?: Pick<Entry, 'rest' | 'superset'>,
+): Entry {
+  const entry = entryFor(exercise, sessions, undefined, defaultRest)
+  const speed = entry.sets.find((s) => s.speed !== null)?.speed ?? null
+  const set: LoggedSet = { ...emptySet('normal'), weight: plan.weight, reps: plan.reps, seconds: plan.seconds, speed }
+  return {
+    ...entry,
+    rest: base?.rest ?? entry.rest,
+    superset: base?.superset ?? null,
+    sets: Array.from({ length: Math.max(1, plan.sets) }, () => ({ ...set })),
+  }
+}

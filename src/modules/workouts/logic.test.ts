@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { catalogExercise } from './catalog'
+import { CATALOG, catalogExercise } from './catalog'
 import {
   bestOf,
+  entryFromPlan,
+  planFor,
   clock,
   entryFor,
   estimateOneRepMax,
@@ -140,5 +142,31 @@ describe('migration', () => {
     expect(next.entries[0].sets[0]).toMatchObject({ weight: 60, reps: 10, done: true })
     expect(next.entries[1]).toMatchObject({ kind: 'bodyweight' })
     expect(sessionVolume(next)).toBe(1800)
+  })
+})
+
+describe('planFor and entryFromPlan', () => {
+  const bench = CATALOG.find((e) => e.id === 'supino-reto-barra')!
+  const plank = CATALOG.find((e) => e.kind === 'time')!
+
+  it('starts from defaults with no history', () => {
+    expect(planFor(bench, [])).toEqual({ sets: 4, reps: 8, weight: null, seconds: null })
+    expect(planFor(plank, [])).toMatchObject({ sets: 3, reps: null, seconds: 30 })
+  })
+
+  it('starts from last time, with its heaviest load', () => {
+    const done = (weight: number, reps: number) => ({ type: 'normal' as const, weight, reps, seconds: null, speed: null, effort: null, done: true })
+    const session = {
+      date: '2026-11-20', name: 'A', routineId: null, startedAt: null, finishedAt: '2026-11-20T12:00:00.000Z', note: '',
+      entries: [{ exerciseId: bench.id, name: bench.name, kind: 'weight' as const, perSide: false, superset: null, rest: 120, note: '', sets: [done(60, 8), done(62.5, 6)] }],
+    }
+    expect(planFor(bench, [session])).toEqual({ sets: 2, reps: 8, weight: 62.5, seconds: null })
+  })
+
+  it('makes equal sets and keeps rest and superset when swapping', () => {
+    const entry = entryFromPlan(bench, { sets: 3, reps: 5, weight: 80, seconds: null }, [], 90, { rest: 180, superset: 'A' })
+    expect(entry.sets).toHaveLength(3)
+    expect(entry.sets.every((s) => s.weight === 80 && s.reps === 5 && !s.done)).toBe(true)
+    expect(entry).toMatchObject({ rest: 180, superset: 'A', exerciseId: bench.id })
   })
 })

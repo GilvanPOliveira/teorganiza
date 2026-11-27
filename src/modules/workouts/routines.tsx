@@ -17,10 +17,10 @@ import {
 import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
+import { ExerciseBrowser } from './browser'
 import { ExerciseSheet } from './detail'
 import { clock, entryFor } from './logic'
 import { ExerciseMedia } from './media'
-import { ExercisePicker } from './picker'
 import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
 import { TEMPLATES } from './templates'
 import { useRoutineMuscles } from './today'
@@ -558,28 +558,27 @@ export function RoutineScreen() {
         ))
       )}
 
-      <div className="to-toolbar">
-        <Button onClick={() => setPicking(true)}>
-          <Plus size={15} />
-          {t('workout.addExercise')}
-        </Button>
-      </div>
-
-      {picking && (
-        <ExercisePicker
+      {picking ? (
+        <ExerciseBrowser
           title={t('workout.addExercise')}
-          multiple
           onClose={() => setPicking(false)}
-          onPick={(exercises) => {
-            const added = exercises.map((exercise): RoutineItem => {
-              const timed = exercise.kind === 'time' || exercise.kind === 'cardio'
-              const sets = setsOf({ warmups: 0, count: timed ? 1 : 3, reps: timed ? null : 10, repsMax: timed ? null : 12, seconds: exercise.kind === 'time' ? 30 : exercise.kind === 'cardio' ? 1200 : null })
-              return { exerciseId: exercise.id, sets, rest: exercise.compound ? 120 : settings.rest, superset: null, note: '' }
-            })
-            mutate((list) => [...list, ...added])
-            setPicking(false)
+          action={{
+            label: t('routine.addToRoutine'),
+            withLoad: false,
+            keepOpen: true,
+            onAdd: (exercise, plan) => {
+              const sets = setsOf({ warmups: 0, count: plan.sets, reps: plan.reps, repsMax: null, seconds: plan.seconds })
+              mutate((list) => [...list, { exerciseId: exercise.id, sets, rest: exercise.compound ? 120 : settings.rest, superset: null, note: '' }])
+            },
           }}
         />
+      ) : (
+        <div className="to-toolbar">
+          <Button onClick={() => setPicking(true)}>
+            <Plus size={15} />
+            {t('workout.addExercise')}
+          </Button>
+        </div>
       )}
     </div>
   )

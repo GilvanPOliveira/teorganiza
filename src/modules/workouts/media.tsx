@@ -6,7 +6,7 @@ import type { ExerciseDef } from './catalog'
 import { PHOTOS } from './photos'
 
 /** The first image or video the user attached to a custom exercise. */
-function useOwnMedia(exercise: ExerciseDef) {
+export function useOwnMedia(exercise: ExerciseDef) {
   const files = useFiles(exercise.custom ? { path: 'workouts/exercises', id: exercise.id.slice(2) } : null)
   const own = exercise.custom ? files.find((f) => ['image', 'video'].includes(fileCategory(f.data))) : undefined
   const url = useBlobUrl(own?.data.hash ?? null)
