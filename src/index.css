@@ -3340,7 +3340,7 @@ a.to-tag:hover {
   font-size: 14px;
 }
 .to-dayselect:disabled { opacity: 1; cursor: default; color: var(--to-text-2, inherit); background: transparent; }
-.to-dayrow.is-rest > :not(.to-dayselect) { opacity: 0.5; }
+.to-dayrow.is-rest > :not(.to-daycheck) { opacity: 0.5; }
 .to-dayrow--link { cursor: pointer; }
 .to-dayrow--link:hover { border-color: var(--to-border-strong); }
 .to-dayrow__thumbs { display: flex; justify-content: flex-end; }
@@ -3357,3 +3357,5 @@ a.to-tag:hover {
 @media (max-width: 720px) {
   .to-dayrow--line .to-dayrow__main { flex: 1 1 calc(100% - 140px); }
 }
+.to-daycheck { flex: none; display: inline-flex; align-items: center; gap: 8px; width: 74px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.to-daycheck input { width: 18px; height: 18px; margin: 0; accent-color: var(--to-accent); cursor: pointer; }

@@ -86,7 +86,6 @@ export function RoutinesScreen() {
   const [settings, setSettings] = useTrainingSettings()
   const { create } = useCollection<Routine>('routines')
   const { count: registered } = usePlanRegister()
-  const moveRoutine = useMoveRoutine()
   const [editing, setEditing] = useState<Editing | null>(null)
 
   const nextOrder = () => (routines.length ? Math.max(...routines.map((r) => r.data.order)) + 1 : 0)
@@ -119,20 +118,15 @@ export function RoutinesScreen() {
   const off = settings.off ?? []
   const trainingDays = routines.filter((r) => r.data.weekday !== null && !off.includes(r.data.weekday)).length
 
-  /** The day select: ✕ rests the day and keeps its routine; the day itself brings it back; another day moves it. */
-  const pickDay = (routine: Envelope<Routine>, day: number, value: string) => {
-    if (value === 'rest') return void setSettings({ off: [...off.filter((d) => d !== day), day] })
-    const to = Number(value)
-    if (to === day) return void setSettings({ off: off.filter((d) => d !== day) })
-    void setSettings({ off: off.filter((d) => d !== day && d !== to) })
-    void moveRoutine(routine.id, to)
-  }
-
-  /** On a day with no routine, the select puts one there: one without a day, or one moved from its day. */
-  const placeOn = (day: number, routineId: string) => {
-    if (routineId === 'rest') return
-    void setSettings({ off: off.filter((d) => d !== day) })
-    void moveRoutine(routineId, day)
+  /**
+   * The day's checkbox. Off rests the day and keeps its routine there; on
+   * brings it back, or makes an empty "Treino de <day>" for a day that
+   * never had one.
+   */
+  const toggleDay = async (day: number, on: boolean, routine?: Envelope<Routine>) => {
+    if (!on) return void setSettings({ off: [...off.filter((d) => d !== day), day] })
+    await setSettings({ off: off.filter((d) => d !== day) })
+    if (!routine) await create({ name: t('sheet.dayRoutine', { day: WEEKDAYS[day] }), weekday: day, order: nextOrder(), items: [] })
   }
 
   return (
@@ -168,37 +162,15 @@ export function RoutinesScreen() {
                 className={`to-dayrow to-dayrow--line${routine && !resting ? ' to-dayrow--link' : ' is-rest'}`}
                 onClick={() => routine && !resting && navigate(`routines/${routine.id}`)}
               >
-                <select
-                  className="to-field__input to-dayselect"
-                  value={routine && !resting ? String(day) : 'rest'}
-                  aria-label={routine ? t('plan.moveDay', { name: routine.data.name }) : t('plan.assign', { day: WEEKDAYS[day] })}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => (routine ? pickDay(routine, day, e.target.value) : placeOn(day, e.target.value))}
-                >
-                  {routine ? (
-                    <>
-                      {WEEK_ORDER.map((d) => (
-                        <option key={d} value={d}>
-                          {SHORT_DAYS[d]}
-                        </option>
-                      ))}
-                      <option value="rest">✕</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="rest">✕</option>
-                      {routines.length > 0 && (
-                        <optgroup label={t('plan.putHere', { day: WEEKDAYS[day] })}>
-                          {routines.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {r.data.weekday === null ? r.data.name : `${r.data.name} (${SHORT_DAYS[r.data.weekday]})`}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </>
-                  )}
-                </select>
+                <label className="to-daycheck" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(routine && !resting)}
+                    aria-label={t('plan.trainOn', { day: WEEKDAYS[day] })}
+                    onChange={(e) => void toggleDay(day, e.target.checked, routine)}
+                  />
+                  <span>{SHORT_DAYS[day]}</span>
+                </label>
                 <span className={`to-today__icon to-today__icon--small${routine && !resting ? '' : ' to-today__icon--rest'}`}>
                   {routine && !resting ? <Dumbbell size={14} /> : <Moon size={14} />}
                 </span>
