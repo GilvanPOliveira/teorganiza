@@ -25,10 +25,13 @@ export const TRAINING_DEFAULTS: TrainingSettings = {
   effort: 'none',
   rest: 90,
   favorites: [],
-  step: 2.5,
+  step: 1,
   sound: true,
   view: 'cards',
 }
+
+/** How much a − or + changes a weight: never under 1 kg, the smallest plate pair in a gym. */
+export const weightStep = (settings: Pick<TrainingSettings, 'step'>) => Math.max(1, settings.step)
 
 export function useTrainingSettings() {
   return useSettings<TrainingSettings>(TRAINING_DEFAULTS)

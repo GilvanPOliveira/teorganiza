@@ -16,7 +16,7 @@ import {
 } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
-import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
+import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds, weightStep } from './data'
 import { ExerciseBrowser } from './browser'
 import { ExerciseStrip } from './strip'
 import { SheetButton, usePlanRegister } from './library'
@@ -272,8 +272,8 @@ function TrainingSettingsCard() {
         </label>
         <label className="to-inline-field">
           <span className="to-muted">{t('settings.step')}</span>
-          <select className="to-field__input" value={settings.step} onChange={(e) => void setSettings({ step: Number(e.target.value) })}>
-            {[0.5, 1, 1.25, 2, 2.5, 5].map((s) => (
+          <select className="to-field__input" value={weightStep(settings)} onChange={(e) => void setSettings({ step: Number(e.target.value) })}>
+            {[1, 1.25, 2, 2.5, 5].map((s) => (
               <option key={s} value={s}>
                 {String(s).replace('.', ',')} kg
               </option>

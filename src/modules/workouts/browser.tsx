@@ -3,7 +3,7 @@ import { Check, ChevronUp, Star, X } from 'lucide-react'
 import { useT } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef, type Muscle } from './catalog'
-import { useExerciseIndex, useSessions, useTrainingSettings, withIds } from './data'
+import { useExerciseIndex, useSessions, useTrainingSettings, weightStep, withIds } from './data'
 import { CustomTools, ExerciseDetail, FavoriteButton } from './detail'
 import { fmt, Stepper } from './inputs'
 import { clock, lastEntry, planFor, type ExercisePlan } from './logic'
@@ -50,7 +50,7 @@ function PlanFields({ exercise, plan, withDays, onChange }: { exercise: Exercise
       <div className="to-plan__fields">
         {lifts && (
           <Field label={t(exercise.kind === 'bodyweight' ? 'setup.extra' : 'setup.load')}>
-            <Stepper value={plan.weight} step={settings.step} label={t('setup.load')} onCommit={(v) => set({ weight: v })} />
+            <Stepper value={plan.weight} step={weightStep(settings)} label={t('setup.load')} onCommit={(v) => set({ weight: v })} />
           </Field>
         )}
         {exercise.kind !== 'cardio' && (
@@ -240,7 +240,7 @@ export function ExerciseBrowser({
         count={t('library.count', { count: shown.length === all.length ? all.length : shown.length })}
         actions={
           <>
-            <button type="button" className={`to-chip${byMuscle ? ' is-active' : ''}`} aria-pressed={byMuscle} onClick={() => setByMuscle((v) => !v)}>
+            <button type="button" className={`to-filters__btn${byMuscle ? ' is-active' : ''}`} aria-pressed={byMuscle} onClick={() => setByMuscle((v) => !v)}>
               {t('library.byMuscle')}
             </button>
             {toolbar}

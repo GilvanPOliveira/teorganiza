@@ -22,7 +22,7 @@ import {
 import { Badge, Button, EmptyState, useCollection, useT, type Envelope } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef, type Muscle } from './catalog'
-import { useExerciseIndex, useSessions, useTrainingSettings, withIds } from './data'
+import { useExerciseIndex, useSessions, useTrainingSettings, weightStep, withIds } from './data'
 import { bestOf, clock, doneSets, entryFromPlan, estimateOneRepMax, isRecord, lastEntry, sessionVolume, warmupFor, type Best, type ExercisePlan } from './logic'
 import { ExerciseBrowser } from './browser'
 import { ExerciseSheet } from './detail'
@@ -632,7 +632,7 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
       before={bestOf(others, entry)}
       last={lastEntry(others, entry)}
       effort={settings.effort}
-      step={settings.step}
+      step={weightStep(settings)}
       showMedia={showMedia}
       linked={Boolean(entry.superset && entries[i + 1]?.superset === entry.superset)}
       actions={{

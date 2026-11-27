@@ -47,7 +47,7 @@ export function SheetButton({ count }: { count: number }) {
   const t = useT()
   const navigate = useNavigate()
   return (
-    <button type="button" className="to-chip to-chip--strong" onClick={() => navigate('sheet')}>
+    <button type="button" className="to-filters__btn to-filters__btn--accent" onClick={() => navigate('sheet')}>
       {t('library.sheet', { count })}
     </button>
   )

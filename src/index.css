@@ -3182,3 +3182,73 @@ a.to-tag:hover {
 .to-list__item:has(.to-list__strip) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
 .to-list__item:has(.to-list__strip) .to-list__main { align-items: flex-start; }
 .to-list__strip { grid-column: 1 / -1; min-width: 0; padding: 0 12px 10px; }
+
+/* Exercícios: one height for the controls, an even card */
+.to-filters { gap: 10px; }
+.to-filters__row { gap: 8px; }
+.to-filters__search,
+.to-filters__select,
+.to-filters__btn { height: 40px; border-radius: 10px; }
+.to-filters__search { min-width: 0; padding: 0 12px; }
+.to-filters__select { padding: 0 10px; font-size: 14px; }
+.to-filters__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid var(--to-border-strong);
+  background: var(--to-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.to-filters__btn:hover { border-color: var(--to-accent); }
+.to-filters__btn.is-active { border-color: var(--to-accent); background: var(--to-accent-soft); }
+.to-filters__btn--accent { border-color: var(--to-accent); color: var(--to-accent); }
+.to-filters .to-chip { display: inline-flex; align-items: center; height: 32px; padding: 0 14px; }
+.to-filters__toggle { height: 28px; }
+
+.to-excard.is-open { gap: 14px; padding: 16px; }
+.to-excard__openhead { min-height: 32px; }
+.to-excard__openhead strong { font-size: 18px; }
+.to-excard.is-open .to-exdetail { align-items: stretch; }
+.to-excard.is-open .to-exdetail__visual,
+.to-excard.is-open .to-exdetail__about { display: flex; flex-direction: column; gap: 12px; }
+.to-excard.is-open .to-media--large { background: #0d0f12; border-radius: 14px; }
+.to-excard.is-open .to-media--large.has-picture .to-media__img { object-fit: cover; }
+.to-excard.is-open .to-exsheet__muscles {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 150px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--to-surface-2);
+}
+.to-excard.is-open .to-exsheet__muscles .to-bodymap--small { flex: none; height: 126px; }
+.to-excard.is-open .to-exsheet__howto { margin: 0; line-height: 1.5; }
+.to-excard.is-open .to-plan { flex: 1; gap: 14px; padding: 16px; }
+.to-plan__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.to-plan__field { gap: 6px; font-size: 12px; font-weight: 600; }
+.to-plan .to-stepper { height: 40px; }
+.to-plan .to-stepper__btn { width: 40px; height: 38px; }
+.to-plan .to-stepper__value { height: 38px; font-size: 15px; }
+.to-plan__select { width: 100%; height: 40px; min-height: 40px; padding: 0 10px; border-radius: 10px; font-size: 15px; }
+.to-plan__days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.to-plan__days .to-chip { display: flex; align-items: center; justify-content: center; height: 34px; padding: 0; border-radius: 10px; font-weight: 600; }
+.to-plan__last { margin: 0; }
+.to-plan__add {
+  align-self: stretch;
+  justify-content: center;
+  height: 42px;
+  margin-top: auto;
+  border-radius: 10px;
+  font-size: 14px;
+}
+@media (max-width: 640px) {
+  .to-filters__btn { padding: 0 12px; }
+  .to-plan__days .to-chip { font-size: 12px; }
+}
