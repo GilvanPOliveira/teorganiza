@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  Info,
   LayoutList,
   Link2,
   Minus,
@@ -24,6 +25,7 @@ import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef, type Muscle } from './catalog'
 import { useExerciseIndex, useSessions, useTrainingSettings, withIds } from './data'
 import { bestOf, clock, doneSets, entryFor, estimateOneRepMax, isRecord, lastEntry, sessionVolume, warmupFor, type Best } from './logic'
+import { ExerciseSheet } from './detail'
 import { ExerciseMedia } from './media'
 import { ExercisePicker } from './picker'
 import type { Entry, LoggedSet, Session, SetType } from './schema'
@@ -444,6 +446,7 @@ function EntryCard({
   actions: EntryActions
 }) {
   const t = useT()
+  const [info, setInfo] = useState(false)
   const { onUpdate, onSetDone } = actions
   const setSet = (i: number, patch: Partial<LoggedSet>) => {
     onUpdate((e) => ({ ...e, sets: e.sets.map((s, j) => (j === i ? { ...s, ...patch } : s)) }))
@@ -462,21 +465,37 @@ function EntryCard({
   let work = 0
 
   return (
-    <article className="to-exercise">
-      {showMedia && def && <ExerciseMedia exercise={def} size="large" />}
+    <article className={`to-exercise${showMedia && def ? ' to-exercise--card' : ''}`}>
+      {showMedia && def && (
+        <div className="to-exercise__media">
+          <ExerciseMedia exercise={def} size="large" />
+        </div>
+      )}
 
-      <header className="to-exercise__head">
-        <h2 className="to-exercise__name">{entry.name}</h2>
-        <EntryMenu index={index} count={count} linked={linked} actions={actions} />
-      </header>
-      <div className="to-exercise__tags">
-        {def && <span className="to-tag">{muscleLabel(def.muscle)}</span>}
-        {def && <span className="to-tag">{equipmentLabel(def.equipment)}</span>}
-        {before.oneRepMax > 0 && <span className="to-tag">{t('entry.best', { kg: before.oneRepMax })}</span>}
-        {entry.superset && <Badge tone="accent">{t('entry.superset', { letter: entry.superset })}</Badge>}
+      <div className="to-exercise__info">
+        <header className="to-exercise__head">
+          {!showMedia && def && (
+            <button type="button" className="to-entry__pic" aria-label={t('entry.howTo', { name: def.name })} onClick={() => setInfo(true)}>
+              <ExerciseMedia exercise={def} size="thumb" />
+            </button>
+          )}
+          <h2 className="to-exercise__name">{entry.name}</h2>
+          {def && (
+            <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.howTo', { name: def.name })} title={t('entry.howToShort')} onClick={() => setInfo(true)}>
+              <Info size={15} />
+            </button>
+          )}
+          <EntryMenu index={index} count={count} linked={linked} actions={actions} />
+        </header>
+        <div className="to-exercise__tags">
+          {def && <span className="to-tag">{muscleLabel(def.muscle)}</span>}
+          {def && <span className="to-tag">{equipmentLabel(def.equipment)}</span>}
+          {before.oneRepMax > 0 && <span className="to-tag">{t('entry.best', { kg: before.oneRepMax })}</span>}
+          {entry.superset && <Badge tone="accent">{t('entry.superset', { letter: entry.superset })}</Badge>}
+        </div>
+        {planLine(entry) && <p className="to-exercise__line">{t('entry.plan', { plan: planLine(entry) })}</p>}
+        {previous && <p className="to-exercise__line">{t('entry.last', { sets: previous })}</p>}
       </div>
-      {planLine(entry) && <p className="to-exercise__line">{t('entry.plan', { plan: planLine(entry) })}</p>}
-      {previous && <p className="to-exercise__line">{t('entry.last', { sets: previous })}</p>}
 
       <div className="to-sets">
         <div className="to-sets__head" aria-hidden>
@@ -551,6 +570,7 @@ function EntryCard({
           </label>
         </div>
       </div>
+      {info && def && <ExerciseSheet exercise={def} onClose={() => setInfo(false)} />}
     </article>
   )
 }
@@ -643,8 +663,8 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
     if (nextSet < 0 && nextEntry >= 0 && view === 'cards') window.setTimeout(() => setCurrent(nextEntry), 600)
   }
 
-  const add = (exercise: ExerciseDef) => {
-    mutate((list) => [...list, entryFor(exercise, others, undefined, settings.rest)])
+  const add = (exercises: ExerciseDef[]) => {
+    mutate((list) => [...list, ...exercises.map((exercise) => entryFor(exercise, others, undefined, settings.rest))])
     setCurrent(entries.length)
     setPicking(null)
   }
@@ -843,7 +863,8 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
         <ExercisePicker
           title={t(picking.mode === 'add' ? 'workout.addExercise' : 'entry.swap')}
           onClose={() => setPicking(null)}
-          onPick={(exercise) => (picking.mode === 'add' ? add(exercise) : swap(picking.at, exercise))}
+          multiple={picking.mode === 'add'}
+          onPick={(exercises) => (picking.mode === 'add' ? add(exercises) : swap(picking.at, exercises[0]))}
         />
       )}
     </div>

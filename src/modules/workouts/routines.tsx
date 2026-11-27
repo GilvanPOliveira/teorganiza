@@ -15,9 +15,11 @@ import {
   type Envelope,
 } from '@core/api'
 import { BodyMap } from './BodyMap'
-import type { ExerciseDef } from './catalog'
+import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
+import { ExerciseSheet } from './detail'
 import { clock, entryFor } from './logic'
+import { ExerciseMedia } from './media'
 import { ExercisePicker } from './picker'
 import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
 import { TEMPLATES } from './templates'
@@ -337,6 +339,7 @@ function ItemEditor({
   onSuperset: () => void
 }) {
   const t = useT()
+  const [info, setInfo] = useState(false)
   const shape = shapeOf(item.sets)
   const timed = def?.kind === 'time' || def?.kind === 'cardio'
   const set = (patch: Partial<SetsShape>) => onUpdate((it) => ({ ...it, sets: setsOf({ ...shapeOf(it.sets), ...patch }) }))
@@ -344,8 +347,18 @@ function ItemEditor({
   return (
     <article className="to-entry">
       <header className="to-entry__header">
+        {def && (
+          <button type="button" className="to-entry__pic" aria-label={t('entry.howTo', { name: def.name })} onClick={() => setInfo(true)}>
+            <ExerciseMedia exercise={def} size="thumb" />
+          </button>
+        )}
         <div className="to-entry__title">
           <strong>{def?.name ?? item.exerciseId}</strong>
+          {def && (
+            <span className="to-muted">
+              {muscleLabel(def.muscle)} · {equipmentLabel(def.equipment)}
+            </span>
+          )}
           {item.superset && <Badge tone="accent">{t('entry.superset', { letter: item.superset })}</Badge>}
         </div>
         <div className="to-toolbar to-toolbar--tight">
@@ -420,6 +433,7 @@ function ItemEditor({
           const note = e.target.value
           if (note !== item.note) onUpdate((it) => ({ ...it, note }))
         }} />
+      {info && def && <ExerciseSheet exercise={def} onClose={() => setInfo(false)} />}
     </article>
   )
 }
@@ -554,11 +568,15 @@ export function RoutineScreen() {
       {picking && (
         <ExercisePicker
           title={t('workout.addExercise')}
+          multiple
           onClose={() => setPicking(false)}
-          onPick={(exercise) => {
-            const timed = exercise.kind === 'time' || exercise.kind === 'cardio'
-            const sets = setsOf({ warmups: 0, count: timed ? 1 : 3, reps: timed ? null : 10, repsMax: timed ? null : 12, seconds: exercise.kind === 'time' ? 30 : exercise.kind === 'cardio' ? 1200 : null })
-            mutate((list) => [...list, { exerciseId: exercise.id, sets, rest: exercise.compound ? 120 : settings.rest, superset: null, note: '' }])
+          onPick={(exercises) => {
+            const added = exercises.map((exercise): RoutineItem => {
+              const timed = exercise.kind === 'time' || exercise.kind === 'cardio'
+              const sets = setsOf({ warmups: 0, count: timed ? 1 : 3, reps: timed ? null : 10, repsMax: timed ? null : 12, seconds: exercise.kind === 'time' ? 30 : exercise.kind === 'cardio' ? 1200 : null })
+              return { exerciseId: exercise.id, sets, rest: exercise.compound ? 120 : settings.rest, superset: null, note: '' }
+            })
+            mutate((list) => [...list, ...added])
             setPicking(false)
           }}
         />
