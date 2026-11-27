@@ -132,9 +132,28 @@ export const routineSchema = z.object({
   items: z.array(routineItemSchema),
 })
 
+/**
+ * A version of the training sheet, kept by day: every routine as it was,
+ * so an earlier sheet can be seen and printed again.
+ */
+export const planSnapshotSchema = z.object({
+  date,
+  savedAt: z.string(),
+  routines: z.array(
+    z.object({
+      name: z.string(),
+      weekday: z.number().int().min(0).max(6).nullable(),
+      /** The weekday was set to rest when this version was kept. */
+      off: z.boolean(),
+      items: z.array(routineItemSchema),
+    }),
+  ),
+})
+
 export type PlannedSet = z.infer<typeof plannedSetSchema>
 export type RoutineItem = z.infer<typeof routineItemSchema>
 export type Routine = z.infer<typeof routineSchema>
+export type PlanSnapshot = z.infer<typeof planSnapshotSchema>
 
 /* ------------------------------------------------------------------ *
  * Custom exercises

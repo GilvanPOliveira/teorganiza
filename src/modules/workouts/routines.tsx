@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Minus, Plus, Repeat2, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Plus, Repeat2, Trash2 } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -23,6 +23,8 @@ import { clock, entryFor, itemFromPlan, planOfItem } from './logic'
 import { ExerciseMedia } from './media'
 import { useMoveRoutine, usePlanRegister } from './register'
 import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
+import { Fold } from './fold'
+import { useKeepPlanHistory } from './plans'
 import { ExerciseStrip } from './strip'
 import { TEMPLATES } from './templates'
 import { useRoutineMuscles } from './today'
@@ -30,40 +32,6 @@ import { useRoutineMuscles } from './today'
 /* ------------------------------------------------------------------ *
  * Pieces
  * ------------------------------------------------------------------ */
-
-/**
- * A section that opens and closes from its title. Closed the first time;
- * after that it stays as it was left, in this browser.
- */
-function Fold({ id, title, summary, children }: { id: string; title: string; summary?: string; children: ReactNode }) {
-  const key = `teorganiza.workouts.fold.${id}`
-  const [open, setOpen] = useState(() => {
-    try {
-      return localStorage.getItem(key) === '1'
-    } catch {
-      return false
-    }
-  })
-  const toggle = () => {
-    const next = !open
-    setOpen(next)
-    try {
-      localStorage.setItem(key, next ? '1' : '0')
-    } catch {
-      // Without storage it still opens and closes; it just starts closed next time.
-    }
-  }
-  return (
-    <section className={`to-fold${open ? ' is-open' : ''}`}>
-      <button type="button" className="to-fold__head" aria-expanded={open} onClick={toggle}>
-        <span className="to-fold__title">{title}</span>
-        {summary && <span className="to-muted to-fold__summary">{summary}</span>}
-        {open ? <Minus size={16} /> : <Plus size={16} />}
-      </button>
-      {open && <div className="to-fold__body">{children}</div>}
-    </section>
-  )
-}
 
 /** The exercise a thumbnail was tapped on, with the routine item it came from. */
 interface Editing {
@@ -94,6 +62,7 @@ export function RoutinesScreen() {
   }
   const { count: registered } = usePlanRegister()
   const [editing, setEditing] = useState<Editing | null>(null)
+  useKeepPlanHistory()
 
   const nextOrder = () => (routines.length ? Math.max(...routines.map((r) => r.data.order)) + 1 : 0)
 
@@ -549,6 +518,7 @@ export function RoutineScreen() {
   const sessionsWriter = useCollection<Session>('sessions')
   const [picking, setPicking] = useState(false)
   const [viewing, setViewing] = useState<ExerciseDef | null>(null)
+  useKeepPlanHistory()
 
   // Edits apply to the newest items, so two quick changes both stay.
   const stored = routine?.data.items

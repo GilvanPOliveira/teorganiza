@@ -1,12 +1,13 @@
 import { useRef } from 'react'
 import { ArrowLeft, Pencil, Printer } from 'lucide-react'
-import { Button, EmptyState, toLocalISODate, useFormat, useNavigate, useT, type Envelope } from '@core/api'
+import { Button, EmptyState, toLocalISODate, useFormat, useNavigate, useParams, useT, type Envelope } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { SHORT_DAYS, WEEK_ORDER } from './browser'
 import { equipmentLabel, muscleLabel } from './catalog'
-import { useExerciseIndex, useRoutines, WEEKDAYS } from './data'
+import { useExerciseIndex, useRoutines, useTrainingSettings, WEEKDAYS } from './data'
 import { clock } from './logic'
 import { PHOTOS } from './photos'
+import { useKeepPlanHistory, usePlanSnapshots } from './plans'
 import type { Routine, RoutineItem } from './schema'
 
 const kg = (n: number) => `${String(n).replace('.', ',')} kg`
@@ -120,6 +121,88 @@ function ItemRow({ item }: { item: RoutineItem }) {
   )
 }
 
+/** One day of a sheet: today's routine, or one kept in an earlier version. */
+export interface SheetGroup {
+  key: string
+  name: string
+  weekday: number | null
+  /** The weekday is set to rest. */
+  off?: boolean
+  items: RoutineItem[]
+  /** The routine to edit, for the current sheet only. */
+  routineId?: string
+}
+
+/** The sheet itself: a page per day of exercises, ready to print. */
+function SheetDocument({ groups, title, dateLabel, sheet }: { groups: SheetGroup[]; title: string; dateLabel: string; sheet: React.RefObject<HTMLElement | null> }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const total = groups.reduce((sum, g) => sum + g.items.length, 0)
+  return (
+    <article ref={sheet} className="to-ficha">
+      <header className="to-ficha__head">
+        <h1>{title}</h1>
+        <span>
+          {t('sheet.count', { count: total })} · {dateLabel}
+        </span>
+      </header>
+
+      {groups.length === 0 ? (
+        <EmptyState title={t('sheet.empty')} body={t('sheet.emptyBody')} />
+      ) : (
+        groups.map((group) => {
+          const day = group.weekday
+          const dayName = day === null ? t('sheet.noDay') : WEEKDAYS[day]
+          const own = group.name !== t('sheet.dayRoutine', { day: dayName })
+          return (
+            <section key={group.key} className="to-ficha__day">
+              <h2>
+                {day !== null && <span className="to-ficha__badge">{SHORT_DAYS[day]}</span>}
+                <span>{day === null ? group.name : dayName}</span>
+                {day !== null && own && <small>{group.name}</small>}
+                {group.off && <small>{t('sheet.offDay')}</small>}
+                {group.routineId && (
+                  <button type="button" className="to-plainicon to-noprint" aria-label={t('sheet.edit', { name: group.name })} title={t('sheet.edit', { name: group.name })} onClick={() => navigate(`routines/${group.routineId}`)}>
+                    <Pencil size={14} />
+                  </button>
+                )}
+              </h2>
+              <ul className="to-ficha__list">
+                {group.items.map((item, i) => (
+                  <ItemRow key={`${i}-${item.exerciseId}`} item={item} />
+                ))}
+              </ul>
+            </section>
+          )
+        })
+      )}
+    </article>
+  )
+}
+
+function SheetPage({ groups, title, dateLabel, back, backLabel }: { groups: SheetGroup[]; title: string; dateLabel: string; back: string; backLabel: string }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const sheet = useRef<HTMLElement>(null)
+  const total = groups.reduce((sum, g) => sum + g.items.length, 0)
+  return (
+    <div className="to-stack">
+      <div className="to-toolbar to-noprint">
+        <Button variant="ghost" onClick={() => navigate(back)}>
+          <ArrowLeft size={15} />
+          {backLabel}
+        </Button>
+        <Button variant="primary" onClick={() => sheet.current && printSheet(sheet.current, title)} disabled={total === 0}>
+          <Printer size={15} />
+          {t('sheet.print')}
+        </Button>
+      </div>
+      {total > 0 && <p className="to-muted to-noprint">{t('sheet.printHint')}</p>}
+      <SheetDocument groups={groups} title={title} dateLabel={dateLabel} sheet={sheet} />
+    </div>
+  )
+}
+
 /**
  * The training sheet: every registered exercise by weekday, with its
  * picture, sets, weight and rest. Printing it, or saving it as a PDF from
@@ -127,65 +210,47 @@ function ItemRow({ item }: { item: RoutineItem }) {
  */
 export function SheetScreen() {
   const t = useT()
-  const navigate = useNavigate()
   const format = useFormat()
   const routines = useRoutines()
-  const sheet = useRef<HTMLElement>(null)
+  const [settings] = useTrainingSettings()
+  useKeepPlanHistory()
 
   const byDay = WEEK_ORDER.map((day) => routines.find((r) => r.data.weekday === day)).filter((r): r is Envelope<Routine> => Boolean(r && r.data.items.length))
   const loose = routines.filter((r) => r.data.weekday === null && r.data.items.length)
-  const groups = [...byDay, ...loose]
-  const total = groups.reduce((sum, r) => sum + r.data.items.length, 0)
-
+  const groups: SheetGroup[] = [...byDay, ...loose].map((r) => ({
+    key: r.id,
+    name: r.data.name,
+    weekday: r.data.weekday,
+    off: r.data.weekday !== null && (settings.off ?? []).includes(r.data.weekday),
+    items: r.data.items,
+    routineId: r.id,
+  }))
   return (
-    <div className="to-stack">
-      <div className="to-toolbar to-noprint">
-        <Button variant="ghost" onClick={() => navigate('library')}>
-          <ArrowLeft size={15} />
-          {t('sheet.back')}
-        </Button>
-        <Button variant="primary" onClick={() => sheet.current && printSheet(sheet.current, t('sheet.title'))} disabled={total === 0}>
-          <Printer size={15} />
-          {t('sheet.print')}
-        </Button>
-      </div>
-      {total > 0 && <p className="to-muted to-noprint">{t('sheet.printHint')}</p>}
+    <SheetPage
+      groups={groups}
+      title={t('sheet.title')}
+      dateLabel={t('sheet.generated', { date: format.date(toLocalISODate()) })}
+      back="library"
+      backLabel={t('sheet.back')}
+    />
+  )
+}
 
-      <article ref={sheet} className="to-ficha">
-        <header className="to-ficha__head">
-          <h1>{t('sheet.title')}</h1>
-          <span>
-            {t('sheet.count', { count: total })} · {t('sheet.generated', { date: format.date(toLocalISODate()) })}
-          </span>
-        </header>
-
-        {groups.length === 0 ? (
-          <EmptyState title={t('sheet.empty')} body={t('sheet.emptyBody')} />
-        ) : (
-          groups.map((routine) => {
-            const day = routine.data.weekday
-            const dayName = day === null ? t('sheet.noDay') : WEEKDAYS[day]
-            const own = routine.data.name !== t('sheet.dayRoutine', { day: dayName })
-            return (
-              <section key={routine.id} className="to-ficha__day">
-                <h2>
-                  {day !== null && <span className="to-ficha__badge">{SHORT_DAYS[day]}</span>}
-                  <span>{day === null ? routine.data.name : dayName}</span>
-                  {day !== null && own && <small>{routine.data.name}</small>}
-                  <button type="button" className="to-plainicon to-noprint" aria-label={t('sheet.edit', { name: routine.data.name })} title={t('sheet.edit', { name: routine.data.name })} onClick={() => navigate(`routines/${routine.id}`)}>
-                    <Pencil size={14} />
-                  </button>
-                </h2>
-                <ul className="to-ficha__list">
-                  {routine.data.items.map((item, i) => (
-                    <ItemRow key={`${i}-${item.exerciseId}`} item={item} />
-                  ))}
-                </ul>
-              </section>
-            )
-          })
-        )}
-      </article>
-    </div>
+/** An earlier version of the sheet, kept in Histórico, seen and printed as it was. */
+export function SnapshotScreen() {
+  const t = useT()
+  const format = useFormat()
+  const { id = '' } = useParams<{ id: string }>()
+  const snapshot = usePlanSnapshots().find((s) => s.id === id)
+  if (!snapshot) return <EmptyState title={t('history.planMissing')} />
+  const groups: SheetGroup[] = snapshot.data.routines.map((r, i) => ({ key: `${i}`, name: r.name, weekday: r.weekday, off: r.off, items: r.items }))
+  return (
+    <SheetPage
+      groups={groups}
+      title={t('history.planTitle', { date: format.date(snapshot.data.date) })}
+      dateLabel={t('history.planKept', { date: format.date(snapshot.data.date) })}
+      back="history"
+      backLabel={t('history.back')}
+    />
   )
 }

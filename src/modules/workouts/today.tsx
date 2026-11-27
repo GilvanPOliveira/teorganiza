@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ArrowRightLeft, CalendarClock, Dumbbell, Moon, Play, Shuffle, Trophy } from 'lucide-react'
 import {
   Card,
@@ -13,9 +13,10 @@ import {
 import { BodyMap } from './BodyMap'
 import type { ExerciseDef, Muscle } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, withIds } from './data'
-import { bestOf, clock, doneSets, entryFor, moveRoutine, plannedRoutine, sessionVolume } from './logic'
+import { clock, doneSets, entryFor, moveRoutine, plannedRoutine, sessionVolume } from './logic'
 import type { Routine, Session } from './schema'
 import { ExerciseStrip } from './strip'
+import { RecordsList, useRecordsList } from './records'
 import { WorkoutLog } from './workout'
 
 const SHORT_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -49,34 +50,14 @@ function Summary({ session }: { session: Session & { id: string } }) {
   )
 }
 
-/** Personal bests by estimated 1RM, from every finished workout. */
+/** Personal bests, from every finished workout. */
 export function Records() {
   const t = useT()
-  const sessions = withIds(useSessions()).filter((s) => s.finishedAt)
-  const top = useMemo(() => {
-    const seen = new Map<string, { name: string; kg: number }>()
-    for (const s of sessions) {
-      for (const entry of s.entries) {
-        const key = entry.exerciseId ?? entry.name.trim().toLocaleLowerCase()
-        if (seen.has(key) || entry.kind !== 'weight') continue
-        seen.set(key, { name: entry.name, kg: bestOf(sessions, entry).oneRepMax })
-      }
-    }
-    return [...seen.values()].filter((r) => r.kg > 0).sort((a, b) => b.kg - a.kg).slice(0, 8)
-  }, [sessions])
-  if (top.length === 0) return null
+  const marks = useRecordsList(8)
+  if (marks.length === 0) return null
   return (
-    <Card title={<span className="to-card__titleicon"><Trophy size={15} />{t('records.title')}</span>}>
-      <ul className="to-plainlist">
-        {top.map((r) => (
-          <li key={r.name} className="to-tile__row">
-            <span>
-              <Dumbbell size={13} /> {r.name}
-            </span>
-            <strong>{t('records.oneRepMax', { kg: r.kg })}</strong>
-          </li>
-        ))}
-      </ul>
+    <Card title={<span className="to-card__titleicon"><Trophy size={15} />{t('records.titleAll')}</span>}>
+      <RecordsList marks={marks} />
     </Card>
   )
 }

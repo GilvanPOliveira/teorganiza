@@ -5,6 +5,8 @@ import {
   entryFromPlan,
   itemFromPlan,
   planFor,
+  snapshotRoutines,
+  snapshotsByDay,
   clock,
   entryFor,
   estimateOneRepMax,
@@ -180,5 +182,21 @@ describe('planFor and entryFromPlan', () => {
     expect(item.sets).toHaveLength(4)
     const entry = entryFor(bench, [], item)
     expect(entry.sets.map((s) => [s.weight, s.reps])).toEqual([[70, 6], [70, 6], [70, 6], [70, 6]])
+  })
+})
+
+describe('sheet versions', () => {
+  const item = { exerciseId: 'supino-reto-barra', sets: [], rest: 90, superset: null, note: '' }
+  const routine = (name: string, weekday: number | null, items = [item]) => ({ name, weekday, order: 0, items })
+
+  it('keeps routines with exercises, Monday first, and marks rest days', () => {
+    const kept = snapshotRoutines([routine('Domingo', 0), routine('Vazia', 2, []), routine('Segunda', 1), routine('Sem dia', null)], [0])
+    expect(kept.map((r) => [r.name, r.off])).toEqual([['Segunda', false], ['Domingo', true], ['Sem dia', false]])
+  })
+
+  it('shows one version per day, the last kept, newest day first', () => {
+    const v = (id: string, date: string, savedAt: string) => ({ id, data: { date, savedAt } })
+    const rows = [v('a', '2026-11-20', '2026-11-20T10:00'), v('b', '2026-11-27', '2026-11-27T08:00'), v('c', '2026-11-27', '2026-11-27T09:00')]
+    expect(snapshotsByDay(rows).map((r) => r.id)).toEqual(['c', 'a'])
   })
 })

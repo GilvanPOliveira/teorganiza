@@ -5,14 +5,16 @@ import { LibraryScreen } from './library'
 import { RoutineScreen, RoutinesScreen } from './routines'
 import {
   customExerciseSchema,
+  planSnapshotSchema,
   routineSchema,
   sessionMigrations,
   sessionSchema,
   type CustomExercise,
+  type PlanSnapshot,
   type Routine,
   type Session,
 } from './schema'
-import { SheetScreen } from './sheet'
+import { SheetScreen, SnapshotScreen } from './sheet'
 import { TodayScreen } from './today'
 import ptBR from './locales/pt-BR.json'
 
@@ -51,6 +53,13 @@ export default defineModule({
       indexes: ['order'],
     },
     {
+      name: 'plans',
+      schema: planSnapshotSchema,
+      schemaVersion: 1,
+      describe: (record) => `Ficha · ${(record.data as PlanSnapshot).date}`,
+      indexes: ['date'],
+    },
+    {
       name: 'exercises',
       schema: customExerciseSchema,
       schemaVersion: 1,
@@ -68,6 +77,7 @@ export default defineModule({
     { path: 'library/:exerciseId', element: LibraryScreen },
     { path: 'history', element: HistoryScreen, label: 'Histórico' },
     { path: 'history/:id', element: SessionScreen },
+    { path: 'history/plans/:id', element: SnapshotScreen },
     { path: 'sheet', element: SheetScreen },
   ],
 
