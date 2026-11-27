@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Dumbbell, Minus, Moon, Plus, Repeat2, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Minus, Plus, Repeat2, Trash2 } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -178,8 +178,8 @@ export function RoutinesScreen() {
                   />
                   <span>{SHORT_DAYS[day]}</span>
                 </label>
-                <span className={`to-today__icon to-today__icon--small${routine && !resting ? '' : ' to-today__icon--rest'}`}>
-                  {routine && !resting ? <Dumbbell size={14} /> : <Moon size={14} />}
+                <span className="to-dayrow__body">
+                  <BodyMap primary={routine ? musclesOf(routine.data) : []} size="tiny" />
                 </span>
                 <button type="button" className="to-dayrow__main" onClick={() => routine && navigate(`routines/${routine.id}`)} disabled={!routine}>
                   <strong>{resting ? t('plan.rest') : (routine?.data.name ?? t('plan.rest'))}</strong>
@@ -192,7 +192,6 @@ export function RoutinesScreen() {
                     <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(routine.data)} />
                   </div>
                 )}
-                {routine && !resting && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
               </div>
             )
           })}
@@ -238,8 +237,8 @@ export function RoutinesScreen() {
         ) : (
           routines.map((routine) => (
             <div key={routine.id} className="to-dayrow to-dayrow--line to-dayrow--week to-dayrow--link" onClick={() => navigate(`routines/${routine.id}`)}>
-              <span className="to-today__icon to-today__icon--small">
-                <Dumbbell size={14} />
+              <span className="to-dayrow__body">
+                <BodyMap primary={musclesOf(routine.data)} size="tiny" />
               </span>
               <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${routine.id}`)}>
                 <strong>{routine.data.name}</strong>

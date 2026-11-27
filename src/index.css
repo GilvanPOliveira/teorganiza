@@ -3393,3 +3393,25 @@ a.to-tag:hover {
 .to-plainicon--danger { color: var(--to-danger, #e06c6c); }
 .to-plainicon--danger:hover { color: var(--to-danger, #e06c6c); background: color-mix(in srgb, var(--to-danger, #e06c6c) 14%, transparent); }
 @media (max-width: 720px) { .to-rowtool { height: auto; padding-left: 10px; } }
+/* Rows of the week and the routines: muscles in front, pictures that scroll */
+.to-dayrow__body { flex: none; display: grid; place-items: center; width: 56px; }
+.to-dayrow__body .to-bodymap--tiny { height: 58px; }
+.to-dayrow.is-rest .to-dayrow__body { opacity: 0.6; }
+.to-daycheck { width: 72px; gap: 10px; padding-right: 10px; }
+.to-dayrow__thumbs { flex: 1 1 0; min-width: 0; overflow: hidden; display: block; }
+.to-dayrow__thumbs .to-today__strip {
+  justify-content: flex-start;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--to-border-strong) transparent;
+  padding-bottom: 4px;
+}
+/* Pushed right while they fit; once they overflow, the first one is still reachable. */
+.to-dayrow__thumbs .to-today__strip > :first-child { margin-left: auto; }
+.to-dayrow__thumbs .to-today__strip::-webkit-scrollbar { height: 4px; }
+.to-dayrow__thumbs .to-today__strip::-webkit-scrollbar-thumb { background: var(--to-border-strong); border-radius: 4px; }
+@media (max-width: 720px) {
+  .to-daycheck { width: 64px; }
+  .to-dayrow--line .to-dayrow__main { flex: 1 1 0; }
+  .to-dayrow__thumbs { flex: 1 0 100%; min-width: 0; }
+}
