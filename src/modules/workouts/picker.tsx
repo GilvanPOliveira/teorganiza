@@ -77,8 +77,3 @@ export function ExerciseFilters({ filter, onChange }: { filter: ExerciseFilter; 
 }
 
 export const EMPTY_FILTER: ExerciseFilter = { query: '', muscle: 'all', equipment: 'all', favorites: false }
-
-/** A search, a muscle, equipment or favorites chosen: the list then shows pictures. */
-export function isFiltering(filter: ExerciseFilter): boolean {
-  return filter.query.trim() !== '' || filter.muscle !== 'all' || filter.equipment !== 'all' || filter.favorites
-}

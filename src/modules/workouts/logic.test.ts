@@ -3,6 +3,7 @@ import { CATALOG, catalogExercise } from './catalog'
 import {
   bestOf,
   entryFromPlan,
+  itemFromPlan,
   planFor,
   clock,
   entryFor,
@@ -150,7 +151,7 @@ describe('planFor and entryFromPlan', () => {
   const plank = CATALOG.find((e) => e.kind === 'time')!
 
   it('starts from defaults with no history', () => {
-    expect(planFor(bench, [])).toEqual({ sets: 4, reps: 8, weight: null, seconds: null })
+    expect(planFor(bench, [])).toEqual({ sets: 4, reps: 8, weight: null, seconds: null, rest: 120, days: [] })
     expect(planFor(plank, [])).toMatchObject({ sets: 3, reps: null, seconds: 30 })
   })
 
@@ -160,13 +161,21 @@ describe('planFor and entryFromPlan', () => {
       date: '2026-11-20', name: 'A', routineId: null, startedAt: null, finishedAt: '2026-11-20T12:00:00.000Z', note: '',
       entries: [{ exerciseId: bench.id, name: bench.name, kind: 'weight' as const, perSide: false, superset: null, rest: 120, note: '', sets: [done(60, 8), done(62.5, 6)] }],
     }
-    expect(planFor(bench, [session])).toEqual({ sets: 2, reps: 8, weight: 62.5, seconds: null })
+    expect(planFor(bench, [session], 90, [1, 4])).toEqual({ sets: 2, reps: 8, weight: 62.5, seconds: null, rest: 120, days: [1, 4] })
   })
 
   it('makes equal sets and keeps rest and superset when swapping', () => {
-    const entry = entryFromPlan(bench, { sets: 3, reps: 5, weight: 80, seconds: null }, [], 90, { rest: 180, superset: 'A' })
+    const entry = entryFromPlan(bench, { sets: 3, reps: 5, weight: 80, seconds: null, rest: 180, days: [] }, [], 90, { rest: 60, superset: 'A' })
     expect(entry.sets).toHaveLength(3)
     expect(entry.sets.every((s) => s.weight === 80 && s.reps === 5 && !s.done)).toBe(true)
     expect(entry).toMatchObject({ rest: 180, superset: 'A', exerciseId: bench.id })
+  })
+
+  it('turns a plan into a routine item, and the item back into a workout with its load', () => {
+    const item = itemFromPlan(bench.id, { sets: 4, reps: 6, weight: 70, seconds: null, rest: 150, days: [1] })
+    expect(item).toMatchObject({ exerciseId: bench.id, rest: 150, weight: 70 })
+    expect(item.sets).toHaveLength(4)
+    const entry = entryFor(bench, [], item)
+    expect(entry.sets.map((s) => [s.weight, s.reps])).toEqual([[70, 6], [70, 6], [70, 6], [70, 6]])
   })
 })

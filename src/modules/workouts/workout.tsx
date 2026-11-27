@@ -770,8 +770,8 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
             onClose={() => setBrowsing(null)}
             action={
               browsing.mode === 'add'
-                ? { label: t('workout.addToWorkout'), withLoad: true, keepOpen: true, onAdd: add }
-                : { label: t('entry.swapTo'), withLoad: true, keepOpen: false, onAdd: (exercise, plan) => swap(browsing.at, exercise, plan) }
+                ? { label: t('workout.addToWorkout'), withDays: false, keepOpen: true, onAdd: add }
+                : { label: t('entry.swapTo'), withDays: false, keepOpen: false, onAdd: (exercise, plan) => swap(browsing.at, exercise, plan) }
             }
           />
         ) : (

@@ -19,7 +19,8 @@ import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
 import { ExerciseBrowser } from './browser'
 import { ExerciseSheet } from './detail'
-import { clock, entryFor } from './logic'
+import { SheetButton, usePlanRegister } from './library'
+import { clock, entryFor, itemFromPlan } from './logic'
 import { ExerciseMedia } from './media'
 import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
 import { TEMPLATES } from './templates'
@@ -39,6 +40,7 @@ export function RoutinesScreen() {
   const musclesOf = useRoutineMuscles()
   const [settings, setSettings] = useTrainingSettings()
   const { create, update, remove } = useCollection<Routine>('routines')
+  const { count: registered } = usePlanRegister()
 
   const nextOrder = () => (routines.length ? Math.max(...routines.map((r) => r.data.order)) + 1 : 0)
 
@@ -72,6 +74,11 @@ export function RoutinesScreen() {
 
   return (
     <div className="to-stack">
+      <div className="to-toolbar">
+        <span className="to-push">
+          <SheetButton count={registered} />
+        </span>
+      </div>
       <section className="to-panel to-panel--row">
         <span className="to-today__icon to-today__icon--small">
           <Repeat2 size={14} />
@@ -409,6 +416,23 @@ function ItemEditor({
             </label>
           </>
         )}
+        {(def?.kind === 'weight' || def?.kind === 'bodyweight') && (
+          <label className="to-inline-field">
+            <span className="to-muted">{t('routine.weight')}</span>
+            <input
+              className="to-field__input to-input--tiny"
+              inputMode="decimal"
+              defaultValue={item.weight ? String(item.weight).replace('.', ',') : ''}
+              aria-label={t('routine.weight')}
+              onBlur={(e) => {
+                const raw = e.target.value.trim().replace(',', '.')
+                const n = Number(raw)
+                const weight = raw === '' || !Number.isFinite(n) || n < 0 ? null : Math.round(n * 100) / 100
+                if (weight !== (item.weight ?? null)) onUpdate((it) => ({ ...it, weight }))
+              }}
+            />
+          </label>
+        )}
         {def?.kind === 'weight' && (
           <label className="to-inline-field">
             <span className="to-muted">{t('routine.warmups')}</span>
@@ -564,12 +588,9 @@ export function RoutineScreen() {
           onClose={() => setPicking(false)}
           action={{
             label: t('routine.addToRoutine'),
-            withLoad: false,
+            withDays: false,
             keepOpen: true,
-            onAdd: (exercise, plan) => {
-              const sets = setsOf({ warmups: 0, count: plan.sets, reps: plan.reps, repsMax: null, seconds: plan.seconds })
-              mutate((list) => [...list, { exerciseId: exercise.id, sets, rest: exercise.compound ? 120 : settings.rest, superset: null, note: '' }])
-            },
+            onAdd: (exercise, plan) => mutate((list) => [...list, itemFromPlan(exercise.id, plan)]),
           }}
         />
       ) : (

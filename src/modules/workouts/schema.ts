@@ -120,6 +120,8 @@ export const routineItemSchema = z.object({
   rest: z.number().int().min(0),
   superset: z.string().nullable(),
   note: z.string(),
+  /** Planned load in kilograms; the workout starts from last time's when there is one. */
+  weight: z.number().min(0).nullable().optional(),
 })
 
 export const routineSchema = z.object({

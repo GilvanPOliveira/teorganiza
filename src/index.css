@@ -3084,3 +3084,51 @@ a.to-tag:hover {
 .to-plan__add { align-self: flex-start; }
 .to-exdetail .to-exsheet__muscles .to-bodymap--small { height: 150px; }
 @media (max-width: 640px) { .to-exdetail .to-exsheet__muscles .to-bodymap--small { height: 120px; } }
+
+/* Plain icon buttons, the plan fields and the training sheet */
+.to-plainicon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--to-text-2, inherit);
+  cursor: pointer;
+}
+.to-plainicon:hover { color: inherit; }
+.to-plainicon--star.active { color: var(--to-warning, #e5b45a); }
+.to-plainicon--star.active svg { fill: currentColor; }
+.to-plan__days { display: flex; flex-wrap: wrap; gap: 6px; }
+.to-plan__select { min-height: 40px; }
+.to-pill:disabled { opacity: 0.5; cursor: not-allowed; }
+.to-pill--danger { background: var(--to-danger, #d9534f); }
+.to-excard__days { font-size: 11px; font-weight: 600; color: var(--to-accent); }
+
+.to-ficha { display: flex; flex-direction: column; gap: 16px; }
+.to-ficha__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.to-ficha__head h1 { margin: 0; font-size: 22px; }
+.to-ficha__head span { font-size: 13px; color: var(--to-text-2, inherit); }
+.to-ficha__day { display: flex; flex-direction: column; gap: 8px; break-inside: avoid; }
+.to-ficha__day h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; }
+.to-ficha__day h2 small { font-weight: 500; font-size: 13px; color: var(--to-text-2, inherit); }
+.to-ficha__badge { padding: 2px 8px; border-radius: 6px; background: var(--to-accent); color: var(--to-on-accent, #fff); font-size: 12px; }
+.to-ficha__list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--to-border); border-radius: 14px; overflow: hidden; }
+.to-ficha__row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 12px; break-inside: avoid; }
+.to-ficha__row + .to-ficha__row { border-top: 1px solid var(--to-border); }
+.to-ficha__pic { width: 52px; height: 52px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: var(--to-surface-2); }
+.to-ficha__pic img { width: 100%; height: 100%; object-fit: cover; }
+.to-ficha__pic .to-bodymap { height: 46px; }
+.to-ficha__name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.to-ficha__name small { color: var(--to-text-2, inherit); font-size: 12px; }
+.to-ficha__nums { display: flex; gap: 16px; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
+.to-ficha__nums > span { display: flex; flex-direction: column; align-items: flex-end; min-width: 52px; }
+.to-ficha__nums small { font-weight: 500; font-size: 11px; color: var(--to-text-2, inherit); }
+@media (max-width: 560px) {
+  .to-ficha__row { grid-template-columns: 44px minmax(0, 1fr); }
+  .to-ficha__pic { width: 44px; height: 44px; }
+  .to-ficha__nums { grid-column: 2; gap: 14px; }
+  .to-ficha__nums > span { align-items: flex-start; min-width: 0; }
+}
+
