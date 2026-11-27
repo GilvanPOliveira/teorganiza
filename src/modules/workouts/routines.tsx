@@ -159,7 +159,7 @@ export function RoutinesScreen() {
             return (
               <div
                 key={day}
-                className={`to-dayrow to-dayrow--line${routine && !resting ? ' to-dayrow--link' : ' is-rest'}`}
+                className={`to-dayrow to-dayrow--line to-dayrow--week${routine && !resting ? ' to-dayrow--link' : ' is-rest'}`}
                 onClick={() => routine && !resting && navigate(`routines/${routine.id}`)}
               >
                 <label className="to-daycheck" onClick={(e) => e.stopPropagation()}>

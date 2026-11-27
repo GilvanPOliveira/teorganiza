@@ -3357,5 +3357,26 @@ a.to-tag:hover {
 @media (max-width: 720px) {
   .to-dayrow--line .to-dayrow__main { flex: 1 1 calc(100% - 140px); }
 }
-.to-daycheck { flex: none; display: inline-flex; align-items: center; gap: 8px; width: 74px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.to-daycheck {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: 92px;
+  height: 100%;
+  padding-right: 14px;
+  border-right: 1px solid var(--to-border);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
 .to-daycheck input { width: 18px; height: 18px; margin: 0; accent-color: var(--to-accent); cursor: pointer; }
+/* Every day of the week is the same card, training or resting */
+.to-dayrow--week { height: 82px; padding: 0 16px; gap: 14px; }
+.to-dayrow--week .to-dayrow__main { min-width: 0; }
+.to-dayrow--week .to-dayrow__main strong,
+.to-dayrow--week .to-dayrow__main .to-muted { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+@media (max-width: 720px) {
+  .to-dayrow--week { height: auto; min-height: 112px; padding: 12px 14px; align-content: center; }
+  .to-daycheck { width: 78px; height: auto; padding-right: 10px; }
+}
