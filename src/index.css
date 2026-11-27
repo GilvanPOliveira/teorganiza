@@ -3326,3 +3326,5 @@ a.to-tag:hover {
 .to-linkbutton--danger { color: var(--to-danger, #e06c6c); }
 .to-exsheet--plan { width: min(1000px, 100%); max-height: 90vh; overflow-y: auto; padding: 0; }
 .to-exsheet--plan .to-excard.is-open { border: none; }
+.to-workout__settings { display: flex; flex-direction: column; gap: 10px; }
+.to-workout__settingshead { display: flex; align-items: center; justify-content: space-between; }
