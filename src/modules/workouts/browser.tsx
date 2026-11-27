@@ -9,6 +9,7 @@ import { fmt, Stepper } from './inputs'
 import { clock, lastEntry, planFor, type ExercisePlan } from './logic'
 import { ExerciseMedia } from './media'
 import { EMPTY_FILTER, ExerciseFilters, filterExercises, type ExerciseFilter } from './picker'
+import { usePlanRegister } from './register'
 
 export const REST_OPTIONS = [0, 30, 45, 60, 90, 120, 150, 180, 240, 300]
 /** Monday first, as a training week is planned. */
@@ -42,7 +43,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function PlanFields({ exercise, plan, withDays, onChange }: { exercise: ExerciseDef; plan: ExercisePlan; withDays: boolean; onChange: (plan: ExercisePlan) => void }) {
   const t = useT()
-  const [settings] = useTrainingSettings()
   const set = (patch: Partial<ExercisePlan>) => onChange({ ...plan, ...patch })
   const lifts = exercise.kind === 'weight' || exercise.kind === 'bodyweight'
   return (
@@ -50,7 +50,7 @@ function PlanFields({ exercise, plan, withDays, onChange }: { exercise: Exercise
       <div className="to-plan__fields">
         {lifts && (
           <Field label={t(exercise.kind === 'bodyweight' ? 'setup.extra' : 'setup.load')}>
-            <Stepper value={plan.weight} step={weightStep(settings)} label={t('setup.load')} onCommit={(v) => set({ weight: v })} />
+            <Stepper value={plan.weight} step={weightStep()} label={t('setup.load')} onCommit={(v) => set({ weight: v })} />
           </Field>
         )}
         {exercise.kind !== 'cardio' && (
@@ -119,17 +119,35 @@ function PlanFields({ exercise, plan, withDays, onChange }: { exercise: Exercise
  * One exercise, enlarged in place
  * ------------------------------------------------------------------ */
 
-function OpenCard({ exercise, action, onCollapse, onDone, linked = false }: { exercise: ExerciseDef; action?: BrowserAction; onCollapse: () => void; onDone: () => void; linked?: boolean }) {
+function OpenCard({
+  exercise,
+  action,
+  onCollapse,
+  onDone,
+  linked = false,
+  initial,
+  dialog = false,
+}: {
+  exercise: ExerciseDef
+  action?: BrowserAction
+  onCollapse: () => void
+  onDone: () => void
+  linked?: boolean
+  /** Values to start from instead of last time's, such as a routine's. */
+  initial?: Partial<ExercisePlan>
+  /** Shown in a popup: a close button, and no scrolling of the page. */
+  dialog?: boolean
+}) {
   const t = useT()
   const [settings] = useTrainingSettings()
   const sessions = withIds(useSessions()).filter((s) => s.finishedAt)
   const before = action?.daysOf?.(exercise.id) ?? []
-  const [plan, setPlan] = useState<ExercisePlan>(() => planFor(exercise, sessions, settings.rest, before))
+  const [plan, setPlan] = useState<ExercisePlan>(() => ({ ...planFor(exercise, sessions, settings.rest, before), ...initial }))
   const ref = useRef<HTMLElement>(null)
   useEffect(() => {
     // Opened from another screen, it comes to the top; tapped here, it only comes into view.
-    ref.current?.scrollIntoView({ block: linked ? 'start' : 'nearest', behavior: 'smooth' })
-  }, [linked])
+    if (!dialog) ref.current?.scrollIntoView({ block: linked ? 'start' : 'nearest', behavior: 'smooth' })
+  }, [linked, dialog])
 
   const last = lastEntry(sessions, { exerciseId: exercise.id, name: exercise.name })
   const work = last?.sets.filter((s) => s.type !== 'warmup') ?? []
@@ -147,8 +165,8 @@ function OpenCard({ exercise, action, onCollapse, onDone, linked = false }: { ex
       <header className="to-excard__openhead">
         <strong>{exercise.name}</strong>
         <FavoriteButton exercise={exercise} />
-        <button type="button" className="to-plainicon" aria-label={t('browser.collapse')} title={t('browser.collapse')} onClick={onCollapse}>
-          <ChevronUp size={18} />
+        <button type="button" className="to-plainicon" aria-label={t(dialog ? 'action.close' : 'browser.collapse')} title={t(dialog ? 'action.close' : 'browser.collapse')} onClick={onCollapse}>
+          {dialog ? <X size={18} /> : <ChevronUp size={18} />}
         </button>
       </header>
       <ExerciseDetail exercise={exercise}>
@@ -174,6 +192,29 @@ function OpenCard({ exercise, action, onCollapse, onDone, linked = false }: { ex
       </ExerciseDetail>
       <CustomTools exercise={exercise} onRemoved={onCollapse} />
     </article>
+  )
+}
+
+/**
+ * The same card in a popup, registering in the plan: from Rotinas, an
+ * exercise is seen and changed without leaving the page.
+ */
+export function ExercisePlanSheet({ exercise, initial, onClose }: { exercise: ExerciseDef; initial?: Partial<ExercisePlan>; onClose: () => void }) {
+  const t = useT()
+  const { daysOf, register } = usePlanRegister()
+  return (
+    <div className="to-palette__backdrop" onMouseDown={onClose}>
+      <section className="to-palette to-exsheet to-exsheet--plan" role="dialog" aria-modal="true" aria-label={exercise.name} onMouseDown={(e) => e.stopPropagation()}>
+        <OpenCard
+          exercise={exercise}
+          initial={initial}
+          dialog
+          action={{ label: t('library.register'), withDays: true, keepOpen: false, onAdd: (ex, plan) => void register(ex, plan), daysOf }}
+          onCollapse={onClose}
+          onDone={onClose}
+        />
+      </section>
+    </div>
   )
 }
 

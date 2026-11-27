@@ -151,7 +151,6 @@
   "settings.effort": "Anotar esforço",
   "settings.effort.none": "Não anotar",
   "settings.rest": "Descanso padrão",
-  "settings.step": "Menor anilha (aquecimento)",
   "settings.sound": "Som e vibração no fim do descanso",
   "settings.hint": "RIR: quantas repetições ainda caberiam. RPE: esforço de 1 a 10. O descanso padrão vale para exercícios novos; cada exercício pode ter o seu.",
   "rest.pause": "Pausar descanso",
@@ -244,5 +243,14 @@
   "sheet.sets": "Séries",
   "sheet.weight": "Peso",
   "sheet.rest": "Descanso",
-  "library.fold": "Recolher"
+  "library.fold": "Recolher",
+  "plan.daysSummary": "{count} dias com treino",
+  "plan.daysSummary.one": "1 dia com treino",
+  "plan.routinesSummary": "{count} rotinas",
+  "plan.routinesSummary.one": "1 rotina",
+  "plan.rotationSummary": "{count} na ordem",
+  "plan.rotationEmpty": "Marque “No rodízio” nas suas rotinas para elas entrarem na ordem.",
+  "plan.moveDay": "Dia de {name}",
+  "routine.of": "Treino de",
+  "routine.noteShort": "Observação"
 }

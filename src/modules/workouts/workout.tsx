@@ -632,7 +632,7 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
       before={bestOf(others, entry)}
       last={lastEntry(others, entry)}
       effort={settings.effort}
-      step={weightStep(settings)}
+      step={weightStep()}
       showMedia={showMedia}
       linked={Boolean(entry.superset && entries[i + 1]?.superset === entry.superset)}
       actions={{
