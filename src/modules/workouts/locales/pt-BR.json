@@ -187,7 +187,7 @@
   "plan.thisWeek": "Sua semana",
   "plan.rest": "Descanso",
   "plan.restHint": "Dia de descanso",
-  "plan.assign": "Rotina de {day}",
+  "plan.assign": "Treino de {day}",
   "plan.routines": "Suas rotinas",
   "settings.view": "Tela do treino",
   "settings.view.cards": "Um exercício por vez",
@@ -253,5 +253,6 @@
   "plan.moveDay": "Dia de {name}",
   "routine.of": "Treino de",
   "routine.noteShort": "Observação",
-  "plan.restingHint": "{name} volta ao escolher o dia"
+  "plan.restingHint": "{name} volta ao escolher o dia",
+  "plan.putHere": "Treinar neste dia"
 }
