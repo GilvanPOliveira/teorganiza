@@ -14,7 +14,7 @@ import {
   type Envelope,
 } from '@core/api'
 import { BodyMap } from './BodyMap'
-import { ExerciseBrowser, ExercisePlanSheet, REST_OPTIONS, WEEK_ORDER } from './browser'
+import { ExerciseBrowser, ExercisePlanSheet, REST_OPTIONS, SHORT_DAYS, WEEK_ORDER } from './browser'
 import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
 import { ExerciseSheet } from './detail'
@@ -31,12 +31,31 @@ import { useRoutineMuscles } from './today'
  * Pieces
  * ------------------------------------------------------------------ */
 
-/** A section that opens and closes from its title; all start closed. */
-function Fold({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false)
+/**
+ * A section that opens and closes from its title. Closed the first time;
+ * after that it stays as it was left, in this browser.
+ */
+function Fold({ id, title, summary, children }: { id: string; title: string; summary?: string; children: ReactNode }) {
+  const key = `teorganiza.workouts.fold.${id}`
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(key) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggle = () => {
+    const next = !open
+    setOpen(next)
+    try {
+      localStorage.setItem(key, next ? '1' : '0')
+    } catch {
+      // Without storage it still opens and closes; it just starts closed next time.
+    }
+  }
   return (
     <section className={`to-fold${open ? ' is-open' : ''}`}>
-      <button type="button" className="to-fold__head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button type="button" className="to-fold__head" aria-expanded={open} onClick={toggle}>
         <span className="to-fold__title">{title}</span>
         {summary && <span className="to-muted to-fold__summary">{summary}</span>}
         {open ? <Minus size={16} /> : <Plus size={16} />}
@@ -97,7 +116,6 @@ export function RoutinesScreen() {
     list.splice(at + delta, 0, id)
     void setSettings({ rotation: list })
   }
-  const loose = routines.filter((r) => r.data.weekday === null)
   const trainingDays = routines.filter((r) => r.data.weekday !== null).length
 
   return (
@@ -123,12 +141,31 @@ export function RoutinesScreen() {
       <p className="to-muted">{t(settings.mode === 'week' ? 'plan.weekHint' : 'plan.rotationHint')}</p>
 
       {settings.mode === 'week' ? (
-        <Fold title={t('plan.thisWeek')} summary={t('plan.daysSummary', { count: trainingDays })}>
+        <Fold id="week" title={t('plan.thisWeek')} summary={t('plan.daysSummary', { count: trainingDays })}>
           {WEEK_ORDER.map((day) => {
             const routine = routines.find((r) => r.data.weekday === day)
             return (
               <div key={day} className={`to-dayrow to-dayrow--line${routine ? '' : ' is-rest'}`}>
-                <span className="to-dayrow__day">{WEEKDAYS[day].slice(0, 3)}</span>
+                <select
+                  className="to-field__input to-dayselect"
+                  value={routine ? String(day) : 'rest'}
+                  disabled={!routine}
+                  aria-label={routine ? t('plan.moveDay', { name: routine.data.name }) : WEEKDAYS[day]}
+                  onChange={(e) => routine && void moveRoutine(routine.id, e.target.value === 'rest' ? null : Number(e.target.value))}
+                >
+                  {routine ? (
+                    <>
+                      {WEEK_ORDER.map((d) => (
+                        <option key={d} value={d}>
+                          {SHORT_DAYS[d]}
+                        </option>
+                      ))}
+                      <option value="rest">✕</option>
+                    </>
+                  ) : (
+                    <option value="rest">{SHORT_DAYS[day]}</option>
+                  )}
+                </select>
                 <span className={`to-today__icon to-today__icon--small${routine ? '' : ' to-today__icon--rest'}`}>
                   {routine ? <Dumbbell size={14} /> : <Moon size={14} />}
                 </span>
@@ -142,43 +179,12 @@ export function RoutinesScreen() {
                   </div>
                 )}
                 {routine && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
-                {routine ? (
-                  <select
-                    className="to-field__input to-dayrow__select"
-                    value={String(day)}
-                    aria-label={t('plan.moveDay', { name: routine.data.name })}
-                    onChange={(e) => void moveRoutine(routine.id, e.target.value === 'rest' ? null : Number(e.target.value))}
-                  >
-                    {WEEK_ORDER.map((d) => (
-                      <option key={d} value={d}>
-                        {WEEKDAYS[d]}
-                      </option>
-                    ))}
-                    <option value="rest">{t('plan.rest')}</option>
-                  </select>
-                ) : (
-                  loose.length > 0 && (
-                    <select
-                      className="to-field__input to-dayrow__select"
-                      value=""
-                      aria-label={t('plan.assign', { day: WEEKDAYS[day] })}
-                      onChange={(e) => e.target.value && void moveRoutine(e.target.value, day)}
-                    >
-                      <option value="">{t('plan.rest')}</option>
-                      {loose.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.data.name}
-                        </option>
-                      ))}
-                    </select>
-                  )
-                )}
               </div>
             )
           })}
         </Fold>
       ) : (
-        <Fold title={t('plan.order')} summary={t('plan.rotationSummary', { count: rotationList.length })}>
+        <Fold id="rotation" title={t('plan.order')} summary={t('plan.rotationSummary', { count: rotationList.length })}>
           {rotationList.length === 0 && <p className="to-muted">{t('plan.rotationEmpty')}</p>}
           {rotationList.map((r, i) => (
             <div key={r.id} className="to-dayrow to-dayrow--line">
@@ -204,7 +210,7 @@ export function RoutinesScreen() {
         </Fold>
       )}
 
-      <Fold title={t('plan.routines')} summary={t('plan.routinesSummary', { count: routines.length })}>
+      <Fold id="routines" title={t('plan.routines')} summary={t('plan.routinesSummary', { count: routines.length })}>
         <QuickAdd
           placeholder={t('routine.placeholder')}
           onAdd={async (name) => {
@@ -250,9 +256,9 @@ export function RoutinesScreen() {
         )}
       </Fold>
 
-      <Fold title={t('templates.title')}>
+      <Fold id="plans" title={t('templates.title')}>
         <p className="to-muted">{t('templates.body')}</p>
-        <div className="to-cards">
+        <div className="to-plans">
           {TEMPLATES.map((template) => (
             <article key={template.id} className="to-tile">
               <h3 className="to-tile__title">{template.name}</h3>
