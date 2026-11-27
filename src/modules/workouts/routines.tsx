@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Dumbbell, Minus, Moon, Plus, Repeat2, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Dumbbell, Minus, Moon, Plus, Repeat2, Trash2 } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -84,7 +84,14 @@ export function RoutinesScreen() {
   const index = useExerciseIndex()
   const musclesOf = useRoutineMuscles()
   const [settings, setSettings] = useTrainingSettings()
-  const { create } = useCollection<Routine>('routines')
+  const { create, remove } = useCollection<Routine>('routines')
+
+  /** Deletes a routine after asking, and takes it out of the rotation. */
+  const removeRoutine = (routine: Envelope<Routine>) => {
+    if (!confirm(t('routine.removeConfirm', { name: routine.data.name }))) return
+    void remove(routine.id)
+    if (settings.rotation.includes(routine.id)) void setSettings({ rotation: settings.rotation.filter((id) => id !== routine.id) })
+  }
   const { count: registered } = usePlanRegister()
   const [editing, setEditing] = useState<Editing | null>(null)
 
@@ -230,7 +237,18 @@ export function RoutinesScreen() {
           <EmptyState title={t('routine.empty')} body={t('routine.emptyBody')} />
         ) : (
           routines.map((routine) => (
-            <div key={routine.id} className="to-dayrow to-dayrow--line to-dayrow--link" onClick={() => navigate(`routines/${routine.id}`)}>
+            <div key={routine.id} className="to-dayrow to-dayrow--line to-dayrow--week to-dayrow--link" onClick={() => navigate(`routines/${routine.id}`)}>
+              <span className="to-rowtool" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="to-plainicon to-plainicon--danger"
+                  aria-label={t('routine.removeNamed', { name: routine.data.name })}
+                  title={t('routine.remove')}
+                  onClick={() => removeRoutine(routine)}
+                >
+                  <Trash2 size={17} />
+                </button>
+              </span>
               <span className="to-today__icon to-today__icon--small">
                 <Dumbbell size={14} />
               </span>
@@ -257,7 +275,6 @@ export function RoutinesScreen() {
                   <span className="to-muted">{t('plan.inRotation')}</span>
                 </label>
               )}
-              <ChevronRight size={16} className="to-muted" aria-hidden />
             </div>
           ))
         )}
