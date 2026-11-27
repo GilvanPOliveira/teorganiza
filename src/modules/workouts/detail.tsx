@@ -91,12 +91,12 @@ export function FavoriteButton({ exercise }: { exercise: ExerciseDef }) {
   return (
     <button
       type="button"
-      className={`to-iconbutton to-iconbutton--small${favorite ? ' active' : ''}`}
+      className={`to-plainicon to-plainicon--star${favorite ? ' active' : ''}`}
       aria-pressed={favorite}
       aria-label={t(favorite ? 'library.unfavorite' : 'library.favorite')}
       onClick={() => void setSettings({ favorites: favorite ? settings.favorites.filter((id) => id !== exercise.id) : [...settings.favorites, exercise.id] })}
     >
-      <Star size={15} />
+      <Star size={17} />
     </button>
   )
 }

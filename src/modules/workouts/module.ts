@@ -12,6 +12,7 @@ import {
   type Routine,
   type Session,
 } from './schema'
+import { SheetScreen } from './sheet'
 import { TodayScreen } from './today'
 import ptBR from './locales/pt-BR.json'
 
@@ -66,12 +67,14 @@ export default defineModule({
     { path: 'library', element: LibraryScreen, label: 'Exercícios' },
     { path: 'history', element: HistoryScreen, label: 'Histórico' },
     { path: 'history/:id', element: SessionScreen },
+    { path: 'sheet', element: SheetScreen },
   ],
 
   commands: [
     { id: 'start', label: 'Começar treino', path: '', keywords: ['treino', 'academia', 'musculação', 'malhar'] },
     { id: 'routines', label: 'Rotinas de treino', path: 'routines', keywords: ['rotina', 'ficha', 'plano', 'treino'] },
     { id: 'library', label: 'Biblioteca de exercícios', path: 'library', keywords: ['exercício', 'biblioteca', 'músculo'] },
+    { id: 'sheet', label: 'Ficha de treino', path: 'sheet', keywords: ['ficha', 'imprimir', 'pdf', 'exportar', 'treino'] },
     { id: 'history', label: 'Histórico de treinos', path: 'history', keywords: ['histórico', 'treinos', 'recorde'] },
   ],
 

@@ -159,7 +159,7 @@ function emptySet(type: LoggedSet['type'] = 'normal'): LoggedSet {
 export function entryFor(
   exercise: ExerciseDef,
   sessions: Session[],
-  item?: Pick<RoutineItem, 'sets' | 'rest' | 'superset' | 'note'>,
+  item?: Pick<RoutineItem, 'sets' | 'rest' | 'superset' | 'note' | 'weight'>,
   defaultRest = 90,
 ): Entry {
   const id = { exerciseId: exercise.id, name: exercise.name }
@@ -176,7 +176,7 @@ export function entryFor(
     const previous = plan.type === 'warmup' ? undefined : lastWork[Math.min(workIndex++, Math.max(lastWork.length - 1, 0))]
     return {
       ...emptySet(plan.type),
-      weight: previous?.weight ?? null,
+      weight: previous?.weight ?? (plan.type === 'warmup' ? null : (item?.weight ?? null)),
       reps: plan.reps ?? previous?.reps ?? null,
       seconds: plan.seconds ?? previous?.seconds ?? null,
       speed: previous?.speed ?? null,
@@ -219,27 +219,46 @@ export function clock(totalSeconds: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`
 }
 
-/** How an exercise goes into a workout or a routine: sets, reps, load or time. */
+/** How an exercise goes into a workout or the training plan. */
 export interface ExercisePlan {
   sets: number
   reps: number | null
   /** Kilograms; added load for body-weight work. */
   weight: number | null
   seconds: number | null
+  /** Rest after each set, in seconds. */
+  rest: number
+  /** Weekdays it is done on (0 = Sunday), when registering it in the plan. */
+  days: number[]
 }
 
 /**
  * Where to start: what was done last time, or a sensible default (3 × 10,
  * 4 × 8 for a compound lift, 30 s held, 20 min of cardio).
  */
-export function planFor(exercise: ExerciseDef, sessions: Session[]): ExercisePlan {
-  const work = lastEntry(sessions, { exerciseId: exercise.id, name: exercise.name })?.sets.filter((s) => s.type !== 'warmup') ?? []
+export function planFor(exercise: ExerciseDef, sessions: Session[], defaultRest = 90, days: number[] = []): ExercisePlan {
+  const last = lastEntry(sessions, { exerciseId: exercise.id, name: exercise.name })
+  const work = last?.sets.filter((s) => s.type !== 'warmup') ?? []
   const timed = exercise.kind === 'time' || exercise.kind === 'cardio'
   return {
     sets: work.length || (exercise.kind === 'cardio' ? 1 : exercise.compound ? 4 : 3),
     reps: timed ? null : (work[0]?.reps ?? (exercise.compound ? 8 : 10)),
     weight: timed ? null : (work.reduce<number | null>((top, s) => (s.weight !== null && (top === null || s.weight > top) ? s.weight : top), null)),
     seconds: timed ? (work[0]?.seconds ?? (exercise.kind === 'time' ? 30 : 1200)) : null,
+    rest: last?.rest ?? (exercise.compound ? 120 : defaultRest),
+    days,
+  }
+}
+
+/** A plan as a routine's item: that many equal work sets, with its load and rest. */
+export function itemFromPlan(exerciseId: string, plan: ExercisePlan, keep?: Pick<RoutineItem, 'superset' | 'note'>): RoutineItem {
+  return {
+    exerciseId,
+    sets: Array.from({ length: Math.max(1, plan.sets) }, () => ({ type: 'normal' as const, reps: plan.reps, repsMax: null, seconds: plan.seconds })),
+    rest: plan.rest,
+    superset: keep?.superset ?? null,
+    note: keep?.note ?? '',
+    weight: plan.weight,
   }
 }
 
@@ -259,7 +278,7 @@ export function entryFromPlan(
   const set: LoggedSet = { ...emptySet('normal'), weight: plan.weight, reps: plan.reps, seconds: plan.seconds, speed }
   return {
     ...entry,
-    rest: base?.rest ?? entry.rest,
+    rest: plan.rest ?? base?.rest ?? entry.rest,
     superset: base?.superset ?? null,
     sets: Array.from({ length: Math.max(1, plan.sets) }, () => ({ ...set })),
   }
