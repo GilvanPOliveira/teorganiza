@@ -130,6 +130,14 @@ Concluídas:
      cartão em Configurações dizendo que ainda não está ativo. Nada sai do
      navegador. Não adicionar SDK, chave ou chamada de API sem pedido
      explícito.
+10. Saúde › Treino refeito no estilo do openGym (AGPL), **sem copiar código,
+    textos ou imagens**: só o conjunto de funções serviu de exemplo, e tudo
+    foi escrito do zero, sob MIT. Catálogo próprio em português
+    (`workouts/catalog.ts`), rotinas por dia da semana ou em rodízio,
+    planos prontos, treino guiado série a série com descanso, aquecimento
+    e recordes, histórico editável. Treinos antigos migram para o formato
+    v2 na leitura. Fases seguintes: progresso (gráficos, mapa muscular,
+    regras de progressão, peso corporal) e importação/exportação.
    - Arquivos: coleção `core/files` (metadados, sincroniza como qualquer
      registro) e conteúdo por hash num IndexedDB próprio
      (`core/files/blobs`). Com destino, o conteúdo vai para

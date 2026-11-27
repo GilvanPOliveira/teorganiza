@@ -2471,3 +2471,90 @@ a.to-tag:hover {
 .to-linkadd .to-field__input {
   flex: 1;
 }
+
+/* Treino: the workout log, set rows, the rest timer, the picker. */
+.to-stack--tight { gap: 8px; }
+.to-toolbar--tight { gap: 4px; }
+.to-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.to-input--tiny { width: 64px; }
+.to-workout__head { display: flex; flex-direction: column; gap: 8px; }
+.to-workout__name { flex: 1; min-width: 200px; font-weight: 600; }
+.to-workout__stats { display: flex; flex-wrap: wrap; gap: 16px; color: var(--to-text-2, inherit); font-variant-numeric: tabular-nums; }
+.to-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--to-border);
+  border-radius: var(--to-radius-lg);
+  background: var(--to-surface);
+}
+.to-entry__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.to-entry__title { display: flex; flex-direction: column; gap: 2px; }
+.to-entry__sets { display: flex; flex-direction: column; gap: 6px; }
+.to-setrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.to-setrow.is-done .to-field__input { border-color: var(--to-positive, #3fb67b); }
+.to-setrow.is-warmup .to-setrow__tag { color: var(--to-warning, #e5b45a); }
+.to-setrow__tag {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--to-border-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+.to-setinput { display: inline-flex; align-items: center; gap: 4px; }
+.to-setinput .to-field__input { width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+.to-setinput__suffix { font-size: 12px; color: var(--to-text-2, inherit); }
+.to-setrow__end { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.to-setrow__record { color: var(--to-warning, #e5b45a); display: inline-flex; }
+.to-setrow__done {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--to-border-strong);
+  background: transparent;
+  color: var(--to-text-2, inherit);
+  cursor: pointer;
+}
+.to-setrow__done.is-on { background: var(--to-positive, #3fb67b); border-color: transparent; color: #fff; }
+.to-rest {
+  position: sticky;
+  top: 8px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: var(--to-radius-lg);
+  background: var(--to-accent-soft);
+  border: 1px solid var(--to-accent);
+}
+.to-rest__time { font-size: 28px; font-variant-numeric: tabular-nums; }
+.to-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--to-surface);
+  border: 1px solid var(--to-warning, #e5b45a);
+  box-shadow: var(--to-shadow);
+  max-width: calc(100vw - 32px);
+}
+.to-picker { max-height: 85vh; width: min(720px, 100%); }
+.to-picker__body { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; overflow-y: auto; }
+@media (max-width: 560px) {
+  .to-setinput .to-field__input { width: 60px; }
+  .to-setrow__end { margin-left: 0; }
+}
