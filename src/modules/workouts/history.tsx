@@ -4,6 +4,7 @@ import { Button, EmptyState, toLocalISODate, useCollection, useFormat, useNaviga
 import { useSessions } from './data'
 import { clock, doneSets, sessionVolume } from './logic'
 import type { Session } from './schema'
+import { ExerciseStrip } from './strip'
 import { Records } from './today'
 import { WorkoutLog } from './workout'
 
@@ -65,6 +66,9 @@ export function HistoryScreen() {
                       </span>
                     </button>
                     <ChevronRight size={15} className="to-muted" aria-hidden />
+                    <div className="to-list__strip">
+                      <ExerciseStrip ids={s.data.entries.map((entry) => entry.exerciseId)} small />
+                    </div>
                   </li>
                 )
               })}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Accessibility, Check, ChevronUp, Star, X } from 'lucide-react'
+import { Check, ChevronUp, Star, X } from 'lucide-react'
 import { useT } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef, type Muscle } from './catalog'
@@ -119,7 +119,7 @@ function PlanFields({ exercise, plan, withDays, onChange }: { exercise: Exercise
  * One exercise, enlarged in place
  * ------------------------------------------------------------------ */
 
-function OpenCard({ exercise, action, onCollapse, onDone }: { exercise: ExerciseDef; action?: BrowserAction; onCollapse: () => void; onDone: () => void }) {
+function OpenCard({ exercise, action, onCollapse, onDone, linked = false }: { exercise: ExerciseDef; action?: BrowserAction; onCollapse: () => void; onDone: () => void; linked?: boolean }) {
   const t = useT()
   const [settings] = useTrainingSettings()
   const sessions = withIds(useSessions()).filter((s) => s.finishedAt)
@@ -127,8 +127,9 @@ function OpenCard({ exercise, action, onCollapse, onDone }: { exercise: Exercise
   const [plan, setPlan] = useState<ExercisePlan>(() => planFor(exercise, sessions, settings.rest, before))
   const ref = useRef<HTMLElement>(null)
   useEffect(() => {
-    ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  }, [])
+    // Opened from another screen, it comes to the top; tapped here, it only comes into view.
+    ref.current?.scrollIntoView({ block: linked ? 'start' : 'nearest', behavior: 'smooth' })
+  }, [linked])
 
   const last = lastEntry(sessions, { exerciseId: exercise.id, name: exercise.name })
   const work = last?.sets.filter((s) => s.type !== 'warmup') ?? []
@@ -192,6 +193,7 @@ export function ExerciseBrowser({
   onClose,
   startMuscle,
   toolbar,
+  initialOpen,
 }: {
   /** Shown as a panel with a close button when there is a title. */
   title?: string
@@ -199,15 +201,17 @@ export function ExerciseBrowser({
   onClose?: () => void
   /** Opens filtered to a muscle, as when swapping an exercise for a similar one. */
   startMuscle?: Muscle
-  /** Extra buttons next to the count, such as the plan summary. */
+  /** Extra buttons next to the equipment select, such as the plan summary. */
   toolbar?: ReactNode
+  /** An exercise to show enlarged from the start, when another screen links to it. */
+  initialOpen?: string
 }) {
   const t = useT()
   const { all } = useExerciseIndex()
   const [settings] = useTrainingSettings()
   const [filter, setFilter] = useState<ExerciseFilter>(startMuscle ? { ...EMPTY_FILTER, muscle: startMuscle } : EMPTY_FILTER)
   const [byMuscle, setByMuscle] = useState(false)
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [openId, setOpenId] = useState<string | null>(initialOpen ?? null)
   const [done, setDone] = useState<string[]>([])
   const ref = useRef<HTMLElement>(null)
   const shown = useMemo(() => filterExercises(all, filter, settings.favorites).slice(0, 160), [all, filter, settings.favorites])
@@ -229,15 +233,20 @@ export function ExerciseBrowser({
         </header>
       )}
 
-      <div className="to-toolbar">
-        <span className="to-muted">{t('library.count', { count: all.length })}</span>
-        <span className="to-toolbar to-toolbar--tight to-push">
-          <button type="button" className={`to-chip${byMuscle ? ' is-active' : ''}`} onClick={() => setByMuscle((v) => !v)}>
-            <Accessibility size={13} /> {t('library.byMuscle')}
-          </button>
-          {toolbar}
-        </span>
-      </div>
+
+      <ExerciseFilters
+        filter={filter}
+        onChange={setFilter}
+        count={t('library.count', { count: shown.length === all.length ? all.length : shown.length })}
+        actions={
+          <>
+            <button type="button" className={`to-chip${byMuscle ? ' is-active' : ''}`} aria-pressed={byMuscle} onClick={() => setByMuscle((v) => !v)}>
+              {t('library.byMuscle')}
+            </button>
+            {toolbar}
+          </>
+        }
+      />
 
       {byMuscle && (
         <section className="to-panel to-bodypick">
@@ -250,8 +259,6 @@ export function ExerciseBrowser({
         </section>
       )}
 
-      <ExerciseFilters filter={filter} onChange={setFilter} />
-
       <div className="to-exgrid">
         {shown.map((exercise) => {
           if (exercise.id === openId) {
@@ -260,6 +267,7 @@ export function ExerciseBrowser({
                 key={exercise.id}
                 exercise={exercise}
                 action={action}
+                linked={exercise.id === initialOpen}
                 onCollapse={() => setOpenId(null)}
                 onDone={() => {
                   setDone((list) => (list.includes(exercise.id) ? list : [...list, exercise.id]))

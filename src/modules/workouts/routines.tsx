@@ -18,7 +18,7 @@ import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
 import { ExerciseBrowser } from './browser'
-import { ExerciseSheet } from './detail'
+import { ExerciseStrip } from './strip'
 import { SheetButton, usePlanRegister } from './library'
 import { clock, entryFor, itemFromPlan } from './logic'
 import { ExerciseMedia } from './media'
@@ -120,6 +120,11 @@ export function RoutinesScreen() {
                     </option>
                   ))}
                 </select>
+                {routine && (
+                  <div className="to-dayrow__strip">
+                    <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small />
+                  </div>
+                )}
               </div>
             )
           })}
@@ -136,6 +141,9 @@ export function RoutinesScreen() {
                   <span className="to-muted">{t('routine.exercises', { count: r.data.items.length })}</span>
                 </button>
                 <BodyMap primary={musclesOf(r.data)} size="tiny" />
+                <div className="to-dayrow__strip">
+                  <ExerciseStrip ids={r.data.items.map((item) => item.exerciseId)} small />
+                </div>
                 <span className="to-toolbar to-toolbar--tight">
                   <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.up')} disabled={i === 0} onClick={() => moveInRotation(r.id, -1)}>
                     <ArrowUp size={14} />
@@ -346,7 +354,7 @@ function ItemEditor({
   onSuperset: () => void
 }) {
   const t = useT()
-  const [info, setInfo] = useState(false)
+  const navigate = useNavigate()
   const shape = shapeOf(item.sets)
   const timed = def?.kind === 'time' || def?.kind === 'cardio'
   const set = (patch: Partial<SetsShape>) => onUpdate((it) => ({ ...it, sets: setsOf({ ...shapeOf(it.sets), ...patch }) }))
@@ -355,7 +363,7 @@ function ItemEditor({
     <article className="to-entry">
       <header className="to-entry__header">
         {def && (
-          <button type="button" className="to-entry__pic" aria-label={t('entry.howTo', { name: def.name })} onClick={() => setInfo(true)}>
+          <button type="button" className="to-entry__pic" aria-label={t('entry.howTo', { name: def.name })} onClick={() => navigate(`library/${encodeURIComponent(def.id)}`)}>
             <ExerciseMedia exercise={def} size="thumb" />
           </button>
         )}
@@ -457,7 +465,6 @@ function ItemEditor({
           const note = e.target.value
           if (note !== item.note) onUpdate((it) => ({ ...it, note }))
         }} />
-      {info && def && <ExerciseSheet exercise={def} onClose={() => setInfo(false)} />}
     </article>
   )
 }
