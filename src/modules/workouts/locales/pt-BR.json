@@ -186,8 +186,7 @@
   "plan.how": "Como você treina",
   "plan.thisWeek": "Sua semana",
   "plan.rest": "Descanso",
-  "plan.restHint": "Dia de descanso",
-  "plan.assign": "Treino de {day}",
+  "plan.restHint": "Marque o dia para treinar",
   "plan.routines": "Suas rotinas",
   "settings.view": "Tela do treino",
   "settings.view.cards": "Um exercício por vez",
@@ -250,9 +249,8 @@
   "plan.routinesSummary.one": "1 rotina",
   "plan.rotationSummary": "{count} na ordem",
   "plan.rotationEmpty": "Marque “No rodízio” nas suas rotinas para elas entrarem na ordem.",
-  "plan.moveDay": "Dia de {name}",
   "routine.of": "Treino de",
   "routine.noteShort": "Observação",
-  "plan.restingHint": "{name} volta ao escolher o dia",
-  "plan.putHere": "Treinar neste dia"
+  "plan.restingHint": "{name} volta ao marcar o dia",
+  "plan.trainOn": "Treinar na semana: {day}"
 }
