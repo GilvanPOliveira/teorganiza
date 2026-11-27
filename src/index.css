@@ -3416,3 +3416,50 @@ a.to-tag:hover {
   .to-dayrow__thumbs { flex: 1 0 100%; min-width: 0; }
 }
 @media (max-width: 720px) { .to-dayrow__body { align-self: center; padding-right: 10px; } }
+
+/* Histórico */
+.to-datecol {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 56px;
+  padding-right: 14px;
+  border-right: 1px solid var(--to-border);
+  line-height: 1.1;
+}
+.to-datecol strong { font-size: 20px; }
+.to-datecol small { font-size: 12px; font-weight: 600; color: var(--to-text-2, inherit); }
+.to-badge-inline { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--to-accent-soft); color: var(--to-accent); font-size: 11px; font-weight: 700; vertical-align: middle; }
+.to-pastform { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.to-pastform > strong { align-self: center; margin-right: 6px; }
+.to-pastform .to-itemfield .to-field__input { width: auto; min-width: 170px; height: 40px; }
+.to-pastform__actions { display: inline-flex; align-items: center; gap: 12px; margin-left: auto; }
+.to-records { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.to-records__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--to-border);
+  border-radius: 12px;
+  background: var(--to-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.to-records__row:hover { border-color: var(--to-border-strong); }
+.to-records__row .to-media--thumb { width: 44px; height: 44px; border-radius: 10px; }
+.to-records__nopic { width: 44px; height: 44px; border-radius: 10px; background: var(--to-surface-2); flex: none; }
+.to-records__name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.to-records__row strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 720px) {
+  .to-datecol { align-self: center; width: 48px; padding-right: 10px; }
+  .to-pastform__actions { margin-left: 0; }
+}
+.to-historybar .to-segmented { margin-left: 0; }
+@media (max-width: 720px) { .to-historystats .to-statgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

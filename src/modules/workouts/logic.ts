@@ -1,5 +1,5 @@
 import type { ExerciseDef } from './catalog'
-import type { Entry, LoggedSet, PlannedSet, Routine, RoutineItem, Session } from './schema'
+import type { Entry, LoggedSet, PlannedSet, PlanSnapshot, Routine, RoutineItem, Session } from './schema'
 
 /* ------------------------------------------------------------------ *
  * Numbers
@@ -294,4 +294,29 @@ export function entryFromPlan(
     superset: base?.superset ?? null,
     sets: Array.from({ length: Math.max(1, plan.sets) }, () => ({ ...set })),
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Sheet versions
+ * ------------------------------------------------------------------ */
+
+/** Monday 0 … Sunday 6, and routines without a day after them. */
+const weekOrder = (weekday: number | null) => (weekday === null ? 7 : (weekday + 6) % 7)
+
+/** The sheet as it is now: the routines with exercises, by weekday then name. */
+export function snapshotRoutines(routines: Routine[], off: number[]): PlanSnapshot['routines'] {
+  return routines
+    .filter((r) => r.items.length > 0)
+    .map((r) => ({ name: r.name, weekday: r.weekday, off: r.weekday !== null && off.includes(r.weekday), items: r.items }))
+    .sort((a, b) => weekOrder(a.weekday) - weekOrder(b.weekday) || a.name.localeCompare(b.name, 'pt-BR'))
+}
+
+/** One version per day, the last one kept that day; newest first. */
+export function snapshotsByDay<R extends { data: Pick<PlanSnapshot, "date" | "savedAt"> }>(rows: R[]): R[] {
+  const byDate = new Map<string, R>()
+  for (const row of rows) {
+    const kept = byDate.get(row.data.date)
+    if (!kept || row.data.savedAt > kept.data.savedAt) byDate.set(row.data.date, row)
+  }
+  return [...byDate.values()].sort((a, b) => (a.data.date < b.data.date ? 1 : -1))
 }
