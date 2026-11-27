@@ -15,6 +15,7 @@ import {
   Plus,
   Repeat,
   RectangleHorizontal,
+  Settings2,
   Trash2,
   Trophy,
   X,
@@ -26,6 +27,7 @@ import { useExerciseIndex, useSessions, useTrainingSettings, weightStep, withIds
 import { bestOf, clock, doneSets, entryFromPlan, estimateOneRepMax, isRecord, lastEntry, sessionVolume, warmupFor, type Best, type ExercisePlan } from './logic'
 import { ExerciseBrowser } from './browser'
 import { ExerciseSheet } from './detail'
+import { TrainingSettingsFields } from './settings'
 import { fmt, NumberInput, Stepper } from './inputs'
 import { ExerciseMedia } from './media'
 import type { Entry, LoggedSet, Session, SetType } from './schema'
@@ -528,6 +530,7 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
   const [now, setNow] = useState(() => Date.now())
   const [current, setCurrent] = useState(0)
   const [menu, setMenu] = useState(false)
+  const [adjusting, setAdjusting] = useState(false)
   const view = settings.view
   useWakeLock(live)
 
@@ -677,6 +680,9 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
                 {view === 'cards' ? <LayoutList size={14} /> : <RectangleHorizontal size={14} />}
                 {t(view === 'cards' ? 'workout.viewList' : 'workout.viewCards')}
               </button>
+              <button type="button" role="menuitem" onClick={() => (setMenu(false), setAdjusting((v) => !v))}>
+                <Settings2 size={14} /> {t('settings.title')}
+              </button>
               <button
                 type="button"
                 role="menuitem"
@@ -704,6 +710,18 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
         </div>
         <span>{sessionVolume(session).toLocaleString('pt-BR')} kg</span>
       </div>
+
+      {adjusting && (
+        <section className="to-panel to-workout__settings" aria-label={t('settings.title')}>
+          <header className="to-workout__settingshead">
+            <strong>{t('settings.title')}</strong>
+            <button type="button" className="to-plainicon" aria-label={t('action.close')} title={t('action.close')} onClick={() => setAdjusting(false)}>
+              <X size={18} />
+            </button>
+          </header>
+          <TrainingSettingsFields />
+        </section>
+      )}
 
       {!live && (
         <label className="to-inline-field">
