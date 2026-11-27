@@ -116,7 +116,17 @@ export function RoutinesScreen() {
     list.splice(at + delta, 0, id)
     void setSettings({ rotation: list })
   }
-  const trainingDays = routines.filter((r) => r.data.weekday !== null).length
+  const off = settings.off ?? []
+  const trainingDays = routines.filter((r) => r.data.weekday !== null && !off.includes(r.data.weekday)).length
+
+  /** The day select: ✕ rests the day and keeps its routine; the day itself brings it back; another day moves it. */
+  const pickDay = (routine: Envelope<Routine>, day: number, value: string) => {
+    if (value === 'rest') return void setSettings({ off: [...off.filter((d) => d !== day), day] })
+    const to = Number(value)
+    if (to === day) return void setSettings({ off: off.filter((d) => d !== day) })
+    void setSettings({ off: off.filter((d) => d !== day && d !== to) })
+    void moveRoutine(routine.id, to)
+  }
 
   return (
     <div className="to-stack">
@@ -138,20 +148,26 @@ export function RoutinesScreen() {
           <SheetButton count={registered} />
         </span>
       </section>
-      <p className="to-muted">{t(settings.mode === 'week' ? 'plan.weekHint' : 'plan.rotationHint')}</p>
+      {settings.mode === 'rotation' && <p className="to-muted">{t('plan.rotationHint')}</p>}
 
       {settings.mode === 'week' ? (
         <Fold id="week" title={t('plan.thisWeek')} summary={t('plan.daysSummary', { count: trainingDays })}>
           {WEEK_ORDER.map((day) => {
             const routine = routines.find((r) => r.data.weekday === day)
+            const resting = Boolean(routine && off.includes(day))
             return (
-              <div key={day} className={`to-dayrow to-dayrow--line${routine ? '' : ' is-rest'}`}>
+              <div
+                key={day}
+                className={`to-dayrow to-dayrow--line${routine && !resting ? ' to-dayrow--link' : ' is-rest'}`}
+                onClick={() => routine && !resting && navigate(`routines/${routine.id}`)}
+              >
                 <select
                   className="to-field__input to-dayselect"
-                  value={routine ? String(day) : 'rest'}
+                  value={routine && !resting ? String(day) : 'rest'}
                   disabled={!routine}
                   aria-label={routine ? t('plan.moveDay', { name: routine.data.name }) : WEEKDAYS[day]}
-                  onChange={(e) => routine && void moveRoutine(routine.id, e.target.value === 'rest' ? null : Number(e.target.value))}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => routine && pickDay(routine, day, e.target.value)}
                 >
                   {routine ? (
                     <>
@@ -166,19 +182,21 @@ export function RoutinesScreen() {
                     <option value="rest">{SHORT_DAYS[day]}</option>
                   )}
                 </select>
-                <span className={`to-today__icon to-today__icon--small${routine ? '' : ' to-today__icon--rest'}`}>
-                  {routine ? <Dumbbell size={14} /> : <Moon size={14} />}
+                <span className={`to-today__icon to-today__icon--small${routine && !resting ? '' : ' to-today__icon--rest'}`}>
+                  {routine && !resting ? <Dumbbell size={14} /> : <Moon size={14} />}
                 </span>
                 <button type="button" className="to-dayrow__main" onClick={() => routine && navigate(`routines/${routine.id}`)} disabled={!routine}>
-                  <strong>{routine?.data.name ?? t('plan.rest')}</strong>
-                  <span className="to-muted">{routine ? t('routine.exercises', { count: routine.data.items.length }) : t('plan.restHint')}</span>
+                  <strong>{resting ? t('plan.rest') : (routine?.data.name ?? t('plan.rest'))}</strong>
+                  <span className="to-muted">
+                    {resting ? t('plan.restingHint', { name: routine!.data.name }) : routine ? t('routine.exercises', { count: routine.data.items.length }) : t('plan.restHint')}
+                  </span>
                 </button>
-                {routine && (
+                {routine && !resting && (
                   <div className="to-dayrow__thumbs">
                     <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(routine.data)} />
                   </div>
                 )}
-                {routine && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
+                {routine && !resting && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
               </div>
             )
           })}
@@ -187,7 +205,7 @@ export function RoutinesScreen() {
         <Fold id="rotation" title={t('plan.order')} summary={t('plan.rotationSummary', { count: rotationList.length })}>
           {rotationList.length === 0 && <p className="to-muted">{t('plan.rotationEmpty')}</p>}
           {rotationList.map((r, i) => (
-            <div key={r.id} className="to-dayrow to-dayrow--line">
+            <div key={r.id} className="to-dayrow to-dayrow--line to-dayrow--link" onClick={() => navigate(`routines/${r.id}`)}>
               <span className="to-dayrow__day">{String.fromCharCode(65 + i)}</span>
               <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${r.id}`)}>
                 <strong>{r.data.name}</strong>
@@ -197,7 +215,7 @@ export function RoutinesScreen() {
                 <ExerciseStrip ids={r.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(r.data)} />
               </div>
               <BodyMap primary={musclesOf(r.data)} size="tiny" />
-              <span className="to-toolbar to-toolbar--tight">
+              <span className="to-toolbar to-toolbar--tight" onClick={(e) => e.stopPropagation()}>
                 <button type="button" className="to-plainicon" aria-label={t('entry.up')} disabled={i === 0} onClick={() => moveInRotation(r.id, -1)}>
                   <ArrowUp size={16} />
                 </button>
@@ -223,7 +241,7 @@ export function RoutinesScreen() {
           <EmptyState title={t('routine.empty')} body={t('routine.emptyBody')} />
         ) : (
           routines.map((routine) => (
-            <div key={routine.id} className="to-dayrow to-dayrow--line">
+            <div key={routine.id} className="to-dayrow to-dayrow--line to-dayrow--link" onClick={() => navigate(`routines/${routine.id}`)}>
               <span className="to-today__icon to-today__icon--small">
                 <Dumbbell size={14} />
               </span>
@@ -237,7 +255,7 @@ export function RoutinesScreen() {
                 <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small onOpen={openExercise(routine.data)} />
               </div>
               {settings.mode === 'rotation' && (
-                <label className="to-inline-field">
+                <label className="to-inline-field" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={inRotation(routine.id)}

@@ -22,6 +22,7 @@ export const TRAINING_DEFAULTS: TrainingSettings = {
   mode: 'week',
   rotation: [],
   moved: {},
+  off: [],
   effort: 'none',
   rest: 90,
   favorites: [],

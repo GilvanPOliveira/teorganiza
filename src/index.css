@@ -3340,7 +3340,10 @@ a.to-tag:hover {
   font-size: 14px;
 }
 .to-dayselect:disabled { opacity: 1; cursor: default; color: var(--to-text-2, inherit); background: transparent; }
-.to-dayrow.is-rest { opacity: 0.5; }
+.to-dayrow.is-rest > :not(.to-dayselect) { opacity: 0.5; }
+.to-dayrow.is-rest > .to-dayselect:disabled { opacity: 0.5; }
+.to-dayrow--link { cursor: pointer; }
+.to-dayrow--link:hover { border-color: var(--to-border-strong); }
 .to-dayrow__thumbs { display: flex; justify-content: flex-end; }
 .to-dayrow__thumbs .to-today__strip { justify-content: flex-end; }
 .to-dayrow--line > .to-bodymap--tiny { flex: none; }

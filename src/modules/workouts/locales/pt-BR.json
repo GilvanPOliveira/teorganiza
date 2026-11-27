@@ -252,5 +252,6 @@
   "plan.rotationEmpty": "Marque “No rodízio” nas suas rotinas para elas entrarem na ordem.",
   "plan.moveDay": "Dia de {name}",
   "routine.of": "Treino de",
-  "routine.noteShort": "Observação"
+  "routine.noteShort": "Observação",
+  "plan.restingHint": "{name} volta ao escolher o dia"
 }
