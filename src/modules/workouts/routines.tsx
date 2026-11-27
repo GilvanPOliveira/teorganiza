@@ -128,6 +128,13 @@ export function RoutinesScreen() {
     void moveRoutine(routine.id, to)
   }
 
+  /** On a day with no routine, the select puts one there: one without a day, or one moved from its day. */
+  const placeOn = (day: number, routineId: string) => {
+    if (routineId === 'rest') return
+    void setSettings({ off: off.filter((d) => d !== day) })
+    void moveRoutine(routineId, day)
+  }
+
   return (
     <div className="to-stack">
       <section className="to-panel to-panel--row to-howpanel">
@@ -164,10 +171,9 @@ export function RoutinesScreen() {
                 <select
                   className="to-field__input to-dayselect"
                   value={routine && !resting ? String(day) : 'rest'}
-                  disabled={!routine}
-                  aria-label={routine ? t('plan.moveDay', { name: routine.data.name }) : WEEKDAYS[day]}
+                  aria-label={routine ? t('plan.moveDay', { name: routine.data.name }) : t('plan.assign', { day: WEEKDAYS[day] })}
                   onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => routine && pickDay(routine, day, e.target.value)}
+                  onChange={(e) => (routine ? pickDay(routine, day, e.target.value) : placeOn(day, e.target.value))}
                 >
                   {routine ? (
                     <>
@@ -179,7 +185,18 @@ export function RoutinesScreen() {
                       <option value="rest">✕</option>
                     </>
                   ) : (
-                    <option value="rest">{SHORT_DAYS[day]}</option>
+                    <>
+                      <option value="rest">✕</option>
+                      {routines.length > 0 && (
+                        <optgroup label={t('plan.putHere', { day: WEEKDAYS[day] })}>
+                          {routines.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.data.weekday === null ? r.data.name : `${r.data.name} (${SHORT_DAYS[r.data.weekday]})`}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </>
                   )}
                 </select>
                 <span className={`to-today__icon to-today__icon--small${routine && !resting ? '' : ' to-today__icon--rest'}`}>
