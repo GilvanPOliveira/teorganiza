@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, Link2, Play, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, Dumbbell, Link2, Moon, Play, Plus, Repeat2, Trash2 } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -14,12 +14,14 @@ import {
   useT,
   type Envelope,
 } from '@core/api'
+import { BodyMap } from './BodyMap'
 import type { ExerciseDef } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, WEEKDAYS, withIds } from './data'
 import { clock, entryFor } from './logic'
 import { ExercisePicker } from './picker'
 import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
 import { TEMPLATES } from './templates'
+import { useRoutineMuscles } from './today'
 
 const REST_OPTIONS = [0, 30, 45, 60, 90, 120, 150, 180, 240, 300]
 
@@ -32,6 +34,7 @@ export function RoutinesScreen() {
   const navigate = useNavigate()
   const routines = useRoutines()
   const index = useExerciseIndex()
+  const musclesOf = useRoutineMuscles()
   const [settings, setSettings] = useTrainingSettings()
   const { create, update, remove } = useCollection<Routine>('routines')
 
@@ -45,6 +48,14 @@ export function RoutinesScreen() {
     if (settings.mode === 'rotation') await setSettings({ rotation: [...settings.rotation, ...ids] })
   }
 
+  /** One routine per weekday: giving a day a routine takes it off the day it had. */
+  const assignDay = async (day: number, routineId: string) => {
+    for (const r of routines) {
+      if (r.data.weekday === day && r.id !== routineId) await update(r.id, { weekday: null })
+    }
+    if (routineId) await update(routineId, { weekday: day })
+  }
+
   const inRotation = (id: string) => settings.rotation.includes(id)
   const rotationList = settings.rotation.map((id) => routines.find((r) => r.id === id)).filter(Boolean) as Envelope<Routine>[]
   const moveInRotation = (id: string, delta: -1 | 1) => {
@@ -54,37 +65,68 @@ export function RoutinesScreen() {
     list.splice(at + delta, 0, id)
     void setSettings({ rotation: list })
   }
+  // Monday first, as people plan a training week.
+  const week = [1, 2, 3, 4, 5, 6, 0]
 
   return (
     <div className="to-stack">
-      <Segmented<'week' | 'rotation'>
-        label={t('plan.mode')}
-        value={settings.mode}
-        onChange={(mode) => void setSettings({ mode })}
-        options={[
-          { value: 'week', label: t('plan.week') },
-          { value: 'rotation', label: t('plan.rotation') },
-        ]}
-      />
+      <section className="to-panel to-panel--row">
+        <span className="to-today__icon to-today__icon--small">
+          <Repeat2 size={14} />
+        </span>
+        <strong>{t('plan.how')}</strong>
+        <Segmented<'week' | 'rotation'>
+          label={t('plan.mode')}
+          value={settings.mode}
+          onChange={(mode) => void setSettings({ mode })}
+          options={[
+            { value: 'week', label: t('plan.week') },
+            { value: 'rotation', label: t('plan.rotation') },
+          ]}
+        />
+      </section>
       <p className="to-muted">{t(settings.mode === 'week' ? 'plan.weekHint' : 'plan.rotationHint')}</p>
 
-      <QuickAdd
-        placeholder={t('routine.placeholder')}
-        onAdd={async (name) => {
-          const id = await create({ name, weekday: null, order: nextOrder(), items: [] })
-          if (settings.mode === 'rotation') await setSettings({ rotation: [...settings.rotation, id] })
-          navigate(`routines/${id}`)
-        }}
-      />
-
-      {settings.mode === 'rotation' && rotationList.length > 0 && (
-        <Card title={t('plan.order')}>
-          <ol className="to-plainlist">
-            {rotationList.map((r, i) => (
-              <li key={r.id} className="to-tile__row">
-                <span>
-                  {String.fromCharCode(65 + i)} · {r.data.name}
+      {settings.mode === 'week' ? (
+        <section className="to-stack to-stack--tight">
+          <h2 className="to-section-title">{t('plan.thisWeek')}</h2>
+          {week.map((day) => {
+            const routine = routines.find((r) => r.data.weekday === day)
+            return (
+              <div key={day} className={`to-dayrow${routine ? '' : ' is-rest'}`}>
+                <span className="to-dayrow__day">{WEEKDAYS[day].slice(0, 3)}</span>
+                <span className={`to-today__icon to-today__icon--small${routine ? '' : ' to-today__icon--rest'}`}>
+                  {routine ? <Dumbbell size={14} /> : <Moon size={14} />}
                 </span>
+                <button type="button" className="to-dayrow__main" onClick={() => routine && navigate(`routines/${routine.id}`)} disabled={!routine}>
+                  <strong>{routine?.data.name ?? t('plan.rest')}</strong>
+                  <span className="to-muted">{routine ? t('routine.exercises', { count: routine.data.items.length }) : t('plan.restHint')}</span>
+                </button>
+                {routine && <BodyMap primary={musclesOf(routine.data)} size="tiny" />}
+                <select className="to-field__input to-dayrow__select" value={routine?.id ?? ''} aria-label={t('plan.assign', { day: WEEKDAYS[day] })} onChange={(e) => void assignDay(day, e.target.value)}>
+                  <option value="">{t('plan.rest')}</option>
+                  {routines.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.data.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )
+          })}
+        </section>
+      ) : (
+        rotationList.length > 0 && (
+          <section className="to-stack to-stack--tight">
+            <h2 className="to-section-title">{t('plan.order')}</h2>
+            {rotationList.map((r, i) => (
+              <div key={r.id} className="to-dayrow">
+                <span className="to-dayrow__day">{String.fromCharCode(65 + i)}</span>
+                <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${r.id}`)}>
+                  <strong>{r.data.name}</strong>
+                  <span className="to-muted">{t('routine.exercises', { count: r.data.items.length })}</span>
+                </button>
+                <BodyMap primary={musclesOf(r.data)} size="tiny" />
                 <span className="to-toolbar to-toolbar--tight">
                   <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.up')} disabled={i === 0} onClick={() => moveInRotation(r.id, -1)}>
                     <ArrowUp size={14} />
@@ -93,73 +135,73 @@ export function RoutinesScreen() {
                     <ArrowDown size={14} />
                   </button>
                 </span>
-              </li>
+              </div>
             ))}
-          </ol>
-        </Card>
+          </section>
+        )
       )}
 
-      {routines.length === 0 ? (
-        <EmptyState title={t('routine.empty')} body={t('routine.emptyBody')} />
-      ) : (
-        <ul className="to-list">
-          {routines.map((routine) => (
-            <li key={routine.id} className="to-list__item">
-              <button type="button" className="to-list__main to-rowbutton" onClick={() => navigate(`routines/${routine.id}`)}>
-                <span className="to-list__title">{routine.data.name}</span>
-                <span className="to-list__meta">
-                  <span>{t('routine.exercises', { count: routine.data.items.length })}</span>
-                  {settings.mode === 'week' && routine.data.weekday !== null && <Badge>{WEEKDAYS[routine.data.weekday]}</Badge>}
-                  <span>{routine.data.items.slice(0, 3).map((item) => index.get(item.exerciseId)?.name).filter(Boolean).join(', ')}</span>
+      <section className="to-stack to-stack--tight">
+        <h2 className="to-section-title">{t('plan.routines')}</h2>
+        <QuickAdd
+          placeholder={t('routine.placeholder')}
+          onAdd={async (name) => {
+            const id = await create({ name, weekday: null, order: nextOrder(), items: [] })
+            if (settings.mode === 'rotation') await setSettings({ rotation: [...settings.rotation, id] })
+            navigate(`routines/${id}`)
+          }}
+        />
+        {routines.length === 0 ? (
+          <EmptyState title={t('routine.empty')} body={t('routine.emptyBody')} />
+        ) : (
+          routines.map((routine) => (
+            <div key={routine.id} className="to-dayrow">
+              <span className="to-today__icon to-today__icon--small">
+                <Dumbbell size={14} />
+              </span>
+              <button type="button" className="to-dayrow__main" onClick={() => navigate(`routines/${routine.id}`)}>
+                <strong>{routine.data.name}</strong>
+                <span className="to-muted">
+                  {[
+                    t('routine.exercises', { count: routine.data.items.length }),
+                    settings.mode === 'week' && routine.data.weekday !== null ? WEEKDAYS[routine.data.weekday] : null,
+                    routine.data.items.slice(0, 3).map((item) => index.get(item.exerciseId)?.name).filter(Boolean).join(', '),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </span>
               </button>
-              <div className="to-list__actions">
-                {settings.mode === 'week' ? (
-                  <select
-                    className="to-field__input"
-                    value={routine.data.weekday ?? ''}
-                    aria-label={t('routine.weekday')}
-                    onChange={(e) => void update(routine.id, { weekday: e.target.value === '' ? null : Number(e.target.value) })}
-                  >
-                    <option value="">{t('routine.noDay')}</option>
-                    {WEEKDAYS.map((day, i) => (
-                      <option key={day} value={i}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <label className="to-inline-field">
-                    <input
-                      type="checkbox"
-                      checked={inRotation(routine.id)}
-                      onChange={(e) =>
-                        void setSettings({
-                          rotation: e.target.checked ? [...settings.rotation, routine.id] : settings.rotation.filter((id) => id !== routine.id),
-                        })
-                      }
-                    />
-                    <span className="to-muted">{t('plan.inRotation')}</span>
-                  </label>
-                )}
-                <ChevronRight size={15} className="to-muted" aria-hidden />
-                <button
-                  type="button"
-                  className="to-iconbutton to-iconbutton--small"
-                  aria-label={t('routine.remove')}
-                  onClick={() => {
-                    if (!confirm(t('routine.removeConfirm', { name: routine.data.name }))) return
-                    void remove(routine.id)
-                    if (inRotation(routine.id)) void setSettings({ rotation: settings.rotation.filter((id) => id !== routine.id) })
-                  }}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              {settings.mode === 'rotation' && (
+                <label className="to-inline-field">
+                  <input
+                    type="checkbox"
+                    checked={inRotation(routine.id)}
+                    onChange={(e) =>
+                      void setSettings({
+                        rotation: e.target.checked ? [...settings.rotation, routine.id] : settings.rotation.filter((id) => id !== routine.id),
+                      })
+                    }
+                  />
+                  <span className="to-muted">{t('plan.inRotation')}</span>
+                </label>
+              )}
+              <button
+                type="button"
+                className="to-iconbutton to-iconbutton--small"
+                aria-label={t('routine.remove')}
+                onClick={() => {
+                  if (!confirm(t('routine.removeConfirm', { name: routine.data.name }))) return
+                  void remove(routine.id)
+                  if (inRotation(routine.id)) void setSettings({ rotation: settings.rotation.filter((id) => id !== routine.id) })
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+              <ChevronRight size={15} className="to-muted" aria-hidden />
+            </div>
+          ))
+        )}
+      </section>
 
       <Card title={t('templates.title')}>
         <p className="to-muted">{t('templates.body')}</p>
@@ -182,44 +224,59 @@ export function RoutinesScreen() {
         </div>
       </Card>
 
-      <Card title={t('settings.title')}>
-        <div className="to-toolbar">
-          <label className="to-inline-field">
-            <span className="to-muted">{t('settings.effort')}</span>
-            <select className="to-field__input" value={settings.effort} onChange={(e) => void setSettings({ effort: e.target.value as 'none' | 'rir' | 'rpe' })}>
-              <option value="none">{t('settings.effort.none')}</option>
-              <option value="rir">RIR</option>
-              <option value="rpe">RPE</option>
-            </select>
-          </label>
-          <label className="to-inline-field">
-            <span className="to-muted">{t('settings.rest')}</span>
-            <select className="to-field__input" value={settings.rest} onChange={(e) => void setSettings({ rest: Number(e.target.value) })}>
-              {REST_OPTIONS.filter((s) => s > 0).map((s) => (
-                <option key={s} value={s}>
-                  {clock(s)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="to-inline-field">
-            <span className="to-muted">{t('settings.step')}</span>
-            <select className="to-field__input" value={settings.step} onChange={(e) => void setSettings({ step: Number(e.target.value) })}>
-              {[0.5, 1, 1.25, 2, 2.5, 5].map((s) => (
-                <option key={s} value={s}>
-                  {String(s).replace('.', ',')} kg
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="to-inline-field">
-            <input type="checkbox" checked={settings.sound} onChange={(e) => void setSettings({ sound: e.target.checked })} />
-            <span>{t('settings.sound')}</span>
-          </label>
-        </div>
-        <p className="to-muted">{t('settings.hint')}</p>
-      </Card>
+      <TrainingSettingsCard />
     </div>
+  )
+}
+
+function TrainingSettingsCard() {
+  const t = useT()
+  const [settings, setSettings] = useTrainingSettings()
+  return (
+    <Card title={t('settings.title')}>
+      <div className="to-toolbar">
+        <label className="to-inline-field">
+          <span className="to-muted">{t('settings.effort')}</span>
+          <select className="to-field__input" value={settings.effort} onChange={(e) => void setSettings({ effort: e.target.value as 'none' | 'rir' | 'rpe' })}>
+            <option value="none">{t('settings.effort.none')}</option>
+            <option value="rir">RIR</option>
+            <option value="rpe">RPE</option>
+          </select>
+        </label>
+        <label className="to-inline-field">
+          <span className="to-muted">{t('settings.rest')}</span>
+          <select className="to-field__input" value={settings.rest} onChange={(e) => void setSettings({ rest: Number(e.target.value) })}>
+            {REST_OPTIONS.filter((s) => s > 0).map((s) => (
+              <option key={s} value={s}>
+                {clock(s)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="to-inline-field">
+          <span className="to-muted">{t('settings.step')}</span>
+          <select className="to-field__input" value={settings.step} onChange={(e) => void setSettings({ step: Number(e.target.value) })}>
+            {[0.5, 1, 1.25, 2, 2.5, 5].map((s) => (
+              <option key={s} value={s}>
+                {String(s).replace('.', ',')} kg
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="to-inline-field">
+          <span className="to-muted">{t('settings.view')}</span>
+          <select className="to-field__input" value={settings.view} onChange={(e) => void setSettings({ view: e.target.value as 'cards' | 'list' })}>
+            <option value="cards">{t('settings.view.cards')}</option>
+            <option value="list">{t('settings.view.list')}</option>
+          </select>
+        </label>
+        <label className="to-inline-field">
+          <input type="checkbox" checked={settings.sound} onChange={(e) => void setSettings({ sound: e.target.checked })} />
+          <span>{t('settings.sound')}</span>
+        </label>
+      </div>
+      <p className="to-muted">{t('settings.hint')}</p>
+    </Card>
   )
 }
 

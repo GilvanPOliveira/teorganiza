@@ -3,48 +3,58 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Flame,
+  LayoutList,
   Link2,
+  Minus,
+  MoreHorizontal,
+  Pause,
+  Play,
   Plus,
   Repeat,
-  SkipForward,
+  RectangleHorizontal,
   Trash2,
   Trophy,
   X,
 } from 'lucide-react'
 import { Badge, Button, EmptyState, useCollection, useT, type Envelope } from '@core/api'
-import { muscleLabel, type ExerciseDef } from './catalog'
+import { BodyMap } from './BodyMap'
+import { equipmentLabel, muscleLabel, type ExerciseDef, type Muscle } from './catalog'
 import { useExerciseIndex, useSessions, useTrainingSettings, withIds } from './data'
-import { bestOf, clock, doneSets, entryFor, estimateOneRepMax, isRecord, sessionVolume, warmupFor, type Best } from './logic'
+import { bestOf, clock, doneSets, entryFor, estimateOneRepMax, isRecord, lastEntry, sessionVolume, warmupFor, type Best } from './logic'
+import { ExerciseMedia } from './media'
 import { ExercisePicker } from './picker'
 import type { Entry, LoggedSet, Session, SetType } from './schema'
 
 const REST_OPTIONS = [0, 30, 45, 60, 90, 120, 150, 180, 240, 300]
 const TYPE_ORDER: SetType[] = ['normal', 'warmup', 'drop', 'restpause']
 
+const fmt = (n: number | null) => (n === null ? '—' : String(n).replace('.', ','))
+
 /* ------------------------------------------------------------------ *
- * Small pieces
+ * Inputs
  * ------------------------------------------------------------------ */
 
 interface NumberInputProps {
   value: number | null
   onCommit: (value: number | null) => void
   label: string
-  suffix?: string
   decimals?: boolean
 }
 
 /**
- * A number field that saves when it loses focus or on Enter, so typing
- * does not write on every key. Keyed by the stored value: when the value
- * changes elsewhere (a copied set, a sync), the field starts over from it.
+ * A number field that saves when it loses focus or on Enter. Keyed by the
+ * stored value: when the value changes elsewhere (a stepper, a sync), the
+ * field starts over from it.
  */
 function NumberInput(props: NumberInputProps) {
   const shown = props.value === null ? '' : String(props.value).replace('.', ',')
   return <NumberField key={shown} shown={shown} {...props} />
 }
 
-function NumberField({ value, onCommit, label, suffix, decimals = true, shown }: NumberInputProps & { shown: string }) {
+function NumberField({ value, onCommit, label, decimals = true, shown }: NumberInputProps & { shown: string }) {
   const [text, setText] = useState(shown)
   // Reads what is in the box when leaving it, not the last rendered text.
   const commit = (raw: string) => {
@@ -55,21 +65,51 @@ function NumberField({ value, onCommit, label, suffix, decimals = true, shown }:
     if (next !== value) onCommit(next)
   }
   return (
-    <label className="to-setinput">
-      <input
-        className="to-field__input"
-        inputMode={decimals ? 'decimal' : 'numeric'}
-        value={text}
-        aria-label={label}
-        placeholder="—"
-        onChange={(e) => setText(e.target.value)}
-        onBlur={(e) => commit(e.currentTarget.value)}
-        onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
-      />
-      {suffix && <span className="to-setinput__suffix">{suffix}</span>}
-    </label>
+    <input
+      className="to-stepper__value"
+      inputMode={decimals ? 'decimal' : 'numeric'}
+      value={text}
+      aria-label={label}
+      placeholder="—"
+      onChange={(e) => setText(e.target.value)}
+      onFocus={(e) => e.currentTarget.select()}
+      onBlur={(e) => commit(e.currentTarget.value)}
+      onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
+    />
   )
 }
+
+/** − value +, the way sets are adjusted between sets without typing. The value can still be typed. */
+function Stepper({
+  value,
+  step,
+  label,
+  decimals = true,
+  onCommit,
+}: {
+  value: number | null
+  step: number
+  label: string
+  decimals?: boolean
+  onCommit: (value: number | null) => void
+}) {
+  const round = (n: number) => Math.round(n * 100) / 100
+  return (
+    <div className="to-stepper">
+      <button type="button" className="to-stepper__btn" aria-label={`${label}: menos ${fmt(step)}`} onClick={() => onCommit(Math.max(0, round((value ?? 0) - step)))}>
+        <Minus size={14} />
+      </button>
+      <NumberInput value={value} label={label} decimals={decimals} onCommit={onCommit} />
+      <button type="button" className="to-stepper__btn" aria-label={`${label}: mais ${fmt(step)}`} onClick={() => onCommit(round((value ?? 0) + step))}>
+        <Plus size={14} />
+      </button>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ *
+ * Screen on, sound, rest
+ * ------------------------------------------------------------------ */
 
 function beep() {
   try {
@@ -113,46 +153,96 @@ function useWakeLock(active: boolean) {
   }, [active])
 }
 
-/** The rest countdown. Its end time is kept per session, so it survives leaving the screen. */
+interface RestState {
+  /** When it ends, in ms; 0 when paused or idle. */
+  end: number
+  /** Seconds left while paused. */
+  paused: number
+  total: number
+  label: string
+}
+
+const IDLE: RestState = { end: 0, paused: 0, total: 0, label: '' }
+
+/** The rest countdown. Kept per session, so it survives leaving the screen. */
 function useRest(sessionId: string, sound: boolean) {
   const key = `teorganiza.rest.${sessionId}`
-  const read = () => {
+  const [state, setState] = useState<RestState>(() => {
     try {
-      return Number(sessionStorage.getItem(key)) || 0
+      return { ...IDLE, ...(JSON.parse(sessionStorage.getItem(key) ?? 'null') as RestState | null) }
     } catch {
-      return 0
+      return IDLE
     }
-  }
-  const [end, setEnd] = useState(read)
+  })
   const [now, setNow] = useState(() => Date.now())
-  const write = (value: number) => {
-    setEnd(value)
+  const write = (next: RestState) => {
+    setState(next)
     try {
-      if (value) sessionStorage.setItem(key, String(value))
+      if (next.end || next.paused) sessionStorage.setItem(key, JSON.stringify(next))
       else sessionStorage.removeItem(key)
     } catch {
       // Without storage the timer lives only on this screen.
     }
   }
   useEffect(() => {
-    if (!end) return
+    if (!state.end) return
     const timer = window.setInterval(() => {
       const t = Date.now()
       setNow(t)
-      if (t >= end) {
+      if (t >= state.end) {
         if (sound) beep()
-        write(0)
+        write(IDLE)
       }
     }, 250)
     return () => window.clearInterval(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [end, sound])
+  }, [state.end, sound])
+
+  const remaining = state.paused || (state.end ? Math.max(0, (state.end - now) / 1000) : 0)
   return {
-    remaining: end ? Math.max(0, (end - now) / 1000) : 0,
-    start: (seconds: number) => seconds > 0 && write(Date.now() + seconds * 1000),
-    add: (seconds: number) => end && write(Math.max(Date.now() + 1000, end + seconds * 1000)),
-    stop: () => write(0),
+    remaining,
+    total: state.total,
+    label: state.label,
+    paused: Boolean(state.paused),
+    active: Boolean(state.end || state.paused),
+    start: (seconds: number, label: string) => seconds > 0 && write({ end: Date.now() + seconds * 1000, paused: 0, total: seconds, label }),
+    add: (seconds: number) =>
+      state.paused
+        ? write({ ...state, paused: Math.max(1, state.paused + seconds), total: Math.max(state.total, state.paused + seconds) })
+        : state.end && write({ ...state, end: Math.max(Date.now() + 1000, state.end + seconds * 1000), total: Math.max(state.total, remaining + seconds) }),
+    toggle: () => (state.paused ? write({ ...state, end: Date.now() + state.paused * 1000, paused: 0 }) : write({ ...state, end: 0, paused: remaining })),
+    stop: () => write(IDLE),
   }
+}
+
+/** The floating rest bar, over the bottom of the screen. */
+function RestBar({ rest }: { rest: ReturnType<typeof useRest> }) {
+  const t = useT()
+  if (!rest.active) return null
+  const share = rest.total ? Math.min(1, rest.remaining / rest.total) : 0
+  return (
+    <div className="to-restbar" role="timer" aria-live="polite">
+      <div className="to-restbar__progress" style={{ width: `${share * 100}%` }} />
+      <div className="to-restbar__time">
+        <strong>{clock(rest.remaining)}</strong>
+        <span>{rest.label || t('rest.label')}</span>
+      </div>
+      <div className="to-restbar__actions">
+        <button type="button" className="to-restbar__btn" onClick={() => rest.add(-15)}>
+          −15s
+        </button>
+        <button type="button" className="to-restbar__btn" onClick={() => rest.add(15)}>
+          +15s
+        </button>
+        <button type="button" className="to-restbar__btn" aria-label={rest.paused ? t('rest.resume') : t('rest.pause')} onClick={rest.toggle}>
+          {rest.paused ? <Play size={14} /> : <Pause size={14} />}
+        </button>
+        <button type="button" className="to-restbar__skip" onClick={rest.stop}>
+          {t('rest.skip')}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 /* ------------------------------------------------------------------ *
@@ -172,6 +262,7 @@ function SetRow({
   index,
   workNumber,
   effort,
+  step,
   record,
   onChange,
   onRemove,
@@ -181,6 +272,7 @@ function SetRow({
   index: number
   workNumber: number
   effort: 'none' | 'rir' | 'rpe'
+  step: number
   record: boolean
   onChange: (patch: Partial<LoggedSet>) => void
   onRemove: () => void
@@ -188,60 +280,62 @@ function SetRow({
   const t = useT()
   const nextType = () => TYPE_ORDER[(TYPE_ORDER.indexOf(set.type) + 1) % TYPE_ORDER.length]
   return (
-    <div className={`to-setrow${set.done ? ' is-done' : ''}${set.type === 'warmup' ? ' is-warmup' : ''}`}>
-      <button
-        type="button"
-        className="to-setrow__tag"
-        title={t(`set.type.${set.type}`)}
-        aria-label={t('set.changeType', { type: t(`set.type.${set.type}`) })}
-        onClick={() => onChange({ type: nextType() })}
-      >
-        {typeTag(set, workNumber)}
-      </button>
-
-      {(entry.kind === 'weight' || entry.kind === 'bodyweight') && (
-        <>
-          <NumberInput value={set.weight} label={t(entry.kind === 'bodyweight' ? 'set.extra' : 'set.weight')} suffix="kg" onCommit={(weight) => onChange({ weight })} />
-          <NumberInput value={set.reps} label={t('set.reps')} suffix={entry.perSide ? t('set.perSide') : t('set.repsShort')} decimals={false} onCommit={(reps) => onChange({ reps })} />
-        </>
-      )}
-      {entry.kind === 'time' && (
-        <NumberInput value={set.seconds} label={t('set.seconds')} suffix="s" decimals={false} onCommit={(seconds) => onChange({ seconds })} />
-      )}
-      {entry.kind === 'cardio' && (
-        <>
-          <NumberInput
-            value={set.seconds === null ? null : Math.round((set.seconds / 60) * 10) / 10}
-            label={t('set.minutes')}
-            suffix="min"
-            onCommit={(minutes) => onChange({ seconds: minutes === null ? null : Math.round(minutes * 60) })}
-          />
-          <NumberInput value={set.speed} label={t('set.speed')} suffix="km/h" onCommit={(speed) => onChange({ speed })} />
-        </>
-      )}
-      {effort !== 'none' && (
-        <NumberInput value={set.effort} label={t(`set.effort.${effort}`)} suffix={effort.toUpperCase()} onCommit={(value) => onChange({ effort: value })} />
-      )}
-
-      <span className="to-setrow__end">
-        {record && (
-          <span className="to-setrow__record" title={t('set.record')}>
-            <Trophy size={14} />
-          </span>
-        )}
+    <div className={`to-set${set.done ? ' is-done' : ''}${set.type === 'warmup' ? ' is-warmup' : ''}`}>
+      <div className="to-set__row">
         <button
           type="button"
-          className={`to-setrow__done${set.done ? ' is-on' : ''}`}
+          className="to-set__tag"
+          title={t(`set.type.${set.type}`)}
+          aria-label={t('set.changeType', { type: t(`set.type.${set.type}`) })}
+          onClick={() => onChange({ type: nextType() })}
+        >
+          {typeTag(set, workNumber)}
+        </button>
+
+        {(entry.kind === 'weight' || entry.kind === 'bodyweight') && (
+          <>
+            <Stepper value={set.weight} step={step} label={t(entry.kind === 'bodyweight' ? 'set.extra' : 'set.weight')} onCommit={(weight) => onChange({ weight })} />
+            <Stepper value={set.reps} step={1} decimals={false} label={t('set.reps')} onCommit={(reps) => onChange({ reps })} />
+          </>
+        )}
+        {entry.kind === 'time' && (
+          <Stepper value={set.seconds} step={5} decimals={false} label={t('set.seconds')} onCommit={(seconds) => onChange({ seconds })} />
+        )}
+        {entry.kind === 'cardio' && (
+          <>
+            <Stepper
+              value={set.seconds === null ? null : Math.round((set.seconds / 60) * 10) / 10}
+              step={1}
+              label={t('set.minutes')}
+              onCommit={(minutes) => onChange({ seconds: minutes === null ? null : Math.round(minutes * 60) })}
+            />
+            <Stepper value={set.speed} step={0.5} label={t('set.speed')} onCommit={(speed) => onChange({ speed })} />
+          </>
+        )}
+        {effort !== 'none' && (
+          <div className="to-set__effort">
+            <NumberInput value={set.effort} label={t(`set.effort.${effort}`)} onCommit={(value) => onChange({ effort: value })} />
+          </div>
+        )}
+
+        <button
+          type="button"
+          className={`to-set__done${set.done ? ' is-on' : ''}`}
           aria-pressed={set.done}
           aria-label={t(set.done ? 'set.undo' : 'set.done', { n: index + 1 })}
           onClick={() => onChange({ done: !set.done })}
         >
-          <Check size={15} />
+          {set.done && <Check size={16} />}
         </button>
-        <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('set.remove')} onClick={onRemove}>
+        <button type="button" className="to-set__remove" aria-label={t('set.remove')} onClick={onRemove}>
           <X size={13} />
         </button>
-      </span>
+      </div>
+      {record && (
+        <p className="to-set__note to-set__note--record">
+          <Trophy size={13} /> {t('set.recordLine', { kg: estimateOneRepMax(set.weight, set.reps) })}
+        </p>
+      )}
     </div>
   )
 }
@@ -250,90 +344,160 @@ function SetRow({
  * One exercise
  * ------------------------------------------------------------------ */
 
-function EntryCard({
-  entry,
-  def,
-  index,
-  count,
-  before,
-  effort,
-  step,
-  onUpdate,
-  onSetDone,
-  onMove,
-  onSwap,
-  onRemove,
-  onSuperset,
-  linkedToNext,
-}: {
-  entry: Entry
-  def?: ExerciseDef
-  index: number
-  count: number
-  before: Best
-  effort: 'none' | 'rir' | 'rpe'
-  step: number
+interface EntryActions {
   onUpdate: (change: (entry: Entry) => Entry) => void
   onSetDone: (setIndex: number) => void
   onMove: (delta: -1 | 1) => void
   onSwap: () => void
   onRemove: () => void
   onSuperset: () => void
-  linkedToNext: boolean
+}
+
+function EntryMenu({ index, count, linked, actions }: { index: number; count: number; linked: boolean; actions: EntryActions }) {
+  const t = useT()
+  const [open, setOpen] = useState(false)
+  const run = (fn: () => void) => () => {
+    setOpen(false)
+    fn()
+  }
+  return (
+    <div className="to-menu">
+      <button type="button" className="to-iconbutton" aria-label={t('entry.menu')} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <MoreHorizontal size={16} />
+      </button>
+      {open && (
+        <div className="to-menu__list" role="menu">
+          <button type="button" role="menuitem" onClick={run(actions.onSwap)}>
+            <Repeat size={14} /> {t('entry.swap')}
+          </button>
+          {index < count - 1 && (
+            <button type="button" role="menuitem" onClick={run(actions.onSuperset)}>
+              <Link2 size={14} /> {t(linked ? 'entry.unlink' : 'entry.supersetToggle')}
+            </button>
+          )}
+          {index > 0 && (
+            <button type="button" role="menuitem" onClick={run(() => actions.onMove(-1))}>
+              <ArrowUp size={14} /> {t('entry.up')}
+            </button>
+          )}
+          {index < count - 1 && (
+            <button type="button" role="menuitem" onClick={run(() => actions.onMove(1))}>
+              <ArrowDown size={14} /> {t('entry.down')}
+            </button>
+          )}
+          <button type="button" role="menuitem" className="is-danger" onClick={run(actions.onRemove)}>
+            <Trash2 size={14} /> {t('entry.remove')}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function planLine(entry: Entry): string {
+  const work = entry.sets.filter((s) => s.type !== 'warmup')
+  if (work.length === 0) return ''
+  const first = work[0]
+  const target = entry.kind === 'time' ? `${first.seconds ?? '—'}s` : entry.kind === 'cardio' ? `${Math.round((first.seconds ?? 0) / 60)} min` : String(first.reps ?? '—')
+  return `${work.length} × ${target}`
+}
+
+function lastLine(entry?: Entry): string {
+  if (!entry) return ''
+  return entry.sets
+    .filter((s) => s.type !== 'warmup' && s.done)
+    .map((s) =>
+      entry.kind === 'time'
+        ? `${s.seconds ?? 0}s`
+        : entry.kind === 'cardio'
+          ? `${Math.round((s.seconds ?? 0) / 60)} min`
+          : s.weight
+            ? `${fmt(s.weight)}×${s.reps ?? 0}${s.effort !== null ? ` (${fmt(s.effort)})` : ''}`
+            : `${s.reps ?? 0}`,
+    )
+    .join(', ')
+}
+
+function EntryCard({
+  entry,
+  def,
+  index,
+  count,
+  before,
+  last,
+  effort,
+  step,
+  linked,
+  showMedia,
+  actions,
+}: {
+  entry: Entry
+  def?: ExerciseDef
+  index: number
+  count: number
+  before: Best
+  last?: Entry
+  effort: 'none' | 'rir' | 'rpe'
+  step: number
+  linked: boolean
+  showMedia: boolean
+  actions: EntryActions
 }) {
   const t = useT()
+  const { onUpdate, onSetDone } = actions
   const setSet = (i: number, patch: Partial<LoggedSet>) => {
     onUpdate((e) => ({ ...e, sets: e.sets.map((s, j) => (j === i ? { ...s, ...patch } : s)) }))
     if (patch.done === true) onSetDone(i)
   }
   const addSet = () =>
     onUpdate((e) => {
-      const last = e.sets.filter((s) => s.type !== 'warmup').at(-1) ?? e.sets.at(-1)
-      const fresh: LoggedSet = last
-        ? { ...last, type: last.type === 'warmup' ? 'normal' : last.type, done: false, effort: null }
+      const lastSet = e.sets.filter((s) => s.type !== 'warmup').at(-1) ?? e.sets.at(-1)
+      const fresh: LoggedSet = lastSet
+        ? { ...lastSet, type: lastSet.type === 'warmup' ? 'normal' : lastSet.type, done: false, effort: null }
         : { type: 'normal', weight: null, reps: null, seconds: null, speed: null, effort: null, done: false }
       return { ...e, sets: [...e.sets, fresh] }
     })
-  const firstWork = entry.sets.find((s) => s.type !== 'warmup' && s.weight)
-  const canWarm = entry.kind === 'weight' && Boolean(firstWork) && !entry.sets.some((s) => s.type === 'warmup')
+  const canWarm = entry.kind === 'weight' && entry.sets.some((s) => s.type !== 'warmup' && s.weight) && !entry.sets.some((s) => s.type === 'warmup')
+  const previous = lastLine(last)
   let work = 0
 
   return (
-    <article className="to-entry">
-      <header className="to-entry__header">
-        <div className="to-entry__title">
-          <strong>{entry.name}</strong>
-          <span className="to-list__meta">
-            {def && <span>{muscleLabel(def.muscle)}</span>}
-            {entry.superset && <Badge tone="accent">{t('entry.superset', { letter: entry.superset })}</Badge>}
-            {before.oneRepMax > 0 && <span>{t('entry.best', { kg: before.oneRepMax })}</span>}
-          </span>
-        </div>
-        <div className="to-toolbar to-toolbar--tight">
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.up')} disabled={index === 0} onClick={() => onMove(-1)}>
-            <ArrowUp size={14} />
-          </button>
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.down')} disabled={index === count - 1} onClick={() => onMove(1)}>
-            <ArrowDown size={14} />
-          </button>
-          {index < count - 1 && (
-            <button type="button" className={`to-iconbutton to-iconbutton--small${linkedToNext ? ' active' : ''}`} aria-label={t('entry.supersetToggle')} title={t('entry.supersetToggle')} onClick={onSuperset}>
-              <Link2 size={14} />
-            </button>
-          )}
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.swap')} title={t('entry.swap')} onClick={onSwap}>
-            <Repeat size={14} />
-          </button>
-          <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('entry.remove')} title={t('entry.remove')} onClick={onRemove}>
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </header>
+    <article className="to-exercise">
+      {showMedia && def && <ExerciseMedia exercise={def} size="large" />}
 
-      <div className="to-entry__sets">
+      <header className="to-exercise__head">
+        <h2 className="to-exercise__name">{entry.name}</h2>
+        <EntryMenu index={index} count={count} linked={linked} actions={actions} />
+      </header>
+      <div className="to-exercise__tags">
+        {def && <span className="to-tag">{muscleLabel(def.muscle)}</span>}
+        {def && <span className="to-tag">{equipmentLabel(def.equipment)}</span>}
+        {before.oneRepMax > 0 && <span className="to-tag">{t('entry.best', { kg: before.oneRepMax })}</span>}
+        {entry.superset && <Badge tone="accent">{t('entry.superset', { letter: entry.superset })}</Badge>}
+      </div>
+      {planLine(entry) && <p className="to-exercise__line">{t('entry.plan', { plan: planLine(entry) })}</p>}
+      {previous && <p className="to-exercise__line">{t('entry.last', { sets: previous })}</p>}
+
+      <div className="to-sets">
+        <div className="to-sets__head" aria-hidden>
+          <span />
+          {(entry.kind === 'weight' || entry.kind === 'bodyweight') && (
+            <>
+              <span>{t(entry.kind === 'bodyweight' ? 'head.extra' : 'head.weight')}</span>
+              <span>{t('head.reps')}</span>
+            </>
+          )}
+          {entry.kind === 'time' && <span>{t('head.seconds')}</span>}
+          {entry.kind === 'cardio' && (
+            <>
+              <span>{t('head.minutes')}</span>
+              <span>{t('head.speed')}</span>
+            </>
+          )}
+          {effort !== 'none' && <span>{effort.toUpperCase()}</span>}
+        </div>
         {entry.sets.map((set, i) => {
           if (set.type === 'normal') work++
-          const record = isRecord(set, entry.kind, before)
           return (
             <SetRow
               key={i}
@@ -342,44 +506,51 @@ function EntryCard({
               index={i}
               workNumber={work}
               effort={effort}
-              record={record}
+              step={step}
+              record={isRecord(set, entry.kind, before)}
               onChange={(patch) => setSet(i, patch)}
               onRemove={() => onUpdate((e) => ({ ...e, sets: e.sets.filter((_, j) => j !== i) }))}
             />
           )
         })}
+        <div className="to-sets__foot">
+          <button type="button" className="to-linkbutton" onClick={addSet}>
+            <Plus size={14} /> {t('set.add')}
+          </button>
+          {canWarm && (
+            <button
+              type="button"
+              className="to-linkbutton"
+              onClick={() =>
+                onUpdate((e) => {
+                  const first = e.sets.find((x) => x.type !== 'warmup' && x.weight)
+                  return first && !e.sets.some((x) => x.type === 'warmup') ? { ...e, sets: [...warmupFor(first.weight!, step), ...e.sets] } : e
+                })
+              }
+            >
+              <Flame size={14} /> {t('entry.warmup')}
+            </button>
+          )}
+          <label className="to-inline-field to-sets__rest">
+            <span className="to-muted">{t('entry.rest')}</span>
+            <select
+              className="to-field__input"
+              value={entry.rest}
+              aria-label={t('entry.rest')}
+              onChange={(ev) => {
+                const rest = Number(ev.target.value)
+                onUpdate((e) => ({ ...e, rest }))
+              }}
+            >
+              {REST_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s === 0 ? t('entry.noRest') : clock(s)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
-
-      <footer className="to-toolbar to-toolbar--tight">
-        <Button variant="ghost" onClick={addSet}>
-          <Plus size={14} />
-          {t('set.add')}
-        </Button>
-        {canWarm && (
-          <Button
-            variant="ghost"
-            onClick={() =>
-              onUpdate((e) => {
-                const work = e.sets.find((x) => x.type !== 'warmup' && x.weight)
-                return work && !e.sets.some((x) => x.type === 'warmup') ? { ...e, sets: [...warmupFor(work.weight!, step), ...e.sets] } : e
-              })
-            }
-          >
-            <Flame size={14} />
-            {t('entry.warmup')}
-          </Button>
-        )}
-        <label className="to-inline-field">
-          <span className="to-muted">{t('entry.rest')}</span>
-          <select className="to-field__input" value={entry.rest} aria-label={t('entry.rest')} onChange={(ev) => onUpdate((e) => ({ ...e, rest: Number(ev.target.value) }))}>
-            {REST_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s === 0 ? t('entry.noRest') : clock(s)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </footer>
     </article>
   )
 }
@@ -388,21 +559,27 @@ function EntryCard({
  * The workout
  * ------------------------------------------------------------------ */
 
+const entryDone = (entry: Entry) => entry.sets.length > 0 && entry.sets.filter((s) => s.type !== 'warmup').every((s) => s.done)
+
 /**
- * Logs a workout set by set. Live, it times the rest between sets, keeps
- * the screen on and marks records as they happen; when editing a past
- * workout, the same screen corrects it.
+ * Logs a workout. One exercise at a time, with its picture, last time and
+ * a −/+ stepper per value; or every exercise in a list. Live, it times the
+ * rest between sets, keeps the screen on and marks records as they happen;
+ * editing a past workout uses the same screen.
  */
 export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Session>; live: boolean; onFinished?: () => void }) {
   const t = useT()
   const { update, remove } = useCollection<Session>('sessions')
   const index = useExerciseIndex()
   const all = useSessions()
-  const [settings] = useTrainingSettings()
+  const [settings, setSettings] = useTrainingSettings()
   const rest = useRest(record.id, settings.sound)
   const [picking, setPicking] = useState<{ mode: 'add' } | { mode: 'swap'; at: number } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
+  const [current, setCurrent] = useState(0)
+  const [menu, setMenu] = useState(false)
+  const view = settings.view
   useWakeLock(live)
 
   useEffect(() => {
@@ -419,6 +596,7 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
   const session = record.data
   const others = useMemo(() => withIds(all).filter((s) => s.id !== record.id && s.finishedAt), [all, record.id])
   const entries = session.entries
+  const at = Math.min(current, Math.max(entries.length - 1, 0))
 
   // Changes apply to the newest entries, not to the ones this render saw:
   // a load typed and then the reps, one right after the other, must both
@@ -428,7 +606,7 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
   useEffect(() => {
     if (pending.current === 0) latest.current = entries
   }, [entries])
-  const mutate = (change: (current: Entry[]) => Entry[]) => {
+  const mutate = (change: (list: Entry[]) => Entry[]) => {
     const next = change(latest.current)
     latest.current = next
     pending.current++
@@ -438,87 +616,175 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
   }
 
   const onSetDone = (entryIndex: number, setIndex: number) => {
-    const current = latest.current
-    const entry = current[entryIndex]
+    const list = latest.current
+    const entry = list[entryIndex]
     const set = entry.sets[setIndex]
     const before = bestOf(others, entry)
     if (isRecord({ ...set, done: true }, entry.kind, before)) {
       const value = entry.kind === 'weight' ? t('toast.oneRm', { kg: estimateOneRepMax(set.weight, set.reps) }) : ''
       setToast(t('toast.record', { name: entry.name, detail: value }))
     }
+    if (!live) return
     // In a superset, rest comes after the last exercise of the group.
     const group = entry.superset
-    const nextInGroup = group && current[entryIndex + 1]?.superset === group
-    if (live && !nextInGroup) rest.start(entry.rest)
+    const nextInGroup = group && list[entryIndex + 1]?.superset === group
+    if (nextInGroup && view === 'cards') setCurrent(entryIndex + 1)
+    if (nextInGroup) return
+    const nextSet = entry.sets.findIndex((s, i) => i > setIndex && !s.done)
+    const nextEntry = list.findIndex((e, i) => i > entryIndex && !entryDone(e))
+    const label =
+      nextSet >= 0
+        ? t('rest.nextSet', { n: nextSet + 1, name: entry.name })
+        : nextEntry >= 0
+          ? t('rest.nextExercise', { name: list[nextEntry].name })
+          : t('rest.last')
+    rest.start(entry.rest, label)
+    // With the exercise finished, the card moves on to the next one to do.
+    if (nextSet < 0 && nextEntry >= 0 && view === 'cards') window.setTimeout(() => setCurrent(nextEntry), 600)
   }
 
   const add = (exercise: ExerciseDef) => {
     mutate((list) => [...list, entryFor(exercise, others, undefined, settings.rest)])
+    setCurrent(entries.length)
     setPicking(null)
   }
-  const swap = (at: number, exercise: ExerciseDef) => {
-    mutate((list) =>
-      list.map((e, i) => (i === at ? { ...entryFor(exercise, others, undefined, e.rest), superset: e.superset } : e)),
-    )
+  const swap = (target: number, exercise: ExerciseDef) => {
+    mutate((list) => list.map((e, i) => (i === target ? { ...entryFor(exercise, others, undefined, e.rest), superset: e.superset } : e)))
     setPicking(null)
   }
-  const move = (at: number, delta: -1 | 1) =>
+  const move = (target: number, delta: -1 | 1) => {
     mutate((list) => {
       const next = [...list]
-      const [item] = next.splice(at, 1)
-      next.splice(at + delta, 0, item)
+      const [item] = next.splice(target, 1)
+      next.splice(target + delta, 0, item)
       return next
     })
-  const toggleSuperset = (at: number) =>
+    setCurrent(target + delta)
+  }
+  const toggleSuperset = (target: number) =>
     mutate((list) => {
-      const a = list[at]
-      const b = list[at + 1]
+      const a = list[target]
+      const b = list[target + 1]
       if (!a || !b) return list
-      if (a.superset && a.superset === b.superset) {
-        return list.map((e, i) => (i === at || i === at + 1 ? { ...e, superset: null } : e))
-      }
+      if (a.superset && a.superset === b.superset) return list.map((e, i) => (i === target || i === target + 1 ? { ...e, superset: null } : e))
       const used = new Set(list.map((e) => e.superset).filter(Boolean))
       const letter = a.superset ?? b.superset ?? 'ABCDEFGH'.split('').find((l) => !used.has(l)) ?? 'Z'
-      return list.map((e, i) => (i === at || i === at + 1 ? { ...e, superset: letter } : e))
+      return list.map((e, i) => (i === target || i === target + 1 ? { ...e, superset: letter } : e))
     })
 
   const elapsed = session.startedAt ? (now - Date.parse(session.startedAt)) / 1000 : 0
   const total = entries.reduce((sum, e) => sum + e.sets.filter((s) => s.type !== 'warmup').length, 0)
+  const done = doneSets(session)
+  const muscles = [...new Set(entries.map((e) => index.get(e.exerciseId)?.muscle).filter(Boolean))] as Muscle[]
+
+  const card = (entry: Entry, i: number, showMedia: boolean) => (
+    <EntryCard
+      key={`${i}-${entry.exerciseId ?? entry.name}`}
+      entry={entry}
+      def={index.get(entry.exerciseId)}
+      index={i}
+      count={entries.length}
+      before={bestOf(others, entry)}
+      last={lastEntry(others, entry)}
+      effort={settings.effort}
+      step={settings.step}
+      showMedia={showMedia}
+      linked={Boolean(entry.superset && entries[i + 1]?.superset === entry.superset)}
+      actions={{
+        onUpdate: (change) => mutate((list) => list.map((e, j) => (j === i ? change(e) : e))),
+        onSetDone: (setIndex) => onSetDone(i, setIndex),
+        onMove: (delta) => move(i, delta),
+        onSwap: () => setPicking({ mode: 'swap', at: i }),
+        onRemove: () => mutate((list) => list.filter((_, j) => j !== i)),
+        onSuperset: () => toggleSuperset(i),
+      }}
+    />
+  )
+
+  const finish = async () => {
+    rest.stop()
+    await update(record.id, { finishedAt: new Date().toISOString() })
+    onFinished?.()
+  }
 
   return (
-    <div className="to-stack">
-      <section className="to-workout__head">
-        <div className="to-toolbar">
+    <div className={`to-workout${live ? ' is-live' : ''}`}>
+      <header className="to-workout__bar">
+        <div className="to-workout__title">
           <input
-            className="to-field__input to-workout__name"
+            className="to-workout__name"
             defaultValue={session.name}
             aria-label={t('workout.name')}
             onBlur={(e) => e.target.value.trim() && e.target.value !== session.name && void update(record.id, { name: e.target.value.trim() })}
           />
-          {!live && (
-            <input type="date" className="to-field__input" value={session.date} aria-label={t('workout.date')} onChange={(e) => e.target.value && void update(record.id, { date: e.target.value })} />
-          )}
-        </div>
-        <div className="to-workout__stats">
-          {live && <span>{clock(elapsed)}</span>}
-          <span>{t('workout.volume', { kg: sessionVolume(session).toLocaleString('pt-BR') })}</span>
-          <span>{t('workout.sets', { done: doneSets(session), total })}</span>
-        </div>
-      </section>
-
-      {live && rest.remaining > 0 && (
-        <div className="to-rest" role="timer" aria-live="polite">
-          <span className="to-rest__label">{t('rest.label')}</span>
-          <strong className="to-rest__time">{clock(rest.remaining)}</strong>
-          <span className="to-toolbar to-toolbar--tight">
-            <Button variant="ghost" onClick={() => rest.add(-15)}>−15s</Button>
-            <Button variant="ghost" onClick={() => rest.add(15)}>+15s</Button>
-            <Button onClick={rest.stop}>
-              <SkipForward size={14} />
-              {t('rest.skip')}
-            </Button>
+          <span className="to-workout__sub">
+            {live ? `${clock(elapsed)} · ` : ''}
+            {t('workout.sets', { done, total })}
           </span>
         </div>
+        <div className="to-menu">
+          <button type="button" className="to-iconbutton" aria-label={t('workout.menu')} aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
+            <MoreHorizontal size={16} />
+          </button>
+          {menu && (
+            <div className="to-menu__list" role="menu">
+              <button type="button" role="menuitem" onClick={() => (setMenu(false), void setSettings({ view: view === 'cards' ? 'list' : 'cards' }))}>
+                {view === 'cards' ? <LayoutList size={14} /> : <RectangleHorizontal size={14} />}
+                {t(view === 'cards' ? 'workout.viewList' : 'workout.viewCards')}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="is-danger"
+                onClick={() => {
+                  setMenu(false)
+                  if (confirm(t(live ? 'workout.discardConfirm' : 'workout.deleteConfirm'))) void remove(record.id).then(onFinished)
+                }}
+              >
+                <Trash2 size={14} /> {t(live ? 'workout.discard' : 'workout.delete')}
+              </button>
+            </div>
+          )}
+        </div>
+        {live && (
+          <button type="button" className="to-pill" onClick={() => void finish()}>
+            {t('workout.finish')}
+          </button>
+        )}
+      </header>
+
+      <div className="to-workout__progress">
+        <div className="to-workout__track">
+          <div className="to-workout__fill" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+        </div>
+        <span>{sessionVolume(session).toLocaleString('pt-BR')} kg</span>
+      </div>
+
+      {!live && (
+        <label className="to-inline-field">
+          <span className="to-muted">{t('workout.date')}</span>
+          <input type="date" className="to-field__input" value={session.date} onChange={(e) => e.target.value && void update(record.id, { date: e.target.value })} />
+        </label>
+      )}
+
+      {entries.length > 0 && (
+        <nav className="to-workout__pager" aria-label={t('workout.exercises')}>
+          <div className="to-workout__dots">
+            {entries.map((entry, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`to-dot${i === at && view === 'cards' ? ' is-current' : ''}${entryDone(entry) ? ' is-done' : ''}`}
+                aria-label={entry.name}
+                title={entry.name}
+                onClick={() => (view === 'cards' ? setCurrent(i) : document.getElementById(`entry-${i}`)?.scrollIntoView({ behavior: 'smooth' }))}
+              >
+                {entryDone(entry) ? <Check size={12} /> : i + 1}
+              </button>
+            ))}
+          </div>
+          {muscles.length > 0 && <BodyMap primary={muscles} size="tiny" />}
+        </nav>
       )}
 
       {toast && (
@@ -530,69 +796,48 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
 
       {entries.length === 0 ? (
         <EmptyState title={t('workout.empty')} body={t('workout.emptyBody')} />
+      ) : view === 'cards' ? (
+        <>
+          {card(entries[at], at, true)}
+          <div className="to-workout__nav">
+            <button type="button" className="to-linkbutton" disabled={at === 0} onClick={() => setCurrent(at - 1)}>
+              <ChevronLeft size={16} /> {t('workout.prev')}
+            </button>
+            <button type="button" className="to-linkbutton to-linkbutton--strong" disabled={at >= entries.length - 1} onClick={() => setCurrent(at + 1)}>
+              {t('workout.next')} <ChevronRight size={16} />
+            </button>
+          </div>
+        </>
       ) : (
         entries.map((entry, i) => (
-          <EntryCard
-            key={`${i}-${entry.exerciseId ?? entry.name}`}
-            entry={entry}
-            def={index.get(entry.exerciseId)}
-            index={i}
-            count={entries.length}
-            before={bestOf(others, entry)}
-            effort={settings.effort}
-            step={settings.step}
-            linkedToNext={Boolean(entry.superset && entries[i + 1]?.superset === entry.superset)}
-            onUpdate={(change) => mutate((list) => list.map((e, j) => (j === i ? change(e) : e)))}
-            onSetDone={(setIndex) => onSetDone(i, setIndex)}
-            onMove={(delta) => move(i, delta)}
-            onSwap={() => setPicking({ mode: 'swap', at: i })}
-            onRemove={() => mutate((list) => list.filter((_, j) => j !== i))}
-            onSuperset={() => toggleSuperset(i)}
-          />
+          <div key={`${i}-${entry.exerciseId ?? entry.name}`} id={`entry-${i}`}>
+            {card(entry, i, false)}
+          </div>
         ))
       )}
 
-      <div className="to-toolbar">
-        <Button onClick={() => setPicking({ mode: 'add' })}>
-          <Plus size={15} />
-          {t('workout.addExercise')}
+      <div className="to-workout__extras">
+        <button type="button" className="to-rowlink" onClick={() => setPicking({ mode: 'add' })}>
+          <Plus size={16} /> {t('workout.addExercise')}
+        </button>
+        <textarea
+          className="to-field__input"
+          rows={2}
+          defaultValue={session.note}
+          placeholder={t('workout.note')}
+          aria-label={t('workout.note')}
+          onBlur={(e) => e.target.value !== session.note && void update(record.id, { note: e.target.value })}
+        />
+      </div>
+
+      {live && (
+        <Button variant="primary" onClick={() => void finish()}>
+          <Check size={15} />
+          {t('workout.finish')}
         </Button>
-      </div>
+      )}
 
-      <textarea
-        className="to-field__input"
-        rows={2}
-        defaultValue={session.note}
-        placeholder={t('workout.note')}
-        aria-label={t('workout.note')}
-        onBlur={(e) => e.target.value !== session.note && void update(record.id, { note: e.target.value })}
-      />
-
-      <div className="to-toolbar">
-        {live ? (
-          <>
-            <Button
-              variant="primary"
-              onClick={async () => {
-                rest.stop()
-                await update(record.id, { finishedAt: new Date().toISOString() })
-                onFinished?.()
-              }}
-            >
-              <Check size={15} />
-              {t('workout.finish')}
-            </Button>
-            <Button variant="ghost" onClick={() => confirm(t('workout.discardConfirm')) && void remove(record.id)}>
-              {t('workout.discard')}
-            </Button>
-          </>
-        ) : (
-          <Button variant="danger" onClick={() => confirm(t('workout.deleteConfirm')) && void remove(record.id).then(onFinished)}>
-            <Trash2 size={15} />
-            {t('workout.delete')}
-          </Button>
-        )}
-      </div>
+      {live && <RestBar rest={rest} />}
 
       {picking && (
         <ExercisePicker

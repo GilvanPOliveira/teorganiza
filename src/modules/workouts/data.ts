@@ -14,6 +14,8 @@ export interface TrainingSettings extends PlanSettings, Record<string, unknown> 
   /** Smallest load step on the bar, for warm-ups and rounding. */
   step: number
   sound: boolean
+  /** The workout screen: one exercise at a time, or all of them in a list. */
+  view: 'cards' | 'list'
 }
 
 export const TRAINING_DEFAULTS: TrainingSettings = {
@@ -25,6 +27,7 @@ export const TRAINING_DEFAULTS: TrainingSettings = {
   favorites: [],
   step: 2.5,
   sound: true,
+  view: 'cards',
 }
 
 export function useTrainingSettings() {

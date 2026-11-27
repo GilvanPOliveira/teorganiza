@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react'
-import { CalendarClock, Dumbbell, Play, Trophy } from 'lucide-react'
+import { ArrowRightLeft, CalendarClock, Dumbbell, Moon, Play, Shuffle, Trophy } from 'lucide-react'
 import {
-  Badge,
-  Button,
   Card,
-  EmptyState,
   Stat,
   StatGrid,
   toLocalISODate,
@@ -13,14 +10,28 @@ import {
   useT,
   type Envelope,
 } from '@core/api'
-import type { ExerciseDef } from './catalog'
+import { BodyMap } from './BodyMap'
+import type { ExerciseDef, Muscle } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, withIds } from './data'
 import { bestOf, clock, doneSets, entryFor, moveRoutine, plannedRoutine, sessionVolume } from './logic'
 import type { Routine, Session } from './schema'
 import { WorkoutLog } from './workout'
 
+const SHORT_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
 function unknownExercise(id: string): ExerciseDef {
   return { id, name: id, muscle: 'corpo', secondary: [], equipment: 'nenhum', kind: 'weight', perSide: false, compound: false, instructions: '' }
+}
+
+function shift(date: string, days: number): string {
+  const [y, m, d] = date.split('-').map(Number)
+  return toLocalISODate(new Date(y, m - 1, d + days))
+}
+
+/** The muscles a routine works, as its exercises' main groups. */
+export function useRoutineMuscles() {
+  const index = useExerciseIndex()
+  return (routine: Routine): Muscle[] => [...new Set(routine.items.map((item) => index.get(item.exerciseId)?.muscle).filter(Boolean))] as Muscle[]
 }
 
 function Summary({ session }: { session: Session & { id: string } }) {
@@ -69,6 +80,43 @@ export function Records() {
   )
 }
 
+/** Monday to Sunday of the current week, with a dot on each day trained. */
+function WeekStrip({
+  today,
+  trained,
+  planned,
+}: {
+  today: string
+  trained: Set<string>
+  planned: Set<string>
+}) {
+  const t = useT()
+  const [y, m, d] = today.split('-').map(Number)
+  const offset = (new Date(y, m - 1, d).getDay() + 6) % 7
+  const monday = shift(today, -offset)
+  const days = Array.from({ length: 7 }, (_, i) => shift(monday, i))
+  const left = days.filter((day) => day >= today && planned.has(day) && !trained.has(day)).length
+  const total = days.filter((day) => planned.has(day)).length
+  return (
+    <div className="to-week">
+      <div className="to-week__days">
+        {days.map((day) => {
+          const [yy, mm, dd] = day.split('-').map(Number)
+          const weekday = new Date(yy, mm - 1, dd).getDay()
+          return (
+            <div key={day} className={`to-week__day${day === today ? ' is-today' : ''}`}>
+              <span className="to-week__name">{SHORT_DAYS[weekday]}</span>
+              <span className="to-week__num">{dd}</span>
+              <span className={`to-week__dot${trained.has(day) ? ' is-done' : planned.has(day) ? ' is-planned' : ''}`} />
+            </div>
+          )
+        })}
+      </div>
+      {total > 0 && <p className="to-week__left">{t('week.left', { left, total })}</p>}
+    </div>
+  )
+}
+
 export function TodayScreen() {
   const t = useT()
   const navigate = useNavigate()
@@ -76,17 +124,18 @@ export function TodayScreen() {
   const sessions = useSessions()
   const routines = useRoutines()
   const index = useExerciseIndex()
+  const musclesOf = useRoutineMuscles()
   const [settings, setSettings] = useTrainingSettings()
   const { create } = useCollection<Session>('sessions')
+  const [choosing, setChoosing] = useState(false)
   const [moveTo, setMoveTo] = useState('')
-  const [pickRoutine, setPickRoutine] = useState('')
 
   const all = withIds(sessions)
   const active = sessions.find((s) => !s.data.finishedAt)
   const finished = all.filter((s) => s.finishedAt)
   const finishedToday = finished.filter((s) => s.date === today)
   const planned = plannedRoutine(today, routines, settings, finished)
-  const doneToday = planned && finishedToday.some((s) => s.routineId === planned.id)
+  const doneToday = Boolean(planned && finishedToday.some((s) => s.routineId === planned.id))
 
   const start = async (routine: Envelope<Routine> | null) => {
     const entries = routine
@@ -105,88 +154,119 @@ export function TodayScreen() {
 
   if (active) return <WorkoutLog record={active} live />
 
+  // The week: days trained, and days with something planned (week mode only).
+  const trained = new Set(finished.map((s) => s.date))
+  const plannedDays = new Set<string>()
+  if (settings.mode === 'week') {
+    for (let i = -7; i < 7; i++) {
+      const day = shift(today, i)
+      if (plannedRoutine(day, routines, settings, finished)) plannedDays.add(day)
+    }
+  }
+  const nextPlanned = settings.mode === 'week' ? [1, 2, 3, 4, 5, 6, 7].map((i) => shift(today, i)).find((day) => plannedDays.has(day) || plannedRoutine(day, routines, settings, finished)) : undefined
+  const nextName = nextPlanned ? plannedRoutine(nextPlanned, routines, settings, finished)?.data.name : undefined
+
   const month = today.slice(0, 7)
   const thisMonth = finished.filter((s) => s.date.startsWith(month))
+  const others = routines.filter((r) => r.id !== planned?.id)
 
   return (
     <div className="to-stack">
+      <section className="to-panel">
+        <WeekStrip today={today} trained={trained} planned={plannedDays} />
+
+        {planned && !doneToday ? (
+          <div className="to-today">
+            <span className="to-today__icon">
+              <Dumbbell size={18} />
+            </span>
+            <div className="to-today__text">
+              <span className="to-muted">{t('today.today')}</span>
+              <strong className="to-today__name">{planned.data.name}</strong>
+              <span className="to-muted">{t('today.count', { count: planned.data.items.length })}</span>
+            </div>
+            <BodyMap primary={musclesOf(planned.data)} size="tiny" />
+            <button type="button" className="to-pill" onClick={() => void start(planned)}>
+              <Play size={14} /> {t('today.start')}
+            </button>
+          </div>
+        ) : (
+          <div className="to-today to-today--rest">
+            <span className="to-today__icon to-today__icon--rest">
+              <Moon size={18} />
+            </span>
+            <div className="to-today__text">
+              <strong className="to-today__name">{t(doneToday ? 'today.doneTitle' : 'today.restTitle')}</strong>
+              <span className="to-muted">
+                {doneToday
+                  ? t('today.doneBody')
+                  : routines.length === 0
+                    ? t('today.noRoutines')
+                    : nextPlanned && nextName
+                      ? t('today.next', { name: nextName, day: SHORT_DAYS[new Date(`${nextPlanned}T12:00:00`).getDay()] })
+                      : t('today.restBody')}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="to-today__links">
+          <button type="button" className="to-linkbutton" onClick={() => setChoosing((v) => !v)}>
+            <ArrowRightLeft size={14} /> {t('today.choose')}
+          </button>
+          {planned && !doneToday && (
+            <label className="to-inline-field">
+              <span className="to-muted">{t('today.moveTo')}</span>
+              <input type="date" className="to-field__input" value={moveTo} min={shift(today, 1)} onChange={(e) => setMoveTo(e.target.value)} />
+              {moveTo && (
+                <button
+                  type="button"
+                  className="to-linkbutton"
+                  onClick={() => {
+                    void setSettings({ moved: moveRoutine(settings, today, moveTo, planned.id) })
+                    setMoveTo('')
+                  }}
+                >
+                  {t('today.move')}
+                </button>
+              )}
+            </label>
+          )}
+        </div>
+      </section>
+
+      {choosing && (
+        <section className="to-stack to-stack--tight">
+          <h2 className="to-section-title">{t('today.others')}</h2>
+          {others.map((routine) => (
+            <div key={routine.id} className="to-routinerow">
+              <span className="to-today__icon to-today__icon--small">
+                <Dumbbell size={14} />
+              </span>
+              <div className="to-today__text">
+                <strong>{routine.data.name}</strong>
+                <span className="to-muted">{t('today.count', { count: routine.data.items.length })}</span>
+              </div>
+              <BodyMap primary={musclesOf(routine.data)} size="tiny" />
+              <button type="button" className="to-chip is-active" onClick={() => void start(routine)}>
+                {t('today.startShort')}
+              </button>
+            </div>
+          ))}
+          <button type="button" className="to-linkbutton to-linkbutton--strong" onClick={() => void start(null)}>
+            <Shuffle size={14} /> {t('today.freeStart')}
+          </button>
+          {routines.length === 0 && (
+            <button type="button" className="to-linkbutton" onClick={() => navigate('routines')}>
+              <CalendarClock size={14} /> {t('today.createRoutine')}
+            </button>
+          )}
+        </section>
+      )}
+
       {finishedToday.map((s) => (
         <Summary key={s.id} session={s} />
       ))}
-
-      {planned && !doneToday ? (
-        <Card title={<span className="to-card__titleicon"><CalendarClock size={15} />{t('today.planned')}</span>}>
-          <h3 className="to-tile__title">{planned.data.name}</h3>
-          <ul className="to-plainlist">
-            {planned.data.items.map((item, i) => (
-              <li key={i} className="to-tile__row">
-                <span>{index.get(item.exerciseId)?.name ?? item.exerciseId}</span>
-                <span className="to-muted">
-                  {item.sets.filter((s) => s.type !== 'warmup').length} ×{' '}
-                  {item.sets[0]?.seconds ? `${item.sets[0].seconds}s` : item.sets[0]?.repsMax ? `${item.sets[0].reps}–${item.sets[0].repsMax}` : item.sets[0]?.reps ?? '—'}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="to-toolbar">
-            <Button variant="primary" onClick={() => void start(planned)}>
-              <Play size={15} />
-              {t('today.start')}
-            </Button>
-            <label className="to-inline-field">
-              <span className="to-muted">{t('today.moveTo')}</span>
-              <input type="date" className="to-field__input" value={moveTo} min={today} onChange={(e) => setMoveTo(e.target.value)} />
-            </label>
-            {moveTo && moveTo !== today && (
-              <Button
-                onClick={() => {
-                  void setSettings({ moved: moveRoutine(settings, today, moveTo, planned.id) })
-                  setMoveTo('')
-                }}
-              >
-                {t('today.move')}
-              </Button>
-            )}
-          </div>
-        </Card>
-      ) : (
-        <Card title={t(doneToday ? 'today.doneTitle' : 'today.restTitle')}>
-          <p className="to-muted">{t(routines.length === 0 ? 'today.noRoutines' : doneToday ? 'today.doneBody' : 'today.restBody')}</p>
-          <div className="to-toolbar">
-            {routines.length > 0 && (
-              <>
-                <select className="to-field__input" value={pickRoutine} aria-label={t('today.pick')} onChange={(e) => setPickRoutine(e.target.value)}>
-                  <option value="">{t('today.pick')}</option>
-                  {routines.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.data.name}
-                    </option>
-                  ))}
-                </select>
-                {pickRoutine && (
-                  <Button variant="primary" onClick={() => void start(routines.find((r) => r.id === pickRoutine) ?? null)}>
-                    <Play size={15} />
-                    {t('today.start')}
-                  </Button>
-                )}
-              </>
-            )}
-            {routines.length === 0 && (
-              <Button variant="primary" onClick={() => navigate('routines')}>
-                {t('today.createRoutine')}
-              </Button>
-            )}
-          </div>
-        </Card>
-      )}
-
-      <div className="to-toolbar">
-        <Button onClick={() => void start(null)}>
-          <Play size={15} />
-          {t('today.freeStart')}
-        </Button>
-        {settings.mode === 'rotation' && <Badge>{t('today.rotation')}</Badge>}
-      </div>
 
       <StatGrid>
         <Stat label={t('stats.month')} value={thisMonth.length} hint={t('stats.sessions')} />
@@ -194,7 +274,6 @@ export function TodayScreen() {
         <Stat label={t('stats.total')} value={finished.length} hint={t('stats.sessions')} />
       </StatGrid>
 
-      {finished.length === 0 && <EmptyState title={t('empty.title')} body={t('empty.body')} />}
       <Records />
     </div>
   )
