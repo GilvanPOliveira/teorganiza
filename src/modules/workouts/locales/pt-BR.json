@@ -243,5 +243,6 @@
   "sheet.edit": "Editar {name}",
   "sheet.sets": "Séries",
   "sheet.weight": "Peso",
-  "sheet.rest": "Descanso"
+  "sheet.rest": "Descanso",
+  "library.fold": "Recolher"
 }

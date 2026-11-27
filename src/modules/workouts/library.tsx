@@ -1,5 +1,4 @@
-import { FileText } from 'lucide-react'
-import { useCollection, useNavigate, useT } from '@core/api'
+import { useCollection, useNavigate, useParams, useT } from '@core/api'
 import { ExerciseBrowser } from './browser'
 import type { ExerciseDef } from './catalog'
 import { useRoutines, WEEKDAYS } from './data'
@@ -48,8 +47,8 @@ export function SheetButton({ count }: { count: number }) {
   const t = useT()
   const navigate = useNavigate()
   return (
-    <button type="button" className="to-chip is-active" onClick={() => navigate('sheet')}>
-      <FileText size={13} /> {t('library.sheet', { count })}
+    <button type="button" className="to-chip to-chip--strong" onClick={() => navigate('sheet')}>
+      {t('library.sheet', { count })}
     </button>
   )
 }
@@ -58,8 +57,12 @@ export function SheetButton({ count }: { count: number }) {
 export function LibraryScreen() {
   const t = useT()
   const { daysOf, register, count } = usePlanRegister()
+  // Hoje, Rotinas and Histórico link here with an exercise to show enlarged.
+  const { exerciseId } = useParams<{ exerciseId?: string }>()
   return (
     <ExerciseBrowser
+      key={exerciseId ?? 'all'}
+      initialOpen={exerciseId}
       toolbar={<SheetButton count={count} />}
       action={{ label: t('library.register'), withDays: true, keepOpen: true, onAdd: (exercise, plan) => void register(exercise, plan), daysOf }}
     />

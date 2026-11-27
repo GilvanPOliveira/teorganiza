@@ -24,18 +24,8 @@ export function ExerciseDetail({ exercise, children }: { exercise: ExerciseDef; 
     <div className="to-exdetail">
       <div className="to-exdetail__visual">
         <ExerciseMedia exercise={exercise} size="large" />
-      </div>
-      <div className="to-exdetail__about">
-        <div className="to-exercise__tags">
-          <span className="to-tag">{muscleLabel(exercise.muscle)}</span>
-          <span className="to-tag">{equipmentLabel(exercise.equipment)}</span>
-          {kind !== equipmentLabel(exercise.equipment) && <span className="to-tag">{kind}</span>}
-          {exercise.perSide && <span className="to-tag">{t('library.perSide')}</span>}
-        </div>
-        {exercise.instructions && <p className="to-exsheet__howto">{exercise.instructions}</p>}
-        {children}
         <div className="to-exsheet__muscles">
-          {/* Without a picture, the media is already the body map. */}
+          {/* Without a picture, the media above is already the body map. */}
           {(own || (!exercise.custom && PHOTOS.has(exercise.id))) && <BodyMap primary={[exercise.muscle]} secondary={exercise.secondary} size="small" />}
           <div className="to-stack to-stack--tight">
             <span>
@@ -52,6 +42,16 @@ export function ExerciseDetail({ exercise, children }: { exercise: ExerciseDef; 
             {lastDate && <span className="to-muted">{t('library.last', { date: format.date(lastDate) })}</span>}
           </div>
         </div>
+      </div>
+      <div className="to-exdetail__about">
+        <div className="to-exercise__tags">
+          <span className="to-tag">{muscleLabel(exercise.muscle)}</span>
+          <span className="to-tag">{equipmentLabel(exercise.equipment)}</span>
+          {kind !== equipmentLabel(exercise.equipment) && <span className="to-tag">{kind}</span>}
+          {exercise.perSide && <span className="to-tag">{t('library.perSide')}</span>}
+        </div>
+        {exercise.instructions && <p className="to-exsheet__howto">{exercise.instructions}</p>}
+        {children}
       </div>
     </div>
   )

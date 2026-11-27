@@ -3132,3 +3132,53 @@ a.to-tag:hover {
   .to-ficha__nums > span { align-items: flex-start; min-width: 0; }
 }
 
+/* Exercícios: filters in three lines, and every card the same */
+.to-filters { display: flex; flex-direction: column; gap: 8px; }
+.to-filters__row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.to-filters__search { flex: 0 1 240px; min-width: 150px; }
+.to-filters__select { width: auto; flex: 0 1 200px; }
+.to-filters__count { font-size: 13px; }
+.to-filters__toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--to-text-2, inherit);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.to-filters__toggle:hover { color: inherit; }
+.to-chip--strong { border-color: var(--to-accent); color: var(--to-accent); font-weight: 600; }
+
+.to-exgrid > .to-excard:not(.is-open) { min-height: 86px; }
+.to-exdetail__visual { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.to-excard.is-open .to-media--large,
+.to-excard.is-open .to-media--large:not(.has-picture) { aspect-ratio: auto; height: 280px; }
+.to-excard.is-open .to-exsheet__muscles { min-height: 150px; flex-wrap: nowrap; }
+@media (min-width: 760px) {
+  .to-excard.is-open .to-exdetail { grid-template-rows: minmax(470px, auto); }
+  .to-excard.is-open .to-exdetail__visual { position: static; }
+}
+@media (max-width: 640px) {
+  .to-excard.is-open .to-media--large,
+  .to-excard.is-open .to-media--large:not(.has-picture) { height: 220px; }
+  .to-excard.is-open .to-exsheet__muscles { min-height: 120px; }
+  .to-filters__search { flex: 1 1 100%; }
+  .to-filters__select { flex: 1 1 auto; }
+}
+
+/* Exercise pictures in Hoje, Rotinas and Histórico */
+.to-strip--small { gap: 6px; padding: 0; }
+.to-strip--small .to-today__ex { width: auto; }
+.to-strip--small .to-media--thumb { width: 40px; height: 40px; border-radius: 9px; }
+.to-dayrow { flex-wrap: wrap; }
+.to-dayrow__strip, .to-routinerow__strip { flex: 1 0 100%; min-width: 0; padding-left: 2px; }
+.to-routinerow { flex-wrap: wrap; }
+.to-list__item:has(.to-list__strip) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+.to-list__item:has(.to-list__strip) .to-list__main { align-items: flex-start; }
+.to-list__strip { grid-column: 1 / -1; min-width: 0; padding: 0 12px 10px; }

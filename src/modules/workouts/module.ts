@@ -65,6 +65,7 @@ export default defineModule({
     { path: 'routines', element: RoutinesScreen, label: 'Rotinas' },
     { path: 'routines/:id', element: RoutineScreen },
     { path: 'library', element: LibraryScreen, label: 'Exercícios' },
+    { path: 'library/:exerciseId', element: LibraryScreen },
     { path: 'history', element: HistoryScreen, label: 'Histórico' },
     { path: 'history/:id', element: SessionScreen },
     { path: 'sheet', element: SheetScreen },

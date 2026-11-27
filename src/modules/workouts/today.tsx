@@ -13,10 +13,9 @@ import {
 import { BodyMap } from './BodyMap'
 import type { ExerciseDef, Muscle } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, withIds } from './data'
-import { ExerciseSheet } from './detail'
 import { bestOf, clock, doneSets, entryFor, moveRoutine, plannedRoutine, sessionVolume } from './logic'
-import { ExerciseMedia } from './media'
 import type { Routine, Session } from './schema'
+import { ExerciseStrip } from './strip'
 import { WorkoutLog } from './workout'
 
 const SHORT_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -131,7 +130,6 @@ export function TodayScreen() {
   const { create } = useCollection<Session>('sessions')
   const [choosing, setChoosing] = useState(false)
   const [moveTo, setMoveTo] = useState('')
-  const [info, setInfo] = useState<ExerciseDef | null>(null)
 
   const all = withIds(sessions)
   const active = sessions.find((s) => !s.data.finishedAt)
@@ -213,19 +211,7 @@ export function TodayScreen() {
           </div>
         )}
 
-        {planned && !doneToday && planned.data.items.length > 0 && (
-          <div className="to-today__strip" aria-label={t('today.exercises')}>
-            {planned.data.items.map((item, i) => {
-              const def = index.get(item.exerciseId)
-              return def ? (
-                <button key={`${i}-${item.exerciseId}`} type="button" className="to-today__ex" onClick={() => setInfo(def)}>
-                  <ExerciseMedia exercise={def} size="thumb" />
-                  <span>{def.name}</span>
-                </button>
-              ) : null
-            })}
-          </div>
-        )}
+        {planned && !doneToday && <ExerciseStrip ids={planned.data.items.map((item) => item.exerciseId)} />}
 
         <div className="to-today__links">
           <button type="button" className="to-linkbutton" onClick={() => setChoosing((v) => !v)}>
@@ -268,6 +254,9 @@ export function TodayScreen() {
               <button type="button" className="to-chip is-active" onClick={() => void start(routine)}>
                 {t('today.startShort')}
               </button>
+              <div className="to-routinerow__strip">
+                <ExerciseStrip ids={routine.data.items.map((item) => item.exerciseId)} small />
+              </div>
             </div>
           ))}
           <button type="button" className="to-linkbutton to-linkbutton--strong" onClick={() => void start(null)}>
@@ -292,7 +281,6 @@ export function TodayScreen() {
       </StatGrid>
 
       <Records />
-      {info && <ExerciseSheet exercise={info} onClose={() => setInfo(null)} />}
     </div>
   )
 }
