@@ -29,8 +29,33 @@ export function openDatabase(): Dexie {
 
   const instance = new Dexie('teorganiza')
   instance.version(version).stores(stores)
+  instance.on('ready', () => repairIfStale(instance, Object.keys(stores), version))
   db = instance
   return instance
+}
+
+const REPAIR_KEY = 'teorganiza.schema.repair'
+
+/**
+ * The version is recorded before the browser upgrades the database. If the
+ * upgrade never ran (another tab, or a page kept alive by a dev reload,
+ * held the old connection open), the record says "up to date" while a new
+ * table is missing, and every read of it fails. Seen once, the record is
+ * cleared so the next open upgrades for real, and the page reloads; twice
+ * in a row it stops, rather than loop.
+ */
+function repairIfStale(instance: Dexie, expected: string[], version: number): void {
+  const names = instance.backendDB().objectStoreNames
+  const missing = expected.some((name) => !names.contains(name))
+  try {
+    if (!missing) return sessionStorage.removeItem(REPAIR_KEY)
+    if (sessionStorage.getItem(REPAIR_KEY)) return
+    sessionStorage.setItem(REPAIR_KEY, '1')
+  } catch {
+    if (!missing) return
+  }
+  writeSchemaMeta({ version, signature: '' })
+  if (typeof location !== 'undefined') location.reload()
 }
 
 export function table<T>(path: string): Table<Envelope<T>, string> {

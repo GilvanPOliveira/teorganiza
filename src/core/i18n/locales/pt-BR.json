@@ -190,5 +190,15 @@
   "trash.files": "Arquivos",
   "trash.links": "Links",
   "nex.soon": "O Nex ainda não está ativo.",
-  "nex.soon.body": "Ele terá o seu lugar aqui. Por enquanto não há nenhuma inteligência artificial nem conexão com API: nada é enviado para fora do seu navegador."
+  "nex.soon.body": "Ele terá o seu lugar aqui. Por enquanto não há nenhuma inteligência artificial nem conexão com API: nada é enviado para fora do seu navegador.",
+  "records.edit": "Editar",
+  "records.remove": "Excluir",
+  "records.save": "Salvar",
+  "records.cancel": "Cancelar",
+  "records.date": "Data",
+  "records.time": "Hora",
+  "records.noTarget": "sem meta",
+  "records.left": "faltam {value} {unit}",
+  "records.reached": "meta atingida",
+  "records.over": "{value} {unit} acima"
 }

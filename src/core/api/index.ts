@@ -23,6 +23,8 @@ export type {
   DatedEntry,
   ProgressEntry,
   ProviderReader,
+  Signal,
+  SignalKey,
   Providers,
   IconProps,
   Envelope,
@@ -62,6 +64,7 @@ export {
   useTags,
   useDated,
   useProgressSources,
+  useSignals,
   useOpenHref,
 } from './hooks'
 
@@ -69,6 +72,32 @@ export type { CollectionWriter, Formatter, Tag } from './hooks'
 export type { CollectedDated, CollectedProgress } from '@core/providers/collect'
 
 export { TagList, TagPicker } from './tags'
+
+export { useProfile } from './profile'
+export type { UseProfile } from './profile'
+export {
+  ACTIVITIES,
+  BODY_MEASURES,
+  GLASS_ML,
+  GOALS,
+  LEVELS,
+  PLACES,
+  RESTRICTIONS,
+  SEXES,
+  type Activity,
+  type BmiBand,
+  type BodyMeasureKey,
+  type Measurement,
+  type Risk,
+  type Goal,
+  type Level,
+  type Place,
+  type Profile,
+  type Restriction,
+  type ProfileFacts,
+  type Sex,
+  type WeightEntry,
+} from '@core/profile'
 
 export {
   Attachments,
@@ -90,8 +119,24 @@ export type { FileCategory } from './files'
 export type { StoredFile, StoredLink } from '@core/collections'
 
 export {
+  NoteList,
+  RecordActions,
+  RecordCard,
+  RecordField,
+  RecordForm,
+  RecordInput,
+  RecordRow,
+  RecordStrip,
+  RecordValue,
+  RecordWhen,
+  TargetBars,
+} from './records'
+export type { DataNote, RecordTone, TargetItem } from './records'
+
+export {
   Badge,
   Button,
+  DateInput,
   Card,
   Checkbox,
   EmptyState,

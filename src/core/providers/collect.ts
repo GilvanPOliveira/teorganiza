@@ -1,4 +1,4 @@
-import type { DatedEntry, Module, ProgressEntry, ProviderReader } from '@core/api/types'
+import type { DatedEntry, Module, ProgressEntry, ProviderReader, Signal } from '@core/api/types'
 import * as repository from '@core/db/repository'
 import { collectionPath, getModules } from '@core/registry/registry'
 
@@ -55,4 +55,24 @@ export async function collectProgress(options: { modules?: Module[] } = {}): Pro
     }),
   )
   return lists.flat()
+}
+
+/** Every signal on offer, keyed; for the same key the newest reading wins. */
+export async function collectSignals(today: string, options: { modules?: Module[] } = {}): Promise<Partial<Record<Signal['key'], Signal>>> {
+  const modules = (options.modules ?? getModules()).filter((mod) => mod.provides?.signals)
+  const lists = await Promise.all(
+    modules.map(async (mod) => {
+      try {
+        return await mod.provides!.signals!(readerFor(mod), today)
+      } catch {
+        return []
+      }
+    }),
+  )
+  const out: Partial<Record<Signal['key'], Signal>> = {}
+  for (const signal of lists.flat()) {
+    const current = out[signal.key]
+    if (!current || signal.date > current.date) out[signal.key] = signal
+  }
+  return out
 }

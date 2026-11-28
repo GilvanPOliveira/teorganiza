@@ -4,6 +4,7 @@ import {
   Attachments,
   Badge,
   Button,
+  DateInput,
   Checkbox,
   EmptyState,
   Progress,
@@ -398,12 +399,7 @@ export function ProjectScreen() {
         <h2 className="to-tile__title">{project.data.name}</h2>
         <label className="to-inline-field">
           <span className="to-muted">{t('projects.deadline')}</span>
-          <input
-            type="date"
-            className="to-field__input"
-            value={project.data.due ?? ''}
-            onChange={(e) => void update(project.id, { due: e.target.value || null })}
-          />
+          <DateInput value={project.data.due} onSave={(due) => void update(project.id, { due })} />
         </label>
       </span>
       <Progress value={done} max={Math.max(items.length, 1)} label={project.data.name} />

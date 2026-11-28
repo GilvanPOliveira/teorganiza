@@ -15,6 +15,7 @@ import type { ExerciseDef, Muscle } from './catalog'
 import { useExerciseIndex, useRoutines, useSessions, useTrainingSettings, withIds } from './data'
 import { clock, doneSets, entryFor, moveRoutine, plannedRoutine, sessionVolume } from './logic'
 import type { Routine, Session } from './schema'
+import { ReadinessNotes } from './readinessnotes'
 import { ExerciseStrip } from './strip'
 import { RecordsList, useRecordsList } from './records'
 import { WorkoutLog } from './workout'
@@ -193,6 +194,7 @@ export function TodayScreen() {
         )}
 
         {planned && !doneToday && <ExerciseStrip ids={planned.data.items.map((item) => item.exerciseId)} />}
+        {planned && !doneToday && <ReadinessNotes />}
 
         <div className="to-today__links">
           <button type="button" className="to-linkbutton" onClick={() => setChoosing((v) => !v)}>

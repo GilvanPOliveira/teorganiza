@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { AnyCollectionDef } from '@core/api/types'
+import { measurementSchema, profileSchema, weightSchema } from '@core/profile'
 
 /**
  * The shell stores user data too, and it is not a special case: same
@@ -143,6 +144,26 @@ export const coreCollections: AnyCollectionDef[] = [
     schemaVersion: 1,
     describe: (record) => `Revisão da semana de ${record.data.week}`,
     indexes: ['week'],
+  },
+  {
+    name: 'profile',
+    schema: profileSchema,
+    schemaVersion: 1,
+    describe: () => 'Meus dados',
+  },
+  {
+    name: 'weights',
+    schema: weightSchema,
+    schemaVersion: 1,
+    describe: (record) => `Peso ${String(record.data.kg).replace('.', ',')} kg em ${record.data.date}`,
+    indexes: ['date'],
+  },
+  {
+    name: 'measurements',
+    schema: measurementSchema,
+    schemaVersion: 1,
+    describe: (record) => `${record.data.key} ${String(record.data.value).replace('.', ',')} em ${record.data.date}`,
+    indexes: ['date', 'key'],
   },
   {
     name: 'settings',

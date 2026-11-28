@@ -309,3 +309,62 @@ export function QuickAdd({
 function cx(...values: (string | undefined | false)[]): string {
   return values.filter(Boolean).join(' ')
 }
+
+type DateInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'defaultValue' | 'onChange'> & {
+  /** The saved date, ISO; null when empty. */
+  value: string | null
+  /** Called with a complete, plausible date, or null when cleared (unless `required`). */
+  onSave: (date: string | null) => void
+  /** Clearing puts the saved date back instead of saving null. */
+  required?: boolean
+}
+
+/**
+ * A date field bound to saved data. Typing a year goes through 0001, 0019,
+ * 0198… on the way to 1988, so the field keeps its own draft while focused,
+ * saves only complete dates within min/max (and from 1900 on), and ignores
+ * saved values coming back mid-typing that would overwrite what is being typed.
+ */
+export function DateInput({ value, onSave, required, min, max, onFocus, onBlur, className, ...rest }: DateInputProps) {
+  const [draft, setDraft] = useState(value ?? '')
+  const [editing, setEditing] = useState(false)
+  const [seen, setSeen] = useState(value)
+  if (value !== seen) {
+    setSeen(value)
+    if (!editing) setDraft(value ?? '')
+  }
+  const plausible = (date: string) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+    Number(date.slice(0, 4)) >= 1900 &&
+    (!min || date >= String(min)) &&
+    (!max || date <= String(max))
+
+  return (
+    <input
+      type="date"
+      className={cx('to-field__input', className)}
+      value={draft}
+      min={min}
+      max={max}
+      {...rest}
+      onFocus={(e) => {
+        setEditing(true)
+        onFocus?.(e)
+      }}
+      onChange={(e) => {
+        const next = e.target.value
+        setDraft(next)
+        if (next && plausible(next) && next !== value) onSave(next)
+      }}
+      onBlur={(e) => {
+        setEditing(false)
+        if (!draft) {
+          if (required) setDraft(value ?? '')
+          else if (value) onSave(null)
+        } else if (!plausible(draft)) setDraft(value ?? '')
+        else if (draft !== value) onSave(draft)
+        onBlur?.(e)
+      }}
+    />
+  )
+}
