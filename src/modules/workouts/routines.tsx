@@ -26,7 +26,7 @@ import type { PlannedSet, Routine, RoutineItem, Session } from './schema'
 import { Fold } from './fold'
 import { useKeepPlanHistory } from './plans'
 import { ExerciseStrip } from './strip'
-import { TEMPLATES } from './templates'
+import { ReadyPlans } from './readyplans'
 import { useRoutineMuscles } from './today'
 
 /* ------------------------------------------------------------------ *
@@ -65,14 +65,6 @@ export function RoutinesScreen() {
   useKeepPlanHistory()
 
   const nextOrder = () => (routines.length ? Math.max(...routines.map((r) => r.data.order)) + 1 : 0)
-
-  const applyTemplate = async (id: string) => {
-    const template = TEMPLATES.find((tpl) => tpl.id === id)!
-    const ids: string[] = []
-    let order = nextOrder()
-    for (const routine of template.routines) ids.push(await create({ ...routine, order: order++ }))
-    if (settings.mode === 'rotation') await setSettings({ rotation: [...settings.rotation, ...ids] })
-  }
 
   /** Opens the exercise's card in a popup, starting from what this routine plans for it. */
   const openExercise = (routine: Routine) => (exerciseId: string) => {
@@ -248,26 +240,7 @@ export function RoutinesScreen() {
         )}
       </Fold>
 
-      <Fold id="plans" title={t('templates.title')}>
-        <p className="to-muted">{t('templates.body')}</p>
-        <div className="to-plans">
-          {TEMPLATES.map((template) => (
-            <article key={template.id} className="to-tile">
-              <h3 className="to-tile__title">{template.name}</h3>
-              <span className="to-muted">{template.description}</span>
-              <span className="to-list__meta">
-                {template.routines.map((r) => (
-                  <span key={r.name}>{r.name}</span>
-                ))}
-              </span>
-              <Button onClick={() => void applyTemplate(template.id)}>
-                <Plus size={14} />
-                {t('templates.use')}
-              </Button>
-            </article>
-          ))}
-        </div>
-      </Fold>
+      <ReadyPlans />
 
       {editing && (
         <ExercisePlanSheet exercise={editing.exercise} initial={{ ...(editing.item ? planOfItem(editing.item) : {}), days: editing.days }} onClose={() => setEditing(null)} />

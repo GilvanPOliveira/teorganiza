@@ -169,9 +169,33 @@ export interface ProgressEntry {
   due?: string | null
 }
 
+/**
+ * A health-type reading one module offers the others, by a shared key:
+ * the latest blood pressure from Exames, last night's sleep from the day,
+ * the week's average intake from Refeições. Modules never read each
+ * other's data; they read signals.
+ */
+export interface Signal {
+  key: SignalKey
+  value: number
+  /** Second number where one is not enough (diastolic pressure, protein). */
+  value2?: number
+  /** When it was measured, or the last day it covers. */
+  date: string
+  /** Days averaged, for averages. */
+  days?: number
+}
+
+/**
+ * water: glasses today. hba1c: latest, %. training: 1 when a workout was
+ * done today, 2 when one is planned for today's weekday.
+ */
+export type SignalKey = 'bloodPressure' | 'glucose' | 'hba1c' | 'ldl' | 'sleep' | 'energy' | 'water' | 'intake' | 'training'
+
 export interface Providers {
   dated?: (read: ProviderReader, range: { from: string; to: string }) => Promise<DatedEntry[]>
   progress?: (read: ProviderReader) => Promise<ProgressEntry[]>
+  signals?: (read: ProviderReader, today: string) => Promise<Signal[]>
 }
 
 export type WidgetSize = 'sm' | 'md' | 'lg'

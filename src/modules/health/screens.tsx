@@ -11,6 +11,7 @@ import {
   toLocalISODate,
   useCollection,
   useFormat,
+  useProfile,
   useRecords,
   useT,
   type Envelope,
@@ -75,6 +76,7 @@ function SleepInput({ value, onSave }: { value: number | null; onSave: (hours: n
 }
 
 function CheckIn() {
+  const waterGoal = useProfile().facts.waterGlasses
   const t = useT()
   const { data, patch } = useToday()
 
@@ -93,12 +95,13 @@ function CheckIn() {
         <div className="to-settings__row">
           <span className="to-toolbar to-toolbar--center">
             <Droplets size={16} /> {t('checkin.water')}
+            {waterGoal !== null && <span className="to-muted">· {t('checkin.waterGoal', { count: waterGoal })}</span>}
           </span>
           <span className="to-toolbar to-toolbar--center">
             <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('checkin.waterLess')} onClick={() => void patch({ water: Math.max(0, data.water - 1) })}>
               <Minus size={14} />
             </button>
-            <strong>{t('checkin.glasses', { count: data.water })}</strong>
+            <strong className={waterGoal && data.water >= waterGoal ? 'to-positive' : undefined}>{t('checkin.glasses', { count: data.water })}</strong>
             <button type="button" className="to-iconbutton to-iconbutton--small" aria-label={t('checkin.waterMore')} onClick={() => void patch({ water: data.water + 1 })}>
               <Plus size={14} />
             </button>

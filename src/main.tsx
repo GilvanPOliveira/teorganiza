@@ -2,6 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './index.css'
+import { installWheelScroll } from './core/wheelScroll'
+
+installWheelScroll()
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Missing #root in index.html')

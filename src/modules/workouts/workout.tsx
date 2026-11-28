@@ -20,7 +20,7 @@ import {
   Trophy,
   X,
 } from 'lucide-react'
-import { Badge, Button, EmptyState, useCollection, useT, type Envelope } from '@core/api'
+import { Badge, Button, DateInput, EmptyState, useCollection, useT, type Envelope } from '@core/api'
 import { BodyMap } from './BodyMap'
 import { equipmentLabel, muscleLabel, type ExerciseDef, type Muscle } from './catalog'
 import { useExerciseIndex, useSessions, useTrainingSettings, weightStep, withIds } from './data'
@@ -726,7 +726,7 @@ export function WorkoutLog({ record, live, onFinished }: { record: Envelope<Sess
       {!live && (
         <label className="to-inline-field">
           <span className="to-muted">{t('workout.date')}</span>
-          <input type="date" className="to-field__input" value={session.date} onChange={(e) => e.target.value && void update(record.id, { date: e.target.value })} />
+          <DateInput required value={session.date} onSave={(date) => date && void update(record.id, { date })} />
         </label>
       )}
 

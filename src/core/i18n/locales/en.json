@@ -190,5 +190,15 @@
   "trash.files": "Files",
   "trash.links": "Links",
   "nex.soon": "Nex is not active yet.",
-  "nex.soon.body": "It will have its place here. For now there is no artificial intelligence and no API connection: nothing leaves your browser."
+  "nex.soon.body": "It will have its place here. For now there is no artificial intelligence and no API connection: nothing leaves your browser.",
+  "records.edit": "Edit",
+  "records.remove": "Delete",
+  "records.save": "Save",
+  "records.cancel": "Cancel",
+  "records.date": "Date",
+  "records.time": "Time",
+  "records.noTarget": "no target",
+  "records.left": "{value} {unit} to go",
+  "records.reached": "target reached",
+  "records.over": "{value} {unit} over"
 }

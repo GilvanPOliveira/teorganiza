@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { defineModule } from '@core/api'
 import { mealSchema, type Meal } from './schema'
 import { DietScreen } from './screens'
+import { intakeSignal } from './signals'
 import ptBR from './locales/pt-BR.json'
 
 export default defineModule({
@@ -31,9 +32,17 @@ export default defineModule({
 
   routes: [{ path: '', element: DietScreen }],
 
-  settings: z.object({ target: z.number(), protein: z.number() }),
+  settings: z.object({ mode: z.enum(['', 'profile', 'manual']).optional(), target: z.number(), protein: z.number() }),
 
   commands: [{ id: 'new-meal', label: 'Registrar refeição', path: '', keywords: ['refeição', 'comida', 'caloria'] }],
+
+  provides: {
+    /** The past week's average intake, for training to compare with the target. */
+    signals: async (read, today) => {
+      const signal = intakeSignal((await read<Meal>('meals')).map((m) => m.data), today)
+      return signal ? [signal] : []
+    },
+  },
 
   locales: { 'pt-BR': ptBR },
 })

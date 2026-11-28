@@ -1,8 +1,18 @@
 import { useMemo } from 'react'
-import { useRecords, useSettings, type Envelope } from '@core/api'
+import { useProfile, useRecords, useSettings, useSignals, type Envelope } from '@core/api'
 import { CATALOG, type ExerciseDef } from './catalog'
+import { buildGuidance, type Guidance } from './guidance'
 import type { PlanSettings } from './logic'
 import type { CustomExercise, Routine, Session } from './schema'
+
+/** A ready plan loaded as routines: when, and which routines it made. */
+export interface UsedTemplate {
+  id: string
+  at: string
+  routines: string[]
+  /** Exercises swapped (or dropped) for the person's restrictions when it was loaded. */
+  swaps?: number
+}
 
 export interface TrainingSettings extends PlanSettings, Record<string, unknown> {
   /** How effort is logged next to each set. */
@@ -16,6 +26,8 @@ export interface TrainingSettings extends PlanSettings, Record<string, unknown> 
   sound: boolean
   /** The workout screen: one exercise at a time, or all of them in a list. */
   view: 'cards' | 'list'
+  /** Ready plans in use (Rotinas › Planos prontos). */
+  templates: UsedTemplate[]
 }
 
 export const TRAINING_DEFAULTS: TrainingSettings = {
@@ -29,6 +41,7 @@ export const TRAINING_DEFAULTS: TrainingSettings = {
   step: 1,
   sound: true,
   view: 'cards',
+  templates: [],
 }
 
 /** How much a − or + changes a weight. Any other weight is typed in the field. */
@@ -66,3 +79,10 @@ export function withIds(sessions: Envelope<Session>[]): (Session & { id: string 
 }
 
 export const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+/** Restrictions, BMI, age and readings from other modules, as training rules. */
+export function useGuidance(): Guidance {
+  const { profile, facts } = useProfile()
+  const signals = useSignals()
+  return useMemo(() => buildGuidance(profile.flags ?? [], facts, signals), [profile.flags, facts, signals])
+}

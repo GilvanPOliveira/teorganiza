@@ -1,7 +1,9 @@
-import { FileHeart, HeartPulse } from 'lucide-react'
+import { FileHeart, HeartPulse, UserRound } from 'lucide-react'
 import { defineModule, type DatedEntry } from '@core/api'
-import { daySchema, doseSchema, examSchema, medicineSchema, type Day, type Dose, type Exam, type Medicine } from './schema'
+import { daySchema, doseSchema, examSchema, medicineSchema, readingSchema, type Day, type Dose, type Exam, type Medicine, type Reading } from './schema'
 import { ExamsScreen } from './exams'
+import { MeScreen } from './me'
+import { healthSignals } from './signals'
 import { HealthScreen } from './screens'
 import ptBR from './locales/pt-BR.json'
 
@@ -51,19 +53,40 @@ export default defineModule({
       },
       indexes: ['date', 'kind'],
     },
+    {
+      name: 'readings',
+      schema: readingSchema,
+      schemaVersion: 1,
+      describe: (record) => {
+        const reading = record.data as Reading
+        return `${reading.marker} ${reading.value}${reading.value2 !== null ? `/${reading.value2}` : ''} em ${reading.date}`
+      },
+      indexes: ['date', 'marker', 'examId'],
+      partition: (record) => (record.data as Reading).date.slice(0, 4),
+    },
   ],
 
   routes: [
     { path: '', element: HealthScreen, area: { id: 'day', label: 'Saúde', icon: HeartPulse, order: 90, tabLabel: 'Dia' } },
     { path: 'exams', element: ExamsScreen, area: { id: 'exams', label: 'Exames', icon: FileHeart, order: 130, within: 'health/day' } },
+    { path: 'me', element: MeScreen, area: { id: 'me', label: 'Meus dados', icon: UserRound, order: 140, within: 'health/day' } },
   ],
 
   commands: [
     { id: 'checkin', label: 'Registrar o dia', path: '', keywords: ['sono', 'humor', 'água', 'remédio'] },
+    { id: 'me', label: 'Meus dados', path: 'me', keywords: ['peso', 'altura', 'idade', 'perfil', 'imc', 'objetivo'] },
     { id: 'new-exam', label: 'Registrar exame', path: 'exams', keywords: ['exame', 'consulta', 'laudo', 'resultado'] },
   ],
 
   provides: {
+    /** Blood pressure, glucose and LDL from exams; today's sleep and energy. */
+    signals: async (read, today) =>
+      healthSignals(
+        (await read<Exam>('exams')).map((e) => e.data),
+        (await read<Day>('days')).map((d) => d.data),
+        today,
+        (await read<Reading>('readings')).map((r) => r.data),
+      ),
     /**
      * Exams and follow-ups; for a single day (the day summary, alerts),
      * also each dose of the active medicines at its time.

@@ -15,6 +15,7 @@ import {
   type Session,
 } from './schema'
 import { SheetScreen, SnapshotScreen } from './sheet'
+import { trainingSignal } from './signals'
 import { TodayScreen } from './today'
 import ptBR from './locales/pt-BR.json'
 
@@ -104,6 +105,15 @@ export default defineModule({
             done: true,
           }),
         ),
+    /** Whether today is a training day, for meals. */
+    signals: async (read, today) => {
+      const signal = trainingSignal(
+        (await read<Session>('sessions')).map((s) => s.data),
+        (await read<Routine>('routines')).map((r) => r.data),
+        today,
+      )
+      return signal ? [signal] : []
+    },
   },
 
   locales: { 'pt-BR': ptBR },

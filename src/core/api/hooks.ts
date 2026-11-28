@@ -1,15 +1,15 @@
 import { useCallback, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useNavigate as useRouterNavigate, useParams as useRouterParams } from 'react-router-dom'
-import type { AppContextValue, Envelope, EventPayload, Query } from '@core/api/types'
+import type { AppContextValue, Envelope, EventPayload, Query, Signal } from '@core/api/types'
 import * as repository from '@core/db/repository'
 import { translate } from '@core/i18n/catalog'
 import { collectionPath } from '@core/registry/registry'
 import { useAppState } from '@core/runtime/app-context'
 import { emitEvent, qualify } from '@core/runtime/events'
 import { useModuleId } from '@core/runtime/module-context'
-import { collectDated, collectProgress, type CollectedDated, type CollectedProgress } from '@core/providers/collect'
-import { parseDate } from './dates'
+import { collectDated, collectProgress, collectSignals, type CollectedDated, type CollectedProgress } from '@core/providers/collect'
+import { parseDate, toLocalISODate } from './dates'
 
 /* ------------------------------------------------------------------ *
  * Data
@@ -284,4 +284,11 @@ export function useProgressSources(): CollectedProgress[] {
 export function useOpenHref(): (href: string) => void {
   const navigate = useRouterNavigate()
   return useCallback((href: string) => navigate(href), [navigate])
+}
+
+const NO_SIGNALS: Partial<Record<Signal['key'], Signal>> = {}
+
+/** The latest readings other modules offer (pressure, sleep, intake…), live. */
+export function useSignals(): Partial<Record<Signal['key'], Signal>> {
+  return useLiveQuery(() => collectSignals(toLocalISODate()), [], NO_SIGNALS) ?? NO_SIGNALS
 }
